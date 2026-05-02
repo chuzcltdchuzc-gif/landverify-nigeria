@@ -1,0 +1,66 @@
+{
+  "name": "Parcel",
+  "type": "object",
+  "properties": {
+    "owner_name": {
+      "type": "string",
+      "description": "Full name of the land owner"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Phone number of the owner"
+    },
+    "latitude": {
+      "type": "number",
+      "description": "GPS latitude"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "GPS longitude"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the land parcel"
+    },
+    "photos": {
+      "type": "array",
+      "description": "URLs of uploaded photos",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "verified",
+        "rejected"
+      ],
+      "default": "pending",
+      "description": "Verification status"
+    },
+    "confidence_score": {
+      "type": "number",
+      "description": "Verification confidence score 0-100"
+    },
+    "verification_notes": {
+      "type": "string",
+      "description": "Notes from verifier"
+    },
+    "flags": {
+      "type": "array",
+      "description": "Fraud detection flags",
+      "items": {
+        "type": "string"
+      }
+    },
+    "captured_at": {
+      "type": "string",
+      "description": "ISO timestamp of field capture"
+    }
+  },
+  "required": [
+    "owner_name",
+    "phone"
+  ]
+}

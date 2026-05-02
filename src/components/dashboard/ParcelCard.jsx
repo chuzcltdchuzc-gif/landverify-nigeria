@@ -1,0 +1,62 @@
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { MapPin, Phone, Calendar, AlertTriangle } from "lucide-react";
+import { format } from "date-fns";
+
+const statusColors = {
+  pending: "bg-accent/15 text-accent border-accent/30",
+  verified: "bg-primary/15 text-primary border-primary/30",
+  rejected: "bg-destructive/15 text-destructive border-destructive/30",
+};
+
+export default function ParcelCard({ parcel, onClick }) {
+  return (
+    <Card
+      className="cursor-pointer hover:shadow-md transition-shadow"
+      onClick={() => onClick?.(parcel)}
+    >
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-2">
+          <div>
+            <h3 className="font-semibold text-foreground">{parcel.owner_name}</h3>
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <Phone className="w-3 h-3" />
+              {parcel.phone}
+            </div>
+          </div>
+          <Badge variant="outline" className={statusColors[parcel.status] || ""}>
+            {parcel.status}
+          </Badge>
+        </div>
+
+        <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+          <MapPin className="w-3 h-3" />
+          {parcel.latitude?.toFixed(5)}, {parcel.longitude?.toFixed(5)}
+        </div>
+
+        {parcel.flags?.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-2">
+            {parcel.flags.map((flag, i) => (
+              <Badge key={i} variant="destructive" className="text-[10px] gap-1">
+                <AlertTriangle className="w-2.5 h-2.5" />
+                {flag}
+              </Badge>
+            ))}
+          </div>
+        )}
+
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Calendar className="w-3 h-3" />
+            {parcel.captured_at
+              ? format(new Date(parcel.captured_at), "dd MMM yyyy, HH:mm")
+              : format(new Date(parcel.created_date), "dd MMM yyyy, HH:mm")}
+          </span>
+          {parcel.photos?.length > 0 && (
+            <span>{parcel.photos.length} photo(s)</span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
