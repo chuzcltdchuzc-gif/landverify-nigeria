@@ -8,6 +8,8 @@ import { base44 } from "@/api/base44Client";
 import { useQueryClient } from "@tanstack/react-query";
 import GPSCapture from "@/components/capture/GPSCapture";
 import PhotoUpload from "@/components/capture/PhotoUpload";
+import OfflineBanner from "@/components/capture/OfflineBanner";
+import { useOfflineQueue } from "@/hooks/useOfflineQueue";
 import { toast } from "sonner";
 
 const INITIAL = {
@@ -22,8 +24,10 @@ const INITIAL = {
 export default function FieldCapture() {
   const [form, setForm] = useState(INITIAL);
   const [submitting, setSubmitting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [success, setSuccess] = useState(false);
   const queryClient = useQueryClient();
+  const { isOnline, queue, saveToQueue, removeFromQueue } = useOfflineQueue();
 
   const set = (field, value) => setForm((f) => ({ ...f, [field]: value }));
 
@@ -38,20 +42,41 @@ export default function FieldCapture() {
     e.preventDefault();
     if (!isValid) return;
 
-    setSubmitting(true);
-    await base44.entities.Parcel.create({
+    const parcelData = {
       ...form,
       status: "pending",
       captured_at: new Date().toISOString(),
-    });
+    };
+
+    if (!isOnline) {
+      saveToQueue(parcelData);
+      setSuccess(true);
+      setTimeout(() => { setSuccess(false); setForm(INITIAL); }, 2000);
+      toast.success("Saved locally — will sync when online.");
+      return;
+    }
+
+    setSubmitting(true);
+    await base44.entities.Parcel.create(parcelData);
     queryClient.invalidateQueries({ queryKey: ["parcels"] });
     setSubmitting(false);
     setSuccess(true);
-    setTimeout(() => {
-      setSuccess(false);
-      setForm(INITIAL);
-    }, 2000);
+    setTimeout(() => { setSuccess(false); setForm(INITIAL); }, 2000);
     toast.success("Parcel saved successfully!");
+  };
+
+  const handleSync = async () => {
+    setSyncing(true);
+    let successCount = 0;
+    for (const entry of queue) {
+      const { _id, _queued_at, ...parcelData } = entry;
+      await base44.entities.Parcel.create(parcelData);
+      removeFromQueue(_id);
+      successCount++;
+    }
+    queryClient.invalidateQueries({ queryKey: ["parcels"] });
+    setSyncing(false);
+    toast.success(`${successCount} parcel${successCount !== 1 ? "s" : ""} synced!`);
   };
 
   if (success) {
@@ -61,13 +86,16 @@ export default function FieldCapture() {
           <CheckCircle2 className="w-10 h-10 text-primary" />
         </div>
         <h2 className="text-xl font-bold text-foreground mb-1">Parcel Saved!</h2>
-        <p className="text-muted-foreground">Data captured successfully.</p>
+        <p className="text-muted-foreground">
+          {isOnline ? "Data captured successfully." : "Saved offline — will sync when connected."}
+        </p>
       </div>
     );
   }
 
   return (
     <div className="p-4 pt-6">
+      <OfflineBanner isOnline={isOnline} queueCount={queue.length} onSync={handleSync} syncing={syncing} />
       <div className="flex items-center gap-2 mb-6">
         <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
           <MapPin className="w-5 h-5 text-primary-foreground" />
