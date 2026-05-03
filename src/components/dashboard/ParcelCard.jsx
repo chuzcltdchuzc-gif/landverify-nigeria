@@ -1,27 +1,49 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { MapPin, Phone, Calendar, AlertTriangle } from "lucide-react";
+import { MapPin, Phone, Calendar, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 
 const statusColors = {
   pending: "bg-accent/15 text-accent border-accent/30",
   verified: "bg-primary/15 text-primary border-primary/30",
   rejected: "bg-destructive/15 text-destructive border-destructive/30",
+  under_review: "bg-chart-5/15 text-chart-5 border-chart-5/30",
 };
 
-export default function ParcelCard({ parcel, onClick }) {
+export default function ParcelCard({ parcel, onClick, selectable, selected, onSelect }) {
+  const handleClick = () => {
+    if (selectable) {
+      onSelect?.(parcel.id);
+    } else {
+      onClick?.(parcel);
+    }
+  };
+
   return (
     <Card
-      className="cursor-pointer hover:shadow-md transition-shadow"
-      onClick={() => onClick?.(parcel)}
+      className={`cursor-pointer transition-all ${
+        selected
+          ? "ring-2 ring-primary shadow-md"
+          : "hover:shadow-md"
+      }`}
+      onClick={handleClick}
     >
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-2">
-          <div>
-            <h3 className="font-semibold text-foreground">{parcel.owner_name}</h3>
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              <Phone className="w-3 h-3" />
-              {parcel.phone}
+          <div className="flex items-start gap-2">
+            {selectable && (
+              <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                selected ? "bg-primary border-primary" : "border-border"
+              }`}>
+                {selected && <CheckCircle2 className="w-3.5 h-3.5 text-primary-foreground" />}
+              </div>
+            )}
+            <div>
+              <h3 className="font-semibold text-foreground">{parcel.owner_name}</h3>
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <Phone className="w-3 h-3" />
+                {parcel.phone}
+              </div>
             </div>
           </div>
           <Badge variant="outline" className={statusColors[parcel.status] || ""}>

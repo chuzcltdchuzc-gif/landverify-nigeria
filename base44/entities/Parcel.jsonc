@@ -34,7 +34,8 @@
       "enum": [
         "pending",
         "verified",
-        "rejected"
+        "rejected",
+        "under_review"
       ],
       "default": "pending",
       "description": "Verification status"
