@@ -6,10 +6,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import ParcelCard from "@/components/dashboard/ParcelCard";
 import ExportButtons from "@/components/dashboard/ExportButtons";
 import ParcelMap from "@/components/dashboard/ParcelMap";
+import RevenueEstimate from "@/components/dashboard/RevenueEstimate";
+import ParcelDetailView from "@/components/dashboard/ParcelDetailView";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRole } from "@/lib/useRole";
+import AccessDenied from "@/components/common/AccessDenied";
 
 export default function Dashboard() {
   const [view, setView] = useState("list");
+  const [selectedParcel, setSelectedParcel] = useState(null);
+  const { canViewDashboard, isGovernment } = useRole();
   const { data: parcels = [], isLoading } = useQuery({
     queryKey: ["parcels"],
     queryFn: () => base44.entities.Parcel.list("-created_date"),
@@ -21,6 +27,8 @@ export default function Dashboard() {
     verified: parcels.filter((p) => p.status === "verified").length,
     flagged: parcels.filter((p) => p.flags?.length > 0).length,
   };
+
+  if (!canViewDashboard) return <AccessDenied />;
 
   const statCards = [
     { label: "Total Parcels", value: stats.total, icon: MapPin, color: "text-primary" },
@@ -35,6 +43,8 @@ export default function Dashboard() {
         <h1 className="text-lg font-bold text-foreground">Dashboard</h1>
         <ExportButtons parcels={parcels} />
       </div>
+
+      {isGovernment && <RevenueEstimate parcels={parcels} />}
 
       <div className="grid grid-cols-2 gap-3 mb-6">
         {statCards.map(({ label, value, icon: Icon, color }) => (
@@ -80,13 +90,17 @@ export default function Dashboard() {
         <div className="space-y-3">
           {isLoading
             ? Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-28 rounded-lg" />)
-            : parcels.map((p) => <ParcelCard key={p.id} parcel={p} />)}
+            : parcels.map((p) => <ParcelCard key={p.id} parcel={p} onClick={setSelectedParcel} />)}
           {!isLoading && parcels.length === 0 && (
             <div className="text-center text-muted-foreground py-12">
               No parcels captured yet. Go to Capture to add one.
             </div>
           )}
         </div>
+      )}
+
+      {selectedParcel && (
+        <ParcelDetailView parcel={selectedParcel} onClose={() => setSelectedParcel(null)} />
       )}
     </div>
   );

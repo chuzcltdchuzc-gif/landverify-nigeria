@@ -8,8 +8,11 @@ import { detectFraud, computeConfidence } from "@/lib/fraudDetection";
 import ParcelCard from "@/components/dashboard/ParcelCard";
 import VerificationPanel from "@/components/verify/VerificationPanel";
 import { toast } from "sonner";
+import { useRole } from "@/lib/useRole";
+import AccessDenied from "@/components/common/AccessDenied";
 
 export default function Verify() {
+  const { canVerify } = useRole();
   const [selectedParcel, setSelectedParcel] = useState(null);
   const [scanning, setScanning] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
@@ -21,6 +24,8 @@ export default function Verify() {
     queryKey: ["parcels"],
     queryFn: () => base44.entities.Parcel.list("-created_date"),
   });
+
+  if (!canVerify) return <AccessDenied />;
 
   const runFraudScan = async () => {
     setScanning(true);

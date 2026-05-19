@@ -11,6 +11,8 @@ import PhotoUpload from "@/components/capture/PhotoUpload";
 import OfflineBanner from "@/components/capture/OfflineBanner";
 import { useOfflineQueue } from "@/hooks/useOfflineQueue";
 import { toast } from "sonner";
+import { useRole } from "@/lib/useRole";
+import AccessDenied from "@/components/common/AccessDenied";
 
 const INITIAL = {
   owner_name: "",
@@ -19,6 +21,10 @@ const INITIAL = {
   longitude: null,
   description: "",
   photos: [],
+  plot_type: "",
+  ownership_type: "",
+  family_history: "",
+  purchased_from: "",
 };
 
 export default function FieldCapture() {
@@ -28,6 +34,9 @@ export default function FieldCapture() {
   const [success, setSuccess] = useState(false);
   const queryClient = useQueryClient();
   const { isOnline, queue, saveToQueue, removeFromQueue } = useOfflineQueue();
+  const { canCapture } = useRole();
+
+  if (!canCapture) return <AccessDenied />;
 
   const set = (field, value) => setForm((f) => ({ ...f, [field]: value }));
 
@@ -151,6 +160,57 @@ export default function FieldCapture() {
 
         <Card>
           <CardContent className="p-4 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Plot Type</label>
+                <select
+                  value={form.plot_type}
+                  onChange={(e) => set("plot_type", e.target.value)}
+                  className="w-full h-12 px-3 rounded-md border border-input bg-background text-base"
+                >
+                  <option value="">Select...</option>
+                  <option value="full">Full Plot</option>
+                  <option value="half">Half Plot</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Ownership</label>
+                <select
+                  value={form.ownership_type}
+                  onChange={(e) => set("ownership_type", e.target.value)}
+                  className="w-full h-12 px-3 rounded-md border border-input bg-background text-base"
+                >
+                  <option value="">Select...</option>
+                  <option value="family_owned">Family Owned</option>
+                  <option value="purchased">Purchased</option>
+                </select>
+              </div>
+            </div>
+
+            {form.ownership_type === "family_owned" && (
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Family History</label>
+                <Textarea
+                  placeholder="Describe the family land history..."
+                  value={form.family_history}
+                  onChange={(e) => set("family_history", e.target.value)}
+                  className="min-h-[70px] text-base"
+                />
+              </div>
+            )}
+
+            {form.ownership_type === "purchased" && (
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Purchased From</label>
+                <Input
+                  placeholder="Name of seller..."
+                  value={form.purchased_from}
+                  onChange={(e) => set("purchased_from", e.target.value)}
+                  className="h-12 text-base"
+                />
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Land Description</label>
               <Textarea

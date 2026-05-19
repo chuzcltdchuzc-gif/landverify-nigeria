@@ -9,6 +9,7 @@ import { base44 } from "@/api/base44Client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { generateLandId } from "@/lib/generateLandId";
 
 export default function VerificationPanel({ parcel, onClose }) {
   const [notes, setNotes] = useState(parcel.verification_notes || "");
@@ -18,14 +19,14 @@ export default function VerificationPanel({ parcel, onClose }) {
 
   const save = async (status) => {
     setSaving(true);
-    await base44.entities.Parcel.update(parcel.id, {
-      status,
-      verification_notes: notes,
-      confidence_score: confidence,
-    });
+    const updates = { status, verification_notes: notes, confidence_score: confidence };
+    if (status === "verified" && !parcel.land_id) {
+      updates.land_id = generateLandId();
+    }
+    await base44.entities.Parcel.update(parcel.id, updates);
     queryClient.invalidateQueries({ queryKey: ["parcels"] });
     setSaving(false);
-    toast.success(`Parcel ${status}`);
+    toast.success(`Parcel ${status}${updates.land_id ? ` · ID: ${updates.land_id}` : ""}`);
     onClose();
   };
 

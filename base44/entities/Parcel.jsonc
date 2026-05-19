@@ -58,6 +58,34 @@
     "captured_at": {
       "type": "string",
       "description": "ISO timestamp of field capture"
+    },
+    "land_id": {
+      "type": "string",
+      "description": "Auto-generated unique land ID assigned on verification"
+    },
+    "plot_type": {
+      "type": "string",
+      "enum": [
+        "full",
+        "half"
+      ],
+      "description": "Type of plot"
+    },
+    "ownership_type": {
+      "type": "string",
+      "enum": [
+        "family_owned",
+        "purchased"
+      ],
+      "description": "How ownership was acquired"
+    },
+    "family_history": {
+      "type": "string",
+      "description": "Family land history notes"
+    },
+    "purchased_from": {
+      "type": "string",
+      "description": "Name of person/entity land was purchased from"
     }
   },
   "required": [
@@ -76,6 +104,16 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "surveyor"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "government"
           }
         }
       ]
