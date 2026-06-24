@@ -1,0 +1,41 @@
+{
+  "summary": "Comprehensive backend + frontend testing of Aquasavannah LandVault MVP. 28/28 backend pytest cases pass (after one test naming fix). All major frontend flows verified: landing, public verify, citizen dashboard with parcel create + evidence upload, validator attestation submission, surveyor plan upload, admin command centre with 13 layers, trust scoring (real non-100 sub-scores), and tab navigation. Stripe checkout returns a real session URL; Paystack init/verify is mocked and properly idempotent.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/public/stats", "issue": "Response keys are total_parcels/verified_parcels/total_attestations/registered_surveyors instead of the spec-described parcels/verified/attestations/surveyors. Test accepts both; consider aliasing or updating the spec."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Public verify result", "issues": ["Disclaimer at bottom contains the word 'ownership' which is intentional disclaimer text — flagged briefly during testing as a string-match false positive, NOT an actual data leak."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/backend_test.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Optional: align /api/public/stats key naming with the documented spec (parcels/verified/attestations/surveyors) to avoid client-spec drift."
+  ],
+  "critical_code_review_comments": [
+    "server.py is a single 1561-line file. Recommend modular refactor (auth, payments, admin, trust, jobs) once feature freeze hits — current size hurts maintainability.",
+    "_id is consistently excluded via projections (good). MongoDB writes use atomic $inc for credit deduction with a guard ({balance: {$gte: amount}}) — sound concurrency handling.",
+    "Idempotency: Paystack verify uses session_id as idempotency_key on credit_transactions and a credits_granted flag on payment_transactions — verified idempotent in tests.",
+    "RBAC enforced via require_role dependency — CITIZEN and SURVEYOR correctly receive 403 on /api/admin/*.",
+    "Public verify response correctly omits owner_id and owner email (verified).",
+    "Trust validation computes real sub-scores from DB counts (evidence integrity, attestation consensus, certificate coverage, job completion, audit coverage) — sub_scores observed at 55/57/52 on fresh seed, confirming no false 100s.",
+    "Job processor only handles 10 jobs per call — fine for manual admin trigger but a real cron/worker would be needed in production (current queue depth was ~30 PENDING during test).",
+    "All endpoints use REACT_APP_BACKEND_URL on frontend; no hard-coded URLs detected."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py (new)",
+    "/app/backend/tests/__init__.py (new)"
+  ],
+  "success_rate": {"backend": "100% (28/28)", "frontend": "100% (all 9 flows passed)"},
+  "test_credentials": "No persisted credentials file in /app/memory/test_credentials.md (file/dir empty). Used dev-login endpoint POST /api/auth/dev-login with role={CITIZEN|COMMUNITY_VALIDATOR|SURVEYOR|ADMIN} which is documented in the review request. Demo emails: citizen.demo@landvault.test, validator.demo@landvault.test, surveyor.demo@landvault.test, admin.demo@landvault.test.",
+  "seed_data_creation": "Created during testing: 1 new parcel via citizen UI (TEST UI Community), ~50 drain parcels via API to test 402 path, 1 evidence record, 1 validator attestation, 2 surveyor plan uploads. Seed user wallet now ~95 credits (was 250). To reset, delete citizen.demo@landvault.test user — backend will re-seed on next startup.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend test file at /app/backend/tests/backend_test.py is reusable. Run: pytest backend/tests/ -v --junitxml=/app/test_reports/pytest/pytest_results.xml. Test data is prefixed TEST_. The CITIZEN demo wallet may be low (~95 credits) — adjust drain logic if running insufficient_credits test after multiple iterations, or re-seed by deleting citizen.demo@landvault.test from DB.",
+  "rca of the issue": "n/a — no critical bugs found."
+}

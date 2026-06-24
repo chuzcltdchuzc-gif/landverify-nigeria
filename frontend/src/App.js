@@ -1,56 +1,51 @@
-import { useEffect } from "react";
-import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
-import { HOME } from "@/constants/testIds";
+import React from 'react';
+import '@/App.css';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { Toaster } from 'sonner';
+import { AuthProvider } from './lib/auth.jsx';
+import Landing from './pages/Landing.jsx';
+import AuthCallback from './pages/AuthCallback.jsx';
+import PublicVerify from './pages/PublicVerify.jsx';
+import Trust from './pages/Trust.jsx';
+import CommunityTransparency from './pages/CommunityTransparency.jsx';
+import CitizenDashboard from './pages/CitizenDashboard.jsx';
+import ValidatorDashboard from './pages/ValidatorDashboard.jsx';
+import SurveyorDashboard from './pages/SurveyorDashboard.jsx';
+import AdminDashboard from './pages/AdminDashboard.jsx';
+import Billing, { BillingSuccess, BillingCancel, PaystackSuccess } from './pages/Billing.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
-
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
-
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
-  return (
-    <div>
-      <header className="App-header">
-        <a
-          data-testid={HOME.emergentLink}
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
-
-function App() {
-  return (
-    <div className="App">
-      <BrowserRouter>
+function Router() {
+    const location = useLocation();
+    if (location.hash?.includes('session_id=')) return <AuthCallback />;
+    return (
         <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
+            <Route path="/" element={<Landing />} />
+            <Route path="/verify" element={<PublicVerify />} />
+            <Route path="/trust" element={<Trust />} />
+            <Route path="/community-transparency" element={<CommunityTransparency />} />
+            <Route path="/dashboard" element={<ProtectedRoute><CitizenDashboard /></ProtectedRoute>} />
+            <Route path="/validator" element={<ProtectedRoute minRole="COMMUNITY_VALIDATOR"><ValidatorDashboard /></ProtectedRoute>} />
+            <Route path="/surveyor" element={<ProtectedRoute minRole="SURVEYOR"><SurveyorDashboard /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute minRole="ADMIN"><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/*" element={<ProtectedRoute minRole="ADMIN"><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/billing" element={<ProtectedRoute><Billing /></ProtectedRoute>} />
+            <Route path="/billing/success" element={<ProtectedRoute><BillingSuccess /></ProtectedRoute>} />
+            <Route path="/billing/cancel" element={<ProtectedRoute><BillingCancel /></ProtectedRoute>} />
+            <Route path="/billing/paystack-success" element={<ProtectedRoute><PaystackSuccess /></ProtectedRoute>} />
         </Routes>
-      </BrowserRouter>
-    </div>
-  );
+    );
 }
 
-export default App;
+export default function App() {
+    return (
+        <div className="App">
+            <BrowserRouter>
+                <AuthProvider>
+                    <Router />
+                    <Toaster position="top-right" richColors closeButton/>
+                </AuthProvider>
+            </BrowserRouter>
+        </div>
+    );
+}
