@@ -28,7 +28,8 @@ audit trail, trust validation, and admin command centre.
 7. **Platform Admin** — operates the command centre
 
 ## 4. Implemented in v1 (2026-06-24)
-### Backend (`/app/backend/server.py`)
+### Backend (now modular under `/app/backend/`)
+- **Phase 9 refactor complete** — monolithic 2 569-line `server.py` reduced to an 8-line shim. Full enterprise structure: `core/`, `schemas/`, `services/`, `routers/`, `webhooks/`. Zero API breaking changes. Backend version bumped 1.0.0 → 1.1.0. See `MIGRATION_REPORT.md`.
 - Emergent Google Auth + `/api/auth/dev-login` test bypass
 - `/api/auth/me`, `/api/auth/logout` with httpOnly session cookie + Bearer fallback
 - Public: `/api/public/stats`, `/api/public/verify`, `/api/public/plans`, `/api/public/transparency`
@@ -78,13 +79,13 @@ audit trail, trust validation, and admin command centre.
 - Minor issues: 1 (cosmetic key naming on `/api/public/stats`)
 
 ## 6. Deferred (P1)
-- Legal / Institutional / Observer dashboards (routes ready, currently fall through to Citizen)
-- Real Paystack integration ✅ DONE (iteration 2) — requires `PAYSTACK_SECRET_KEY` env var to activate
+- Phase 8 frontend dashboards for Legal / Institutional / Observer (**backend ready**, includes risk engine + real PDF report generation via job queue; only the React pages remain)
+- Real Paystack integration ✅ DONE (iteration 2)
 - Stripe webhook signature verification ✅ DONE (iteration 2)
+- Enterprise backend refactor ✅ DONE (iteration 3 / Phase 9)
 - Real OCR / fraud scoring (mocked)
-- Cloudflare R2 file storage (current evidence uses external URLs)
-- PDF certificate rendering (currently flagged as ISSUED, no actual PDF asset)
-- Rate limiting (Upstash) and Sentry instrumentation
+- Cloudflare R2 file storage
+- Rate limiting + Sentry instrumentation
 - CI/CD pipeline scaffolding
 
 ## 7. Backlog (P2)
