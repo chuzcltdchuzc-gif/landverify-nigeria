@@ -456,7 +456,6 @@ class TestIdempotency:
         sid = r.json()["session_id"]
         # Call status twice. The sandbox session is not actually paid, so wallet
         # won't change at all. But this also exercises the no-op path safely.
-        bal0 = s.get(f"{API}/credits/balance", timeout=15).json()["wallet"]["balance"]
         s.get(f"{API}/payments/stripe/status/{sid}", timeout=30)
         bal1 = s.get(f"{API}/credits/balance", timeout=15).json()["wallet"]["balance"]
         s.get(f"{API}/payments/stripe/status/{sid}", timeout=30)

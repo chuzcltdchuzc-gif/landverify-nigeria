@@ -35,8 +35,14 @@ audit trail, trust validation, and admin command centre.
 - Parcels CRUD, evidence vault (SHA-256), community attestations (RBAC ≥ COMMUNITY_VALIDATOR)
 - Surveyor assignments + survey plan upload (RBAC ≥ SURVEYOR)
 - Credit wallet with atomic `$inc` deductions + idempotency keys
-- Stripe Checkout via `emergentintegrations` (USD-equivalent NGN); polling status endpoint
-- Paystack init/verify sandbox stub with idempotent credit grant
+- **Payments (iteration 2 — env-driven):**
+  - `/api/payments/config` returns `{stripe: {enabled, mode, publishable_key}, paystack: {enabled, mode, public_key}}` — secrets never leak
+  - Stripe checkout via `emergentintegrations` (USD-equivalent NGN); status endpoint verifies local ledger FIRST (404 on unknown), enforces user isolation (admin override allowed)
+  - **Real Paystack** integration: `POST /transaction/initialize` and `GET /transaction/verify/{ref}` via httpx with `Authorization: Bearer ${PAYSTACK_SECRET_KEY}`
+  - `/api/webhook/stripe` — signature verified via `stripe.Webhook.construct_event` against `STRIPE_WEBHOOK_SECRET`
+  - `/api/webhook/paystack` — HMAC-SHA512 verified against `PAYSTACK_WEBHOOK_SECRET` (or `PAYSTACK_SECRET_KEY` fallback)
+  - All payment endpoints return **503 "Payment system not configured (Stripe|Paystack)"** when the provider's secret is missing — no crash, no silent failure
+  - `_fulfill_payment()` idempotent (guarded by `credits_granted` flag + `idempotency_key` on credit transactions)
 - Admin overview, users, parcels, evidence (approve), jobs (process), audit log
 - Trust validation — **REAL sub-scores from DB counts** (no false 100s), graded A_PLUS … F
 - Take-off readiness assessment
@@ -73,8 +79,8 @@ audit trail, trust validation, and admin command centre.
 
 ## 6. Deferred (P1)
 - Legal / Institutional / Observer dashboards (routes ready, currently fall through to Citizen)
-- Real Paystack integration (requires merchant credentials)
-- Stripe webhook signature verification (current flow uses status polling — works for sandbox)
+- Real Paystack integration ✅ DONE (iteration 2) — requires `PAYSTACK_SECRET_KEY` env var to activate
+- Stripe webhook signature verification ✅ DONE (iteration 2)
 - Real OCR / fraud scoring (mocked)
 - Cloudflare R2 file storage (current evidence uses external URLs)
 - PDF certificate rendering (currently flagged as ISSUED, no actual PDF asset)

@@ -1119,14 +1119,23 @@ async def stripe_status(session_id: str, user: dict = Depends(get_current_user))
     cfg = _payments_config()
     if not cfg["stripe"]["enabled"]:
         raise HTTPException(status_code=503, detail="Payment system not configured (Stripe)")
-    from emergentintegrations.payments.stripe.checkout import StripeCheckout
-    api_key = os.environ.get("STRIPE_SECRET_KEY") or os.environ.get("STRIPE_API_KEY")
-    checkout = StripeCheckout(api_key=api_key, webhook_url="")
-    status_resp = await checkout.get_checkout_status(session_id)
 
+    # Check our local ledger FIRST — fast path, prevents Stripe SDK 500s, and
+    # blocks enumeration of foreign session ids by authenticated users.
     pt = await db.payment_transactions.find_one({"session_id": session_id}, {"_id": 0})
     if not pt:
         raise HTTPException(status_code=404, detail="Transaction not found")
+    if pt["user_id"] != user["user_id"] and ROLE_RANK.get(user["role"], 0) < ROLE_RANK["ADMIN"]:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    from emergentintegrations.payments.stripe.checkout import StripeCheckout
+    api_key = os.environ.get("STRIPE_SECRET_KEY") or os.environ.get("STRIPE_API_KEY")
+    checkout = StripeCheckout(api_key=api_key, webhook_url="")
+    try:
+        status_resp = await checkout.get_checkout_status(session_id)
+    except Exception as exc:
+        logger.warning("Stripe status lookup failed for %s: %s", session_id, exc)
+        raise HTTPException(status_code=502, detail="Upstream Stripe error")
 
     if status_resp.payment_status == "paid":
         await _fulfill_payment(pt, session_id)
