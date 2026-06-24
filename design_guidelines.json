@@ -1,0 +1,97 @@
+{
+  "theme": "light",
+  "archetype": "1_organic_earthy",
+  "domain": "Institution/Government SaaS",
+  "design_philosophy": "Institutional Trust and Verifiability. Clean, trustworthy, and reliant on strict data hierarchy. Uses organic greens to signify land and growth, balanced with trust blue for institutional reliability.",
+  "typography": {
+    "headings": {
+      "family": "Plus Jakarta Sans",
+      "weight": "700",
+      "usage": "h1 to h6, section titles, card titles"
+    },
+    "body": {
+      "family": "Inter",
+      "weight": "400, 500",
+      "usage": "All standard text, paragraphs, labels, form inputs"
+    },
+    "monospace": {
+      "family": "JetBrains Mono",
+      "usage": "Parcel numbers, SHA-256 hashes, transaction IDs, code snippets, system logs, verification stamps"
+    }
+  },
+  "colors": {
+    "background_gradient": "linear-gradient(135deg, #e8f5e9 0%, #e0f7fa 50%, #e3f2fd 100%)",
+    "primary": "#2e7d52",
+    "secondary": "#1565c0",
+    "card_background": "#ffffff",
+    "text_primary": "#1a2e1a",
+    "text_secondary": "#546e7a",
+    "warning": "#f57f17",
+    "error": "#c62828",
+    "success": "#2e7d52",
+    "border_subtle": "rgba(46,125,82,0.15)",
+    "glass_background": "rgba(255, 255, 255, 0.7)"
+  },
+  "styling": {
+    "radius": {
+      "cards": "12px",
+      "inputs": "8px",
+      "buttons": "24px"
+    },
+    "shadows": {
+      "cards": "0 2px 12px rgba(46, 125, 82, 0.08)",
+      "glass_panel": "0 8px 32px rgba(46, 125, 82, 0.12)"
+    },
+    "surfaces": {
+      "glassmorphism": "backdrop-blur-xl bg-white/70 border border-[#2e7d52]/10 shadow-[0_2px_12px_rgba(46,125,82,0.08)]",
+      "verification_stamps": "Use JetBrains Mono, uppercase, tight tracking, nested inside a 1px dashed border with a subtle green tint.",
+      "audit_timeline": "Vertical left border #2e7d52/20, absolute positioned nodes using #2e7d52, timestamps in JetBrains Mono."
+    }
+  },
+  "layouts": {
+    "landing_login": {
+      "description": "Full-screen split layout for Auth.",
+      "left_panel": "Green-blue gradient background (#e8f5e9 to #e0f7fa to #e3f2fd). Center LandVault logo, primary tagline. Includes animated trust stats (e.g. 'Over 1M+ Parcels Secured') floating via green-tinted glassmorphism panels.",
+      "right_panel": "Solid white (#ffffff) housing the auth card. Card uses 12px radius, inputs 8px, buttons 24px."
+    },
+    "dashboards": {
+      "description": "Control Room Grid. Dense, data-oriented, compact spacing for tables and forms.",
+      "grid": "grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6",
+      "sidebar": "Fixed left sidebar, white background, text_secondary for inactive, primary for active states."
+    }
+  },
+  "components": {
+    "buttons": "Primary buttons: bg-[#2e7d52], text-white, rounded-[24px]. Secondary buttons: bg-white, text-[#1565c0], border border-[#1565c0].",
+    "inputs": "rounded-[8px], border border-[#2e7d52]/15, focus:ring-2 focus:ring-[#2e7d52]/50 focus:border-[#2e7d52].",
+    "trust_badges": "SVG badges (lucide-react shield-check), colored #2e7d52. Text in JetBrains Mono.",
+    "kpi_cards": "Glassmorphism surface. Large text in Plus Jakarta Sans. Subtle icon top right."
+  },
+  "media": {
+    "hero_landscape": {
+      "url": "https://images.unsplash.com/photo-1618828665011-0abd973f7bb8?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA3MDR8MHwxfHNlYXJjaHwxfHxuaWdlcmlhJTIwbGFuZHNjYXBlfGVufDB8fHx8MTc4MjMyMDYwNHww&ixlib=rb-4.1.0&q=85",
+      "description": "Aerial view of city/buildings for the landing page or trust architecture background."
+    },
+    "surveyor_dashboard": {
+      "url": "https://images.unsplash.com/photo-1628158088936-68ccaaa400dc?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzF8MHwxfHNlYXJjaHwxfHxzdXJ2ZXlvciUyMGxhbmQlMjBlcXVpcG1lbnR8ZW58MHx8fHwxNzgyMzIwNjA0fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Surveyor tripod on land for the surveyor assignments module."
+    },
+    "evidence_vault": {
+      "url": "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1Mjh8MHwxfHNlYXJjaHwxfHxzZWN1cmUlMjBkaWdpdGFsJTIwZG9jdW1lbnR8ZW58MHx8fHwxNzgyMzIwNjA0fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Padlock indicating secure digital verification, used in the Evidence Vault explainer."
+    }
+  },
+  "testing": {
+    "attributes": "All interactive elements MUST include data-testid attributes (e.g., data-testid='login-submit-button')."
+  },
+  "instructions_to_main_agent": [
+    "Install lucide-react for icons. Use Shield, CheckCircle, FileText, Map, Activity.",
+    "Use Javascript (.js/.jsx), do not use Typescript (.ts/.tsx).",
+    "Use Shadcn UI components but customize borders (8px/12px radius) and shadows (0 2px 12px rgba(46,125,82,0.08)) to match the institutional aesthetic.",
+    "Do NOT use generic Inter for headings, strictly use Plus Jakarta Sans weight 700.",
+    "Apply the background gradient strictly as 'linear-gradient(135deg, #e8f5e9 0%, #e0f7fa 50%, #e3f2fd 100%)' to the main containers or body.",
+    "Create the 13-layer status dashboard in Admin Command Center using grid with amber/red/green indicators.",
+    "Wrap SHA-256 hashes in JetBrains Mono inside the Evidence Vault.",
+    "Ensure all text contrast passes accessibility checks, especially text_secondary (#546e7a) on light backgrounds.",
+    "Follow mobile-first responsive layout strategies for all portals and dashboards."
+  ]
+}
