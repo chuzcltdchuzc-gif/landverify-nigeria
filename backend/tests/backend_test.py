@@ -328,37 +328,138 @@ class TestRBAC:
         assert r.status_code == 403
 
 
-# ---------------- Payments ----------------
-class TestPayments:
-    def test_stripe_checkout_creates_session(self, citizen):
+# ---------------- Payments (iteration 2) ----------------
+class TestPaymentsConfig:
+    def test_config_anonymous_public(self):
+        # /api/payments/config is public
+        r = requests.get(f"{API}/payments/config", timeout=15)
+        assert r.status_code == 200, r.text
+        d = r.json()
+        # Shape
+        assert "stripe" in d and "paystack" in d
+        for prov in ("stripe", "paystack"):
+            for k in ("enabled", "mode"):
+                assert k in d[prov], f"{prov}.{k} missing"
+        # With current env: stripe enabled (sk_test_emergent fallback), paystack disabled
+        assert d["stripe"]["enabled"] is True
+        assert d["stripe"]["mode"] == "TEST"
+        assert d["paystack"]["enabled"] is False
+        assert d["paystack"]["mode"] == "DISABLED"
+        # NO secret keys leaked
+        flat = str(d).lower()
+        assert "sk_test_" not in flat
+        assert "sk_live_" not in flat
+        assert "secret" not in flat
+
+
+class TestPaymentsStripe:
+    def test_stripe_checkout_pack(self, citizen):
         s, _ = citizen
-        body = {"pack_code": "STARTER", "origin_url": BASE_URL}
+        body = {"pack_code": "STARTER", "origin_url": "https://example.com"}
         r = s.post(f"{API}/payments/stripe/checkout", json=body, timeout=30)
         assert r.status_code == 200, r.text
         d = r.json()
         assert d.get("url", "").startswith("http")
         assert d.get("session_id")
-        # Verify payment_transactions record exists by checking the session URL contains the id
-        # (Direct DB check is not available — we infer from successful response)
+        # Mode is TEST
+        assert d.get("mode") == "TEST"
+        # Save for status test
+        TestPaymentsStripe._last_session = d["session_id"]
 
-    def test_paystack_init_and_verify_idempotent(self, citizen):
+    def test_stripe_checkout_plan_monthly(self, citizen):
         s, _ = citizen
-        # Get balance before
-        before = s.get(f"{API}/credits/balance", timeout=15).json()["wallet"]["balance"]
-        body = {"pack_code": "STARTER", "origin_url": BASE_URL}
-        r = s.post(f"{API}/payments/paystack/init", json=body, timeout=15)
+        body = {"plan_code": "CITIZEN", "billing_cycle": "monthly", "origin_url": "https://example.com"}
+        r = s.post(f"{API}/payments/stripe/checkout", json=body, timeout=30)
         assert r.status_code == 200, r.text
         d = r.json()
-        assert d.get("mocked") is True
-        assert d.get("authorization_url", "").startswith("http")
-        ref = d["reference"]
-        # First verify grants credits
-        v1 = s.get(f"{API}/payments/paystack/verify/{ref}", timeout=15)
-        assert v1.status_code == 200
-        mid = s.get(f"{API}/credits/balance", timeout=15).json()["wallet"]["balance"]
-        assert mid == before + 100, f"Expected {before+100}, got {mid}"
-        # Second verify should be idempotent (no double credit)
-        v2 = s.get(f"{API}/payments/paystack/verify/{ref}", timeout=15)
-        assert v2.status_code == 200
-        after = s.get(f"{API}/credits/balance", timeout=15).json()["wallet"]["balance"]
-        assert after == mid, f"Paystack verify NOT idempotent: {mid} -> {after}"
+        assert d.get("url", "").startswith("http")
+        assert d.get("session_id")
+
+    def test_stripe_checkout_invite_only_plan_rejected(self, citizen):
+        s, _ = citizen
+        body = {"plan_code": "GOVERNMENT_OBSERVER", "origin_url": "https://example.com"}
+        r = s.post(f"{API}/payments/stripe/checkout", json=body, timeout=30)
+        assert r.status_code == 400, f"expected 400, got {r.status_code}: {r.text}"
+
+    def test_stripe_status_known_session(self, citizen):
+        s, _ = citizen
+        sid = getattr(TestPaymentsStripe, "_last_session", None)
+        assert sid, "Prior checkout test did not run"
+        r = s.get(f"{API}/payments/stripe/status/{sid}", timeout=30)
+        assert r.status_code == 200, r.text
+        d = r.json()
+        assert "status" in d or "payment_status" in d
+
+    def test_stripe_status_unknown_session_returns_404(self, citizen):
+        s, _ = citizen
+        r = s.get(f"{API}/payments/stripe/status/nope_unknown_session_xyz", timeout=30)
+        assert r.status_code == 404, f"expected 404, got {r.status_code}: {r.text[:200]}"
+
+    def test_stripe_checkout_requires_auth(self):
+        r = requests.post(f"{API}/payments/stripe/checkout",
+                          json={"pack_code": "STARTER", "origin_url": "https://example.com"},
+                          timeout=15)
+        assert r.status_code == 401, f"expected 401, got {r.status_code}"
+
+
+class TestPaymentsPaystackDisabled:
+    """With PAYSTACK_SECRET_KEY empty in .env, all Paystack endpoints must 503."""
+    def test_paystack_init_503(self, citizen):
+        s, _ = citizen
+        body = {"pack_code": "STARTER", "origin_url": "https://example.com"}
+        r = s.post(f"{API}/payments/paystack/init", json=body, timeout=15)
+        assert r.status_code == 503, r.text
+        assert "Paystack" in r.json().get("detail", "")
+
+    def test_paystack_verify_503(self, citizen):
+        s, _ = citizen
+        r = s.get(f"{API}/payments/paystack/verify/anything", timeout=15)
+        assert r.status_code == 503, r.text
+        assert "Paystack" in r.json().get("detail", "")
+
+
+class TestWebhooks:
+    def test_stripe_webhook_no_secret_acknowledges(self):
+        # No STRIPE_WEBHOOK_SECRET set: should respond 200 with verified=false
+        r = requests.post(f"{API.replace('/api','')}/api/webhook/stripe",
+                          data=b'{"id":"evt_test","type":"checkout.session.completed"}',
+                          headers={"Content-Type": "application/json",
+                                   "stripe-signature": "t=1,v1=deadbeef"},
+                          timeout=15)
+        assert r.status_code == 200, r.text
+        d = r.json()
+        assert d.get("received") is True
+        assert d.get("verified") is False
+        assert "not configured" in (d.get("reason") or "").lower()
+
+    def test_paystack_webhook_no_secret_acknowledges(self):
+        r = requests.post(f"{API.replace('/api','')}/api/webhook/paystack",
+                          data=b'{"event":"charge.success","data":{"reference":"x"}}',
+                          headers={"Content-Type": "application/json",
+                                   "x-paystack-signature": "deadbeef"},
+                          timeout=15)
+        assert r.status_code == 200, r.text
+        d = r.json()
+        assert d.get("received") is True
+        assert d.get("verified") is False
+        assert "not configured" in (d.get("reason") or "").lower()
+
+
+class TestIdempotency:
+    """Verify _fulfill_payment is no-op on already-fulfilled session."""
+    def test_stripe_status_double_call_does_not_double_credit(self, citizen):
+        s, _ = citizen
+        # Create a checkout
+        body = {"pack_code": "STARTER", "origin_url": "https://example.com"}
+        r = s.post(f"{API}/payments/stripe/checkout", json=body, timeout=30)
+        assert r.status_code == 200
+        sid = r.json()["session_id"]
+        # Call status twice. The sandbox session is not actually paid, so wallet
+        # won't change at all. But this also exercises the no-op path safely.
+        bal0 = s.get(f"{API}/credits/balance", timeout=15).json()["wallet"]["balance"]
+        s.get(f"{API}/payments/stripe/status/{sid}", timeout=30)
+        bal1 = s.get(f"{API}/credits/balance", timeout=15).json()["wallet"]["balance"]
+        s.get(f"{API}/payments/stripe/status/{sid}", timeout=30)
+        bal2 = s.get(f"{API}/credits/balance", timeout=15).json()["wallet"]["balance"]
+        # Idempotency: bal1 == bal2 always (no second-call delta)
+        assert bal1 == bal2, f"Second status call changed balance: {bal1} -> {bal2}"

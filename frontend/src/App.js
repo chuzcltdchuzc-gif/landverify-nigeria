@@ -33,6 +33,7 @@ function Router() {
             <Route path="/billing/success" element={<ProtectedRoute><BillingSuccess /></ProtectedRoute>} />
             <Route path="/billing/cancel" element={<ProtectedRoute><BillingCancel /></ProtectedRoute>} />
             <Route path="/billing/paystack-success" element={<ProtectedRoute><PaystackSuccess /></ProtectedRoute>} />
+            <Route path="/billing/paystack-callback" element={<ProtectedRoute><PaystackSuccess /></ProtectedRoute>} />
         </Routes>
     );
 }

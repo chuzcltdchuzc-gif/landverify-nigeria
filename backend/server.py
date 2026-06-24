@@ -14,6 +14,7 @@ Single-file backend covering:
 from __future__ import annotations
 
 import hashlib
+import hmac
 import logging
 import os
 import uuid
@@ -950,57 +951,153 @@ async def credit_transactions(user: dict = Depends(get_current_user)) -> dict:
     return {"items": items}
 
 
-# -------------- Payments — Stripe --------------
-@api.post("/payments/stripe/checkout")
-async def stripe_checkout(body: CheckoutCreate, request: Request, user: dict = Depends(get_current_user)) -> dict:
-    from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionRequest
+# -------------- Payments — configuration & shared helpers --------------
+PAYSTACK_API_BASE = "https://api.paystack.co"
 
-    api_key = os.environ.get("STRIPE_API_KEY")
-    if not api_key:
-        raise HTTPException(status_code=500, detail="Stripe not configured")
 
-    # Determine amount + metadata server-side (NEVER trust frontend)
-    amount_ngn: float
-    metadata: dict[str, str]
+def _payments_config() -> dict:
+    """Return the runtime status of each payment provider.
+
+    A provider is "configured" when its secret key env var is set to a non-empty
+    value. We never leak secrets — only the publishable key (Stripe) and public
+    key (Paystack) are returned to the client.
+    """
+    stripe_secret = os.environ.get("STRIPE_SECRET_KEY") or os.environ.get("STRIPE_API_KEY") or ""
+    stripe_pub = os.environ.get("STRIPE_PUBLISHABLE_KEY") or ""
+    paystack_secret = os.environ.get("PAYSTACK_SECRET_KEY") or ""
+    paystack_pub = os.environ.get("PAYSTACK_PUBLIC_KEY") or ""
+
+    def _mode(key: str) -> str:
+        if not key:
+            return "DISABLED"
+        if key.startswith("sk_live_") or key.startswith("pk_live_"):
+            return "LIVE"
+        return "TEST"
+
+    return {
+        "stripe": {
+            "enabled": bool(stripe_secret),
+            "mode": _mode(stripe_secret),
+            "publishable_key": stripe_pub or None,
+        },
+        "paystack": {
+            "enabled": bool(paystack_secret),
+            "mode": _mode(paystack_secret),
+            "public_key": paystack_pub or None,
+        },
+    }
+
+
+@api.get("/payments/config")
+async def payments_config() -> dict:
+    return _payments_config()
+
+
+def _resolve_amount(body) -> tuple[float, dict[str, str]]:
+    """Validate pack_code / plan_code and return (amount_ngn, metadata)."""
     if body.pack_code:
         pack = next((p for p in CREDIT_PACKS if p["code"] == body.pack_code), None)
         if not pack:
             raise HTTPException(status_code=400, detail="Unknown pack")
-        amount_ngn = float(pack["price_ngn"])
-        metadata = {"type": "CREDIT_PACK", "pack_code": pack["code"], "credits": str(pack["credits"]),
-                    "user_id": user["user_id"], "tenant_id": user["tenant_id"]}
-    elif body.plan_code:
+        return float(pack["price_ngn"]), {
+            "type": "CREDIT_PACK",
+            "pack_code": pack["code"],
+            "credits": str(pack["credits"]),
+        }
+    if body.plan_code:
         plan = next((p for p in SUBSCRIPTION_PLANS if p["code"] == body.plan_code), None)
         if not plan:
             raise HTTPException(status_code=400, detail="Unknown plan")
-        amount_ngn = float(plan["annual_ngn"] if body.billing_cycle == "annual" else plan["monthly_ngn"])
-        if amount_ngn <= 0:
+        amount = float(plan["annual_ngn"] if body.billing_cycle == "annual" else plan["monthly_ngn"])
+        if amount <= 0:
             raise HTTPException(status_code=400, detail="Plan not purchasable (invite-only)")
-        metadata = {"type": "SUBSCRIPTION", "plan_code": plan["code"], "billing_cycle": body.billing_cycle or "monthly",
-                    "user_id": user["user_id"], "tenant_id": user["tenant_id"]}
-    else:
-        raise HTTPException(status_code=400, detail="pack_code or plan_code required")
+        return amount, {
+            "type": "SUBSCRIPTION",
+            "plan_code": plan["code"],
+            "billing_cycle": body.billing_cycle or "monthly",
+        }
+    raise HTTPException(status_code=400, detail="pack_code or plan_code required")
 
-    # NOTE: Emergent Stripe sandbox uses USD; we charge a USD equivalent ≈ NGN/1500
-    amount_usd = round(amount_ngn / 1500.0, 2)
-    if amount_usd < 0.5:
-        amount_usd = 0.5
 
-    host_url = str(request.base_url)
-    webhook_url = f"{host_url}api/webhook/stripe"
+async def _fulfill_payment(pt: dict, reference: str) -> None:
+    """Grant credits / activate subscription. Idempotent — guarded by
+    credits_granted flag plus idempotency_key on the credit transaction."""
+    if pt.get("credits_granted"):
+        return
+    meta = pt.get("metadata", {}) or {}
+    if meta.get("type") == "CREDIT_PACK":
+        credits = int(meta.get("credits", "0"))
+        if credits:
+            existing_tx = await db.credit_transactions.find_one({"idempotency_key": reference})
+            if not existing_tx:
+                await db.credit_wallets.update_one(
+                    {"user_id": pt["user_id"]},
+                    {"$inc": {"balance": credits, "total_purchased": credits}},
+                )
+                await db.credit_transactions.insert_one({
+                    "id": new_id("tx"),
+                    "user_id": pt["user_id"],
+                    "type": "PURCHASE",
+                    "amount": credits,
+                    "description": f"{pt.get('provider','stripe').title()} purchase {meta.get('pack_code')}",
+                    "reference": reference,
+                    "status": "COMPLETED",
+                    "idempotency_key": reference,
+                    "tenant_id": pt.get("tenant_id"),
+                    "created_at": isoformat(now_utc()),
+                })
+    elif meta.get("type") == "SUBSCRIPTION":
+        await db.users.update_one(
+            {"user_id": pt["user_id"]},
+            {"$set": {
+                "subscription_plan": meta.get("plan_code"),
+                "subscription_status": "ACTIVE",
+                "role": meta.get("plan_code"),
+                "updated_at": isoformat(now_utc()),
+            }},
+        )
+    await db.payment_transactions.update_one(
+        {"session_id": pt["session_id"]},
+        {"$set": {
+            "payment_status": "PAID",
+            "credits_granted": True,
+            "paid_at": isoformat(now_utc()),
+        }},
+    )
+
+
+# -------------- Payments — Stripe --------------
+@api.post("/payments/stripe/checkout")
+async def stripe_checkout(body: CheckoutCreate, request: Request, user: dict = Depends(get_current_user)) -> dict:
+    cfg = _payments_config()
+    if not cfg["stripe"]["enabled"]:
+        raise HTTPException(status_code=503, detail="Payment system not configured (Stripe)")
+
+    from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionRequest
+    api_key = os.environ.get("STRIPE_SECRET_KEY") or os.environ.get("STRIPE_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="Payment system not configured (Stripe)")
+
+    amount_ngn, metadata = _resolve_amount(body)
+    metadata.update({"user_id": user["user_id"], "tenant_id": user["tenant_id"]})
+
+    # Emergent Stripe sandbox uses USD; convert NGN at a fixed indicative rate.
+    amount_usd = max(0.5, round(amount_ngn / 1500.0, 2))
+
+    webhook_url = f"{str(request.base_url).rstrip('/')}/api/webhook/stripe"
     checkout = StripeCheckout(api_key=api_key, webhook_url=webhook_url)
 
     origin = body.origin_url.rstrip("/")
-    success_url = f"{origin}/billing/success?session_id={{CHECKOUT_SESSION_ID}}"
-    cancel_url = f"{origin}/billing/cancel"
-
     session = await checkout.create_checkout_session(CheckoutSessionRequest(
         amount=amount_usd, currency="usd",
-        success_url=success_url, cancel_url=cancel_url, metadata=metadata,
+        success_url=f"{origin}/billing/success?session_id={{CHECKOUT_SESSION_ID}}",
+        cancel_url=f"{origin}/billing/cancel",
+        metadata=metadata,
     ))
 
     await db.payment_transactions.insert_one({
         "id": new_id("pt"),
+        "provider": "stripe",
         "session_id": session.session_id,
         "user_id": user["user_id"],
         "tenant_id": user["tenant_id"],
@@ -1012,13 +1109,18 @@ async def stripe_checkout(body: CheckoutCreate, request: Request, user: dict = D
         "credits_granted": False,
         "created_at": isoformat(now_utc()),
     })
-    return {"url": session.url, "session_id": session.session_id}
+    await audit_log("STRIPE_CHECKOUT_CREATED", "payment", session.session_id, user=user,
+                    metadata={"amount_ngn": amount_ngn, "metadata": metadata})
+    return {"url": session.url, "session_id": session.session_id, "mode": cfg["stripe"]["mode"]}
 
 
 @api.get("/payments/stripe/status/{session_id}")
 async def stripe_status(session_id: str, user: dict = Depends(get_current_user)) -> dict:
+    cfg = _payments_config()
+    if not cfg["stripe"]["enabled"]:
+        raise HTTPException(status_code=503, detail="Payment system not configured (Stripe)")
     from emergentintegrations.payments.stripe.checkout import StripeCheckout
-    api_key = os.environ["STRIPE_API_KEY"]
+    api_key = os.environ.get("STRIPE_SECRET_KEY") or os.environ.get("STRIPE_API_KEY")
     checkout = StripeCheckout(api_key=api_key, webhook_url="")
     status_resp = await checkout.get_checkout_status(session_id)
 
@@ -1026,79 +1128,110 @@ async def stripe_status(session_id: str, user: dict = Depends(get_current_user))
     if not pt:
         raise HTTPException(status_code=404, detail="Transaction not found")
 
-    # Idempotent: only grant credits / subscription once
-    if status_resp.payment_status == "paid" and not pt.get("credits_granted"):
-        meta = pt.get("metadata", {})
-        if meta.get("type") == "CREDIT_PACK":
-            credits = int(meta.get("credits", "0"))
-            await db.credit_wallets.update_one(
-                {"user_id": pt["user_id"]},
-                {"$inc": {"balance": credits, "total_purchased": credits}},
-            )
-            await db.credit_transactions.insert_one({
-                "id": new_id("tx"),
-                "user_id": pt["user_id"],
-                "type": "PURCHASE",
-                "amount": credits,
-                "description": f"Stripe purchase {meta.get('pack_code')}",
-                "service_type": None,
-                "reference": session_id,
-                "status": "COMPLETED",
-                "idempotency_key": session_id,
-                "tenant_id": pt.get("tenant_id"),
-                "created_at": isoformat(now_utc()),
-            })
-        elif meta.get("type") == "SUBSCRIPTION":
-            await db.users.update_one(
-                {"user_id": pt["user_id"]},
-                {"$set": {"subscription_plan": meta.get("plan_code"), "subscription_status": "ACTIVE",
-                          "role": meta.get("plan_code"), "updated_at": isoformat(now_utc())}},
-            )
-        await db.payment_transactions.update_one(
-            {"session_id": session_id},
-            {"$set": {"payment_status": "PAID", "credits_granted": True, "paid_at": isoformat(now_utc())}},
-        )
+    if status_resp.payment_status == "paid":
+        await _fulfill_payment(pt, session_id)
     elif status_resp.status == "expired":
-        await db.payment_transactions.update_one({"session_id": session_id}, {"$set": {"payment_status": "EXPIRED"}})
+        await db.payment_transactions.update_one(
+            {"session_id": session_id}, {"$set": {"payment_status": "EXPIRED"}},
+        )
 
-    return {"status": status_resp.status, "payment_status": status_resp.payment_status,
-            "amount_total": status_resp.amount_total, "currency": status_resp.currency,
-            "metadata": status_resp.metadata}
+    return {
+        "status": status_resp.status,
+        "payment_status": status_resp.payment_status,
+        "amount_total": status_resp.amount_total,
+        "currency": status_resp.currency,
+        "metadata": status_resp.metadata,
+    }
 
 
 @app.post("/api/webhook/stripe")
 async def stripe_webhook(request: Request) -> dict:
-    # Minimal webhook receiver — full verification handled in /status polling
+    """Receive + verify a Stripe webhook event.
+
+    Signature is verified against STRIPE_WEBHOOK_SECRET. If the secret is not
+    configured the event is logged and acknowledged (so Stripe stops retrying)
+    but no state is mutated.
+    """
     body = await request.body()
-    sig = request.headers.get("Stripe-Signature", "")
-    logger.info("Stripe webhook received: %d bytes, sig=%s…", len(body), sig[:16])
-    return {"received": True}
+    sig_header = request.headers.get("Stripe-Signature", "")
+    webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET") or ""
+    api_key = os.environ.get("STRIPE_SECRET_KEY") or os.environ.get("STRIPE_API_KEY") or ""
+
+    if not webhook_secret or not api_key:
+        logger.warning("Stripe webhook received but webhook secret not configured — acknowledging without action.")
+        return {"received": True, "verified": False, "reason": "webhook secret not configured"}
+
+    try:
+        import stripe as stripe_sdk
+        stripe_sdk.api_key = api_key
+        event = stripe_sdk.Webhook.construct_event(body, sig_header, webhook_secret)
+    except Exception as exc:
+        logger.warning("Stripe webhook signature verification failed: %s", exc)
+        raise HTTPException(status_code=400, detail="Invalid signature")
+
+    event_type = event.get("type")
+    data = event.get("data", {}).get("object", {})
+    if event_type in ("checkout.session.completed", "checkout.session.async_payment_succeeded"):
+        session_id = data.get("id")
+        if session_id:
+            pt = await db.payment_transactions.find_one({"session_id": session_id}, {"_id": 0})
+            if pt:
+                await _fulfill_payment(pt, session_id)
+                await audit_log("STRIPE_WEBHOOK_FULFILLED", "payment", session_id, metadata={"event": event_type})
+    elif event_type == "checkout.session.expired":
+        session_id = data.get("id")
+        if session_id:
+            await db.payment_transactions.update_one(
+                {"session_id": session_id}, {"$set": {"payment_status": "EXPIRED"}},
+            )
+    return {"received": True, "verified": True, "type": event_type}
 
 
-# -------------- Payments — Paystack (NGN) stub --------------
+# -------------- Payments — Paystack (NGN) --------------
 @api.post("/payments/paystack/init")
 async def paystack_init(body: PaystackInit, user: dict = Depends(get_current_user)) -> dict:
-    """Initialise a Paystack transaction.
+    """Initialise a real Paystack transaction.
 
-    NOTE: This is a sandbox stub. Real Paystack integration requires a verified
-    Nigerian merchant account. We persist the transaction record and return a
-    mock authorisation URL that lands on the success page directly so the credit
-    grant flow can be tested end-to-end.
+    Requires PAYSTACK_SECRET_KEY in env. Returns 503 if not configured.
     """
-    if body.pack_code:
-        pack = next((p for p in CREDIT_PACKS if p["code"] == body.pack_code), None)
-        if not pack:
-            raise HTTPException(status_code=400, detail="Unknown pack")
-        amount_ngn = float(pack["price_ngn"])
-        metadata = {"type": "CREDIT_PACK", "pack_code": pack["code"], "credits": str(pack["credits"]),
-                    "user_id": user["user_id"]}
-    else:
-        raise HTTPException(status_code=400, detail="pack_code required")
+    cfg = _payments_config()
+    if not cfg["paystack"]["enabled"]:
+        raise HTTPException(status_code=503, detail="Payment system not configured (Paystack)")
+
+    amount_ngn, metadata = _resolve_amount(body)
+    metadata.update({"user_id": user["user_id"], "tenant_id": user["tenant_id"]})
     reference = f"ps_{uuid.uuid4().hex}"
+    callback_url = f"{body.origin_url.rstrip('/')}/billing/paystack-callback"
+
+    secret = os.environ["PAYSTACK_SECRET_KEY"]
+    try:
+        async with httpx.AsyncClient(timeout=20) as http:
+            r = await http.post(
+                f"{PAYSTACK_API_BASE}/transaction/initialize",
+                headers={"Authorization": f"Bearer {secret}", "Content-Type": "application/json"},
+                json={
+                    "email": user["email"],
+                    "amount": int(amount_ngn * 100),  # kobo
+                    "reference": reference,
+                    "callback_url": callback_url,
+                    "currency": "NGN",
+                    "metadata": metadata,
+                },
+            )
+    except httpx.HTTPError as exc:
+        logger.exception("Paystack init network error: %s", exc)
+        raise HTTPException(status_code=502, detail="Paystack network error")
+
+    payload = r.json() if r.content else {}
+    if r.status_code != 200 or not payload.get("status"):
+        logger.warning("Paystack init failed: %s %s", r.status_code, payload)
+        raise HTTPException(status_code=400, detail=payload.get("message") or "Paystack init failed")
+
+    data = payload["data"]
     await db.payment_transactions.insert_one({
         "id": new_id("pt"),
-        "session_id": reference,
         "provider": "paystack",
+        "session_id": reference,
         "user_id": user["user_id"],
         "tenant_id": user["tenant_id"],
         "amount_ngn": amount_ngn,
@@ -1106,46 +1239,89 @@ async def paystack_init(body: PaystackInit, user: dict = Depends(get_current_use
         "metadata": metadata,
         "payment_status": "INITIATED",
         "credits_granted": False,
+        "callback_url": callback_url,
         "created_at": isoformat(now_utc()),
     })
-    origin = body.origin_url.rstrip("/")
+    await audit_log("PAYSTACK_CHECKOUT_CREATED", "payment", reference, user=user,
+                    metadata={"amount_ngn": amount_ngn})
     return {
-        "authorization_url": f"{origin}/billing/paystack-success?reference={reference}",
-        "reference": reference,
-        "mocked": True,
+        "authorization_url": data["authorization_url"],
+        "access_code": data.get("access_code"),
+        "reference": data["reference"],
+        "mode": cfg["paystack"]["mode"],
     }
 
 
 @api.get("/payments/paystack/verify/{reference}")
 async def paystack_verify(reference: str, user: dict = Depends(get_current_user)) -> dict:
+    cfg = _payments_config()
+    if not cfg["paystack"]["enabled"]:
+        raise HTTPException(status_code=503, detail="Payment system not configured (Paystack)")
     pt = await db.payment_transactions.find_one({"session_id": reference}, {"_id": 0})
     if not pt:
         raise HTTPException(status_code=404, detail="Reference not found")
-    if not pt.get("credits_granted"):
-        meta = pt.get("metadata", {})
-        credits = int(meta.get("credits", "0"))
-        if credits:
-            await db.credit_wallets.update_one(
-                {"user_id": pt["user_id"]},
-                {"$inc": {"balance": credits, "total_purchased": credits}},
+
+    secret = os.environ["PAYSTACK_SECRET_KEY"]
+    try:
+        async with httpx.AsyncClient(timeout=20) as http:
+            r = await http.get(
+                f"{PAYSTACK_API_BASE}/transaction/verify/{reference}",
+                headers={"Authorization": f"Bearer {secret}"},
             )
-            await db.credit_transactions.insert_one({
-                "id": new_id("tx"),
-                "user_id": pt["user_id"],
-                "type": "PURCHASE",
-                "amount": credits,
-                "description": f"Paystack purchase {meta.get('pack_code')}",
-                "reference": reference,
-                "status": "COMPLETED",
-                "idempotency_key": reference,
-                "tenant_id": pt.get("tenant_id"),
-                "created_at": isoformat(now_utc()),
-            })
-        await db.payment_transactions.update_one(
-            {"session_id": reference},
-            {"$set": {"payment_status": "PAID", "credits_granted": True, "paid_at": isoformat(now_utc())}},
-        )
-    return {"status": "success", "reference": reference, "mocked": True}
+    except httpx.HTTPError as exc:
+        logger.exception("Paystack verify network error: %s", exc)
+        raise HTTPException(status_code=502, detail="Paystack network error")
+
+    payload = r.json() if r.content else {}
+    paystack_status = (payload.get("data") or {}).get("status")
+    if r.status_code == 200 and payload.get("status") and paystack_status == "success":
+        await _fulfill_payment(pt, reference)
+        return {"status": "success", "reference": reference, "verified": True}
+    return {
+        "status": paystack_status or "failed",
+        "reference": reference,
+        "verified": False,
+        "message": payload.get("message"),
+    }
+
+
+@app.post("/api/webhook/paystack")
+async def paystack_webhook(request: Request) -> dict:
+    """Paystack webhook receiver.
+
+    Verifies HMAC-SHA512 over raw body using the Paystack secret key
+    (Paystack does not use a separate webhook secret — the secret key is the
+    HMAC key). We still respect PAYSTACK_WEBHOOK_SECRET as an override so
+    operators can rotate the signing key independently if Paystack changes the
+    scheme later.
+    """
+    body = await request.body()
+    sig_header = request.headers.get("x-paystack-signature", "")
+    signing_secret = (
+        os.environ.get("PAYSTACK_WEBHOOK_SECRET")
+        or os.environ.get("PAYSTACK_SECRET_KEY")
+        or ""
+    )
+    if not signing_secret:
+        logger.warning("Paystack webhook received but no signing secret configured.")
+        return {"received": True, "verified": False, "reason": "webhook secret not configured"}
+
+    expected = hmac.new(signing_secret.encode("utf-8"), body, hashlib.sha512).hexdigest()
+    if not hmac.compare_digest(expected, sig_header):
+        logger.warning("Paystack webhook signature mismatch.")
+        raise HTTPException(status_code=401, detail="Invalid signature")
+
+    event = await request.json()
+    event_type = event.get("event")
+    data = event.get("data") or {}
+    reference = data.get("reference")
+    if event_type == "charge.success" and reference:
+        pt = await db.payment_transactions.find_one({"session_id": reference}, {"_id": 0})
+        if pt:
+            await _fulfill_payment(pt, reference)
+            await audit_log("PAYSTACK_WEBHOOK_FULFILLED", "payment", reference,
+                            metadata={"event": event_type})
+    return {"received": True, "verified": True, "type": event_type}
 
 
 # -------------- Dashboards --------------

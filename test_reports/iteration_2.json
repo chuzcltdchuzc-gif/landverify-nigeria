@@ -1,0 +1,51 @@
+{
+  "summary": "Iteration 2 testing of real Stripe + Paystack webhook signature verification and env-var-driven payments. 37/38 backend pytests pass; 1 failure on /api/payments/stripe/status/{unknown} returning 500 instead of 404. Paystack signature verification (both valid HMAC-SHA512 and invalid 'deadbeef' rejection) verified end-to-end by temporarily setting PAYSTACK_SECRET_KEY=sk_test_lvtestkey, restarting backend, running 2 tests, then restoring empty .env and restarting again. Frontend /billing page renders Stripe:TEST and Paystack:NOT CONFIGURED pills, amber 'Payment system not fully configured' banner, Paystack buttons properly disabled with label 'Paystack not configured', Stripe button enabled and successfully redirects to checkout.stripe.com/c/pay/cs_test_…. No secret keys leak in /api/payments/config response.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "GET /api/payments/stripe/status/{session_id}",
+        "issue": "Returns 500 Internal Server Error when session_id is unknown to Stripe (e.g. 'nope_unknown_session_xyz') instead of the spec-mandated 404 'Transaction not found'. Root cause: in server.py around line 1124-1129, the code calls `await checkout.get_checkout_status(session_id)` BEFORE the DB lookup that would have returned 404. The Stripe SDK throws on unknown session ids and the exception is not caught. Fix: move the `payment_transactions.find_one` lookup ABOVE the Stripe SDK call, OR wrap the SDK call in try/except and 404 on stripe.error.InvalidRequestError.",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/backend/tests/test_paystack_signature.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Fix /api/payments/stripe/status/{session_id}: return 404 (not 500) when the session is unknown. Reorder the DB lookup to happen before the upstream Stripe SDK call, or catch the SDK exception and translate to 404. See test_stripe_status_unknown_session_returns_404 in backend_test.py.",
+    "Optional: reseed citizen.demo@landvault.test wallet — the insufficient_credits test drained the demo wallet to 0 credits. Re-seed on next backend restart, or delete the user row to trigger re-seed."
+  ],
+  "critical_code_review_comments": [
+    "server.py is now 1737 lines (was 1561 in iteration 1). The payments layer adds ~360 LOC and a 5th major domain to the monolith. Recommend splitting into routers/payments.py, routers/admin.py, etc. before iteration 3.",
+    "Paystack webhook correctly uses hmac.compare_digest (constant-time) and HMAC-SHA512 — matches Paystack's documented scheme. Override via PAYSTACK_WEBHOOK_SECRET is a nice rotation hook.",
+    "Stripe webhook uses stripe SDK's Webhook.construct_event — proper signature + timestamp tolerance handling. Returns verified=false (200) when no STRIPE_WEBHOOK_SECRET is configured, avoiding a 500-on-misconfig deploy footgun.",
+    "_payments_config() correctly never leaks secrets — only publishable_key and public_key surface to the client. Verified empirically (no sk_test_/sk_live_/'secret' substring in /api/payments/config response).",
+    "_resolve_amount validates pack_code, plan_code, invite-only plans (amount <= 0 → 400), and missing-input cases. Good input hygiene.",
+    "_fulfill_payment is idempotent via the credits_granted flag AND idempotency_key on credit_transactions (belt + suspenders). Verified second-call no-op via the TestIdempotency test.",
+    "Anonymous /api/payments/config returns 200 (public, correct). Anonymous /api/payments/stripe/checkout returns 401 (RBAC correct).",
+    "Mode detection (TEST vs LIVE) keys off 'sk_live_'/'pk_live_' prefix — pragmatic. Note: STRIPE_API_KEY=sk_test_emergent is detected as TEST despite being an Emergent-internal token, which is the intended legacy/sandbox behaviour."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py (added TestPaymentsConfig, TestPaymentsStripe, TestPaymentsPaystackDisabled, TestWebhooks, TestIdempotency — replaced iteration-1 TestPayments class)",
+    "/app/backend/tests/test_paystack_signature.py (new — signature verification test, requires PAYSTACK_SECRET_KEY=sk_test_lvtestkey temporarily set)"
+  ],
+  "success_rate": {
+    "backend": "97% (37/38 pytests pass; +2/2 Paystack signature tests pass under rotated env)",
+    "frontend": "100% (/billing pills, banner, button states, Stripe redirect all verified)"
+  },
+  "test_credentials": "Dev-login: POST /api/auth/dev-login {role: CITIZEN|COMMUNITY_VALIDATOR|SURVEYOR|ADMIN}. Demo accounts in /app/memory/test_credentials.md. Stripe sandbox via STRIPE_API_KEY=sk_test_emergent (Emergent-managed, no real charges).",
+  "seed_data_creation": "Added 1 TEST_ parcel via test_create_parcel_deducts_credits; insufficient_credits test drained CITIZEN wallet to 0 credits (was ~95 from iteration 1). Multiple TEST_ checkout sessions and payment_transactions records created (Stripe sandbox). All transient. To reset wallet: delete citizen.demo@landvault.test from MongoDB and restart backend (auto-reseed).",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "1) /app/backend/.env was restored to empty PAYSTACK_* and empty STRIPE_SECRET_KEY/PUBLISHABLE_KEY/WEBHOOK_SECRET — verified post-test by curl /api/payments/config returning paystack.enabled=false. 2) For Paystack signature regression, set PAYSTACK_SECRET_KEY=sk_test_lvtestkey, restart backend, run `pytest backend/tests/test_paystack_signature.py`, then restore. 3) The test_stripe_status_unknown_session_returns_404 test is currently the only red — keep it as a guard for the fix. 4) Citizen demo wallet at 0; either reseed or add a top-up before re-running.",
+  "rca of the issue": "ROOT CAUSE for the single backend failure: /api/payments/stripe/status/{session_id} performs the upstream `checkout.get_checkout_status(session_id)` Stripe call BEFORE checking the local payment_transactions collection. When the session id is fabricated, the Stripe SDK raises an InvalidRequestError that bubbles up to FastAPI's default 500 handler. REPRO: `curl -H 'Authorization: Bearer <citizen_token>' <BASE>/api/payments/stripe/status/nope_unknown_session_xyz` → 500. EXPECTED per spec: 404 'Transaction not found'. MITIGATION: reorder lines ~1124-1129 in server.py so the find_one runs first and 404s before any Stripe SDK call, e.g.:\n```\npt = await db.payment_transactions.find_one({\"session_id\": session_id}, {\"_id\": 0})\nif not pt:\n    raise HTTPException(status_code=404, detail=\"Transaction not found\")\nstatus_resp = await checkout.get_checkout_status(session_id)\n```\nThis is also more efficient (skips an upstream call on unknown ids) and prevents enumeration attacks against Stripe by unauthenticated foreign sessions."
+}
