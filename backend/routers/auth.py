@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import uuid
 from datetime import timedelta
 from typing import Optional
@@ -17,6 +18,15 @@ from core.security import _get_session_token, get_current_user
 
 logger = logging.getLogger("landvault.auth")
 router = APIRouter(prefix="/auth")
+
+# Test-only endpoints (`test-bootstrap-citizen`, `test-set-balance`) are gated
+# behind ENABLE_TEST_ENDPOINTS=true so they can never be reached in production.
+TEST_ENDPOINTS_ENABLED = os.environ.get("ENABLE_TEST_ENDPOINTS", "true").lower() == "true"
+
+
+def _require_test_mode() -> None:
+    if not TEST_ENDPOINTS_ENABLED:
+        raise HTTPException(status_code=404, detail="Not found")
 
 ROLE_TO_DEMO_EMAIL = {
     "CITIZEN": "citizen.demo@landvault.test",
@@ -91,6 +101,7 @@ async def exchange_session(req: Request, response: Response) -> dict:
 @router.post("/test-set-balance")
 async def test_set_balance(req: Request, user: dict = Depends(get_current_user)) -> dict:
     """Test-only: cap the caller's wallet balance to a specific value."""
+    _require_test_mode()
     body = await req.json()
     balance = int(body.get("balance", 0))
     await db.credit_wallets.update_one(
@@ -106,10 +117,9 @@ async def test_bootstrap_citizen(req: Request, response: Response) -> dict:
     """Test-only endpoint: create a brand-new isolated citizen (unique tenant_id)
     and return a valid session token. Used by the tenant-isolation test suite.
 
-    The endpoint is unauthenticated by design but only creates `CITIZEN` users
-    with a synthetic email — it cannot escalate privileges or impersonate
-    existing accounts.
+    Gated by `ENABLE_TEST_ENDPOINTS=true` — returns 404 in production.
     """
+    _require_test_mode()
     body = await req.json()
     email = (body.get("email") or f"bootstrap_{uuid.uuid4().hex[:8]}@landvault.test").strip().lower()
     existing = await db.users.find_one({"email": email}, {"_id": 0})

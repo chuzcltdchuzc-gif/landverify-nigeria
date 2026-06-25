@@ -97,6 +97,79 @@ audit trail, trust validation, and admin command centre.
 - Multi-region Neon read replicas (Lagos)
 
 ## 8. Known limitations
-- Tenant isolation is enforced per-handler (no automatic global Mongoose-style pre-hook)
 - Email/password sign-up flow not exposed in UI (Google + demo only)
 - Apple / Microsoft / Facebook social buttons are visual-only placeholders
+- AI/OCR is mocked (returns canned text). Replacement with Emergent integrations is P2.
+
+## 9. P0 + P1 hardening (iteration 4 — 2026-06-25)
+**P0 Tenant Isolation & Transaction Safety + P1 Worker + Reports — COMPLETE**
+
+### Tenant Isolation (structural, RLS-equivalent)
+- `core/tenant.py` — `ContextVar` carrying `tenant_id`, `bypass_tenant()` context manager
+- `core/safe_db.py` — `SafeCollection` wrapper auto-injects `tenant_id` into
+  every `find`/`find_one`/`count`/`update`/`delete`/`insert`/`aggregate`/`distinct`/
+  `find_one_and_*` call. Unauthenticated context filters to `__NO_TENANT_CONTEXT__`
+  (default-deny). Exposed as `tdb` singleton.
+- `core/security.get_current_user` now calls `set_tenant(user.tenant_id)` so the
+  context propagates through the entire request.
+- Routers switched to `tdb`: `parcels`, `evidence`, `credits`, `notifications`,
+  `dashboards.citizen`. Admin / Legal / Institution / Observer / Public routers
+  continue to use the raw `db` collection for legitimate cross-tenant queries.
+- 5 regression tests verify cross-tenant reads/writes/listings/dashboards/
+  notifications/wallets are all blocked (`tests/test_tenant_isolation.py`).
+
+### Transaction Safety (multi-doc ACID)
+- MongoDB upgraded to a single-node replica set (`rs0`) so `start_session()` +
+  `start_transaction()` engage at runtime. `mongod` supervisor command updated.
+- `core/tx.py` — `atomic_transaction()` context + `run_in_transaction(coro_factory)`
+  with **auto-retry on TransientTransactionError / WriteConflict** (5 retries,
+  exponential backoff with jitter).
+- `services/payments.deduct_credits` and `services/payments.fulfill_payment`
+  now run inside `run_in_transaction()`. Conditional `balance >= amount` filter
+  + idempotency-key guard prevent double spending under any race.
+- 2 concurrency tests verify (a) 10 concurrent /api/parcels against a 25-credit
+  wallet yields exactly 5×200 + 5×402, final balance 0 — never negative; and
+  (b) idempotency-key replay does not double-charge.
+
+### Background Worker (production async)
+- `services/worker.py` — long-lived asyncio task started in FastAPI `startup`,
+  stopped in `shutdown`. Polls `job_queue` every `WORKER_POLL_INTERVAL` (5s),
+  claims jobs atomically via `find_one_and_update`, executes via
+  `services.jobs._execute_job`. Exponential-backoff retries on failure
+  (10s × 2^attempt with jitter), terminal `DEAD_LETTER` after `max_attempts`.
+- Auto-routes all job types (OCR, duplicate detection, confidence recalc,
+  fraud scoring, certificate generation, legal/institution reports, backup,
+  audit, security scan, abuse detection, take-off, trust validation).
+
+### Real PDF + CSV Reports (worker-generated)
+- `services/trust.render_legal_report_csv` and `render_institution_report_csv`
+  emit downloadable CSV artifacts alongside the existing reportlab PDFs.
+- `LEGAL_REPORT` and `INSTITUTION_REPORT` job handlers store both URLs:
+  `result_url` (PDF) + `csv_url` (CSV) on `db.reports`.
+- `GET /api/legal/reports/{id}/download(.csv)` and
+  `GET /api/institution/reports/{id}/download(.csv)` serve the artifacts
+  through `FileResponse`, with role-scoped + owner-scoped access checks.
+
+### Test coverage delta (iteration 4)
+- Backend: **51 passed, 2 skipped, 0 failed** (was 38)
+  - +5 tenant isolation tests
+  - +2 concurrency tests
+  - +6 worker + report E2E tests (`tests/test_worker_reports.py`)
+- Pytest marker `tx_test` registered in `/app/backend/pytest.ini`.
+
+### Operational notes
+- `ENABLE_TEST_ENDPOINTS` env flag gates `POST /api/auth/test-bootstrap-citizen`
+  and `POST /api/auth/test-set-balance` — defaults to true in dev, set to
+  `false` for production deployments.
+- Demo wallets are auto-topped-up to baseline (250 / 1000) on every backend
+  startup, so drained-wallet flakes across pytest runs are eliminated.
+
+## 10. Backlog (P2) — unchanged
+- Scheduled automations (abuse 30m, fraud 15m, backup daily 02:00) — cron / APScheduler layer
+- Real OCR / fraud scoring via Emergent integrations (awaiting user go-ahead)
+- Stripe Metered Billing for institutional plans
+- Email notifications (Resend / Postmark)
+- Mapbox parcel boundary visualisation
+- Bulk verification API for institutional users
+- Cloudflare R2 file storage
+- Rate limiting + Sentry instrumentation

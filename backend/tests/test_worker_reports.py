@@ -194,7 +194,10 @@ class TestInstitutionReport:
         csv = inst.get(f"{API}/institution/reports/{report_id}/download.csv", timeout=20)
         assert csv.status_code == 200, csv.text
         assert csv.headers.get("content-type", "").startswith("text/csv")
-        assert csv.content.decode("utf-8", errors="replace").startswith("Section,Key,Value")
+        # Institution CSV is a tabular per-parcel report (not Section/Key/Value).
+        assert csv.content.decode("utf-8", errors="replace").startswith(
+            "#,Parcel,Found,Status,Confidence,Risk Level,Risk Score"
+        )
 
 
 # --------------------------------------------------------------------------

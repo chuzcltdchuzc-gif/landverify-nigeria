@@ -26,7 +26,17 @@ logger = logging.getLogger("landvault.jobs")
 
 async def upsert_user(email: str, name: str, role: str) -> dict:
     existing = await db.users.find_one({"email": email}, {"_id": 0})
+    target_balance = 250 if role == "CITIZEN" else 1000
     if existing:
+        # Top up demo wallets back to baseline on every startup so end-to-end
+        # tests that drain the wallet don't break subsequent runs.
+        wallet = await db.credit_wallets.find_one({"user_id": existing["user_id"]}, {"_id": 0})
+        if wallet and wallet.get("balance", 0) < target_balance:
+            await db.credit_wallets.update_one(
+                {"user_id": existing["user_id"]},
+                {"$set": {"balance": target_balance, "total_consumed": 0,
+                          "total_purchased": target_balance}},
+            )
         return existing
     user_id = new_id("user")
     tenant_id = new_id("tenant")
@@ -49,9 +59,9 @@ async def upsert_user(email: str, name: str, role: str) -> dict:
     await db.credit_wallets.insert_one({
         "id": new_id("wallet"),
         "user_id": user_id,
-        "balance": 250 if role == "CITIZEN" else 1000,
+        "balance": target_balance,
         "reserved_credits": 0,
-        "total_purchased": 0,
+        "total_purchased": target_balance,
         "total_consumed": 0,
         "status": "ACTIVE",
         "tenant_id": tenant_id,
