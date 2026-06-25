@@ -1,0 +1,4 @@
+#,Parcel,Found,Status,Confidence,Risk Level,Risk Score,Community,LGA,State
+1,AS-LV-2026-1002,True,VERIFIED,88,LOW_RISK,80,Ungwan Rimi,Kaduna North,Kaduna
+2,AS-LV-2026-1000,True,UNVERIFIED,25,HIGH_RISK,21,Umuahia North,Umuahia North,Abia
+3,FAKE-XXX,False,NOT FOUND,0,HIGH_RISK,0,—,—,—

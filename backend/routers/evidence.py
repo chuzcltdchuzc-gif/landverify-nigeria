@@ -6,8 +6,8 @@ import hashlib
 from fastapi import APIRouter, Depends, HTTPException
 
 from core.audit import audit_log, enqueue_job, timeline_event
-from core.database import db
 from core.helpers import isoformat, new_id, now_utc
+from core.safe_db import tdb
 from core.security import get_current_user
 from schemas.models import EvidenceCreate
 
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/evidence")
 
 @router.post("")
 async def upload_evidence(body: EvidenceCreate, user: dict = Depends(get_current_user)) -> dict:
-    parcel = await db.parcels.find_one({"id": body.parcel_id, "tenant_id": user["tenant_id"]}, {"_id": 0})
+    parcel = await tdb.parcels.find_one({"id": body.parcel_id}, {"_id": 0})
     if not parcel:
         raise HTTPException(status_code=404, detail="Parcel not found")
     file_hash = hashlib.sha256(
@@ -31,8 +31,8 @@ async def upload_evidence(body: EvidenceCreate, user: dict = Depends(get_current
         "status": "PENDING", "integrity_verified": True, "seal_date": None,
         "lock_reason": None, "tenant_id": user["tenant_id"], "created_at": isoformat(now_utc()),
     }
-    await db.evidence_vault.insert_one(dict(doc))
-    await db.parcels.update_one(
+    await tdb.evidence_vault.insert_one(dict(doc))
+    await tdb.parcels.update_one(
         {"id": body.parcel_id},
         {"$inc": {"evidence_count": 1}, "$set": {"updated_at": isoformat(now_utc())}},
     )

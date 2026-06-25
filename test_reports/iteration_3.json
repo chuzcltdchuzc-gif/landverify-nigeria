@@ -1,0 +1,63 @@
+{
+  "summary": "Iteration 3 verifies P0 mandate: tenant isolation, transaction safety, background worker, and PDF+CSV reports. 48/51 backend tests pass after wallet reseed. All 5 tenant isolation tests pass — cross-tenant reads (parcels/evidence/wallet/notifications/dashboard) are blocked at the SafeCollection layer. Both concurrency tests pass — 10 concurrent /api/parcels against a 25-credit wallet land exactly 5×200 / 5×402, wallet ends at 0 (never negative); idempotency-key replay correctly skips the second deduction. Background worker auto-progresses CONFIDENCE_RECALCULATION from PENDING→COMPLETED within ~10s without any manual /admin/jobs/process call. Legal cross-tenant search returns parcels from other tenants by design. Admin trust/run scans across all tenants (cross-tenant bypass works). Observer dashboard returns aggregate counters. **One critical regression in the user-facing report download endpoints**: both /api/legal/reports/{id}/download AND /api/institution/reports/{id}/download return 404 'Report file missing' because they compute `path = REPORTS_DIR / Path(r['result_url']).name` — and `result_url` is a URL path like '/api/legal/reports/.../download' so `.name` resolves to literal string 'download' instead of the actual PDF filename. The CSV download endpoints work correctly because they use `r['csv_filename']` directly. PDF files (e.g. rep_*.pdf) exist on disk under /app/backend/_reports/ — only the lookup is wrong. The Stripe 404 bug from iteration_2 is fixed (test_stripe_status_unknown_session_returns_404 now PASSES).",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "GET /api/legal/reports/{report_id}/download",
+        "issue": "Returns 404 'Report file missing' for COMPLETED reports because legal.py line 121 uses `path = REPORTS_DIR / Path(r['result_url']).name`. r['result_url'] is the URL '/api/legal/reports/{id}/download' so `.name` is 'download' (not e.g. 'rep_xxx.pdf'). The Mongo doc carries the correct filename in r['filename']. Fix: `path = REPORTS_DIR / r['filename']` (with a None-guard returning 409 if missing). Same bug exists symmetrically in /api/institution/reports/{report_id}/download (institution.py line 159).",
+        "priority": "CRITICAL"
+      },
+      {
+        "endpoint": "GET /api/institution/reports/{report_id}/download",
+        "issue": "Same root cause as legal: institution.py line 159 uses `path = REPORTS_DIR / Path(r['result_url']).name` → looks up 'download' literal. Fix: `path = REPORTS_DIR / r['filename']`. PDF files are correctly produced by the worker (verified on disk) — only the download lookup is broken.",
+        "priority": "CRITICAL"
+      }
+    ],
+    "minor": [
+      {
+        "endpoint": "GET /api/admin/jobs",
+        "issue": "Job document field is `job_type`, not `type`. Tests/clients that filter by `type` will silently fail to match. Consider aliasing or documenting in OpenAPI."
+      },
+      {
+        "endpoint": "GET /api/health",
+        "issue": "queue_depth reports total job_queue document count (~1170 historical) rather than PENDING-only depth. This is misleading for ops dashboards. Should filter `{status: 'PENDING'}` or expose both."
+      }
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/backend/tests/test_tenant_isolation.py",
+    "/app/backend/tests/test_concurrency.py",
+    "/app/backend/tests/test_worker_reports.py (new this iteration — 6 tests: worker auto-progress, legal PDF+CSV, institution PDF+CSV, cross-tenant legal/admin/observer)",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "FIX legal.py:121 — replace `path = REPORTS_DIR / Path(r['result_url']).name` with `path = REPORTS_DIR / r['filename']` (with a 409 guard if r.get('filename') is None).",
+    "FIX institution.py:159 — same change: `path = REPORTS_DIR / r['filename']`.",
+    "MINOR: /api/health queue_depth should count only PENDING jobs, not lifetime total.",
+    "MINOR: When the demo CITIZEN wallet drains (TestCitizenFlow.test_insufficient_credits_returns_402 zeros it), subsequent runs of test_create_parcel_deducts_credits fail. Either reseed the demo citizen on backend startup unconditionally, or rewrite the regression test to bootstrap its own citizen. Workaround for now: `mongosh test_database --eval 'db.credit_wallets.updateMany({},{$set:{balance:250}})'` between runs.",
+    "OPTIONAL: register custom pytest mark `tx_test` in pytest.ini to silence the 2 PytestUnknownMarkWarning warnings."
+  ],
+  "critical_code_review_comments": [
+    "core/safe_db.SafeCollection auto-injects tenant_id on ALL CRUD ops and falls back to '__NO_TENANT_CONTEXT__' for unauthenticated callers — this is the right default-deny pattern. Verified by 5 isolation tests that cross-tenant reads/writes/listings/notifications/wallets all return 404 or empty as appropriate.",
+    "core/tx.run_in_transaction wraps deduct_credits and fulfill_payment with TransientTransactionError auto-retry. Verified end-to-end: 10 concurrent /api/parcels against a 25-credit wallet land EXACTLY 5×200 / 5×402, final balance 0, zero 5xx — proves the conditional `balance>=amount` filter + replica-set TX retries work as designed.",
+    "services/worker._claim_one_job uses find_one_and_update for atomic claim — correct pattern, no double-claim possible. CONFIDENCE_RECALCULATION job auto-completes in <10s with empty queue, confirming the startup-hook worker is running.",
+    "**Report download endpoints are inconsistent**: CSV uses `r['csv_filename']` (correct) while PDF uses `Path(r['result_url']).name` (incorrect — extracts literal 'download'). The doc-shape mismatch is the root cause. Recommend always reading filenames from explicit fields, never parsing them out of URLs.",
+    "/api/health queue_depth = `db.job_queue.count_documents({})` — should be `{'status':'PENDING'}` only.",
+    "test-only routes /api/auth/test-bootstrap-citizen and /api/auth/test-set-balance are unauthenticated; in production these MUST be gated by an env flag (e.g. `ENABLE_TEST_ENDPOINTS=true`) or removed at build time. Otherwise an attacker can mint citizens and credit wallets at will."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_worker_reports.py (NEW — 6 tests: TestBackgroundWorker, TestLegalReport, TestInstitutionReport, TestCrossTenantViews)"
+  ],
+  "success_rate": {
+    "backend": "94% (48/51 pass with wallet reseed; 2/3 failures are the single PDF download bug duplicated across legal+institution; 1/3 is wallet drain hygiene across runs)",
+    "frontend": "not tested (per testing_type=backend only)"
+  },
+  "test_credentials": "POST /api/auth/dev-login {role: CITIZEN|COMMUNITY_VALIDATOR|SURVEYOR|LEGAL|INSTITUTIONAL|GOVERNMENT_OBSERVER|ADMIN}. Also /api/auth/test-bootstrap-citizen for isolated tenants. See /app/memory/test_credentials.md.",
+  "seed_data_creation": "Each tenant-isolation/concurrency/worker test creates a fresh citizen (tenanttest_*, concur_*, wkrtest_*) with its own tenant_id, so test data is naturally isolated. Created ~6 legal due-diligence reports and 2 portfolios under legal.demo / institutional.demo. PDFs and CSVs landed under /app/backend/_reports/. Wallet reseed to 250 was performed at the start of testing.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "1) The single most important fix is the PDF download endpoint bug in routers/legal.py and routers/institution.py — change `Path(r['result_url']).name` → `r['filename']`. Once that ships, re-run `pytest backend/tests/test_worker_reports.py -v` to verify all 6 pass. 2) Before any full-suite run, reseed wallets: `mongosh test_database --eval 'db.credit_wallets.updateMany({},{$set:{balance:250}})'`. 3) Worker test deadline is 150s — the worker batch=5/poll=5s can take ~30-60s when there's queue backlog from prior tests. Always run test_worker_reports.py FIRST, before concurrency tests inflate the queue. 4) Stripe sandbox via STRIPE_API_KEY=sk_test_emergent — TEST mode. Paystack disabled. 5) The job collection's type field is `job_type`, not `type`.",
+  "rca of the issue": "ROOT CAUSE for PDF download 404s: In both /app/backend/routers/legal.py (line 121) and /app/backend/routers/institution.py (line 159), the report download endpoint computes the on-disk path from the URL stored in `r['result_url']`:\n```python\npath = REPORTS_DIR / Path(r['result_url']).name\n```\nBut `result_url` is the public API URL ('/api/legal/reports/{id}/download'), not the file path. `Path('/api/legal/reports/{id}/download').name` evaluates to the literal string `'download'`. So the code looks for `/app/backend/_reports/download` — which never exists — and returns 404. The actual PDF (e.g. `rep_0f6a67ecf7a34ea2.pdf`) is correctly written to disk by services/jobs.py and the filename is stored in the report doc under `r['filename']`. Note the CSV sibling endpoint uses `r['csv_filename']` directly and works correctly — proof that the data is there. REPRO: as LEGAL user, POST /api/legal/report/{parcel_id} → wait until status=COMPLETED → GET /api/legal/reports/{rid}/download → 404 'Report file missing'. EXPECTED: 200 application/pdf with %PDF header. FIX (one-line per file):\n```python\nfilename = r.get('filename')\nif not filename:\n    raise HTTPException(status_code=409, detail='Report not ready')\npath = REPORTS_DIR / filename\n```"
+}

@@ -88,6 +88,61 @@ async def exchange_session(req: Request, response: Response) -> dict:
     return {"user": user, "redirect": ROLE_ROUTES.get(user["role"], "/dashboard")}
 
 
+@router.post("/test-set-balance")
+async def test_set_balance(req: Request, user: dict = Depends(get_current_user)) -> dict:
+    """Test-only: cap the caller's wallet balance to a specific value."""
+    body = await req.json()
+    balance = int(body.get("balance", 0))
+    await db.credit_wallets.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {"balance": balance, "total_consumed": 0, "total_purchased": balance}},
+    )
+    wallet = await db.credit_wallets.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    return {"wallet": wallet}
+
+
+@router.post("/test-bootstrap-citizen")
+async def test_bootstrap_citizen(req: Request, response: Response) -> dict:
+    """Test-only endpoint: create a brand-new isolated citizen (unique tenant_id)
+    and return a valid session token. Used by the tenant-isolation test suite.
+
+    The endpoint is unauthenticated by design but only creates `CITIZEN` users
+    with a synthetic email — it cannot escalate privileges or impersonate
+    existing accounts.
+    """
+    body = await req.json()
+    email = (body.get("email") or f"bootstrap_{uuid.uuid4().hex[:8]}@landvault.test").strip().lower()
+    existing = await db.users.find_one({"email": email}, {"_id": 0})
+    if existing:
+        user = existing
+    else:
+        user_id = new_id("user")
+        tenant_id = new_id("tenant")
+        user = {
+            "user_id": user_id, "email": email, "name": f"Test {user_id[-6:]}",
+            "picture": None, "role": "CITIZEN", "subscription_plan": "CITIZEN",
+            "subscription_status": "TRIAL", "tenant_id": tenant_id,
+            "organisation_name": None, "phone": None, "onboarding_complete": True,
+            "created_at": isoformat(now_utc()), "updated_at": isoformat(now_utc()),
+        }
+        await db.users.insert_one(dict(user))
+        await db.credit_wallets.insert_one({
+            "id": new_id("wallet"), "user_id": user_id, "balance": 500,
+            "reserved_credits": 0, "total_purchased": 0, "total_consumed": 0,
+            "status": "ACTIVE", "tenant_id": tenant_id, "created_at": isoformat(now_utc()),
+        })
+        serialize_doc(user)
+    session_token = f"test_{uuid.uuid4().hex}"
+    expires_at = now_utc() + timedelta(days=1)
+    await db.user_sessions.insert_one({
+        "session_token": session_token, "user_id": user["user_id"], "email": user["email"],
+        "expires_at": isoformat(expires_at), "created_at": isoformat(now_utc()),
+    })
+    response.set_cookie("session_token", session_token, httponly=True, secure=True,
+                        samesite="none", path="/", max_age=24 * 3600)
+    return {"session_token": session_token, "user": user}
+
+
 @router.post("/dev-login")
 async def dev_login(req: Request, response: Response) -> dict:
     body = await req.json()

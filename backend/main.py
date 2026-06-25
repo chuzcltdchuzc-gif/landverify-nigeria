@@ -17,6 +17,7 @@ from routers import (admin, attestations, auth, credits, dashboards, evidence,
                      institution, legal, notifications, observer, parcels,
                      payments, public, surveyor)
 from services.jobs import seed_demo_data
+from services.worker import start_worker, stop_worker
 from webhooks import paystack as paystack_webhook
 from webhooks import stripe as stripe_webhook
 
@@ -60,8 +61,10 @@ app.add_middleware(
 async def _startup() -> None:
     await ensure_indexes()
     await seed_demo_data()
+    await start_worker()
 
 
 @app.on_event("shutdown")
 async def _shutdown() -> None:
+    await stop_worker()
     client.close()

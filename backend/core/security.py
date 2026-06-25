@@ -9,6 +9,7 @@ from fastapi import Cookie, Depends, Header, HTTPException
 from core.config import ROLE_RANK
 from core.database import db
 from core.helpers import now_utc, serialize_doc
+from core.tenant import set_tenant
 
 
 async def _get_session_token(
@@ -39,6 +40,9 @@ async def get_current_user(token: Optional[str] = Depends(_get_session_token)) -
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     serialize_doc(user)
+    # Bind tenant context for this request — every `tdb.<col>` call now
+    # auto-scopes to this tenant.
+    set_tenant(user.get("tenant_id"))
     return user
 
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 
 from core.database import db
+from core.safe_db import tdb
 from core.security import get_current_user, require_role
 
 router = APIRouter(prefix="/dashboard")
@@ -11,12 +12,14 @@ router = APIRouter(prefix="/dashboard")
 
 @router.get("/citizen")
 async def dashboard_citizen(user: dict = Depends(get_current_user)) -> dict:
-    parcels = [p async for p in db.parcels.find({"tenant_id": user["tenant_id"]}, {"_id": 0}).sort("created_at", -1)]
-    evidence = await db.evidence_vault.find({"uploader_id": user["user_id"]}).to_list(None)
+    # All reads here are auto-scoped to the citizen's tenant via tdb.
+    parcels = [p async for p in tdb.parcels.find({}, {"_id": 0}).sort("created_at", -1)]
+    evidence = await tdb.evidence_vault.find({"uploader_id": user["user_id"]}).to_list(None)
     parcel_ids = [p["id"] for p in parcels]
-    attestations = await db.community_attestations.find({"parcel_id": {"$in": parcel_ids}}).to_list(None)
-    wallet = await db.credit_wallets.find_one({"user_id": user["user_id"]}, {"_id": 0})
-    timeline = [t async for t in db.evidence_timeline_events.find(
+    attestations = await tdb.community_attestations.find(
+        {"parcel_id": {"$in": parcel_ids}}).to_list(None)
+    wallet = await tdb.credit_wallets.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    timeline = [t async for t in tdb.evidence_timeline_events.find(
         {"parcel_id": {"$in": parcel_ids}}, {"_id": 0}).sort("created_at", -1).limit(20)]
     avg_trust = round(sum(p.get("confidence_score", 0) for p in parcels) / len(parcels)) if parcels else 0
     return {

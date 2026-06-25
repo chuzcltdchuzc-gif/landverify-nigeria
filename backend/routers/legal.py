@@ -123,3 +123,17 @@ async def report_download(report_id: str, user: dict = Depends(require_role("LEG
         raise HTTPException(status_code=404, detail="Report file missing")
     await audit_log("CERTIFICATE_DOWNLOADED", "report", report_id, user=user)
     return FileResponse(path, media_type="application/pdf", filename=path.name)
+
+
+@router.get("/reports/{report_id}/download.csv")
+async def report_download_csv(report_id: str, user: dict = Depends(require_role("LEGAL"))):
+    r = await db.reports.find_one({"id": report_id, "requested_by": user["user_id"]}, {"_id": 0})
+    if not r:
+        raise HTTPException(status_code=404, detail="Report not found")
+    if r["status"] != "COMPLETED" or not r.get("csv_filename"):
+        raise HTTPException(status_code=409, detail="CSV not ready")
+    path = REPORTS_DIR / r["csv_filename"]
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="CSV file missing")
+    await audit_log("CERTIFICATE_DOWNLOADED", "report_csv", report_id, user=user)
+    return FileResponse(path, media_type="text/csv", filename=path.name)

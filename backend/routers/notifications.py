@@ -1,9 +1,9 @@
-"""Notification feed — recent timeline events + reports."""
+"""Notification feed — recent timeline events + reports (tenant-scoped)."""
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 
-from core.database import db
+from core.safe_db import tdb
 from core.security import get_current_user
 
 router = APIRouter()
@@ -12,15 +12,15 @@ router = APIRouter()
 @router.get("/notifications")
 async def notifications(user: dict = Depends(get_current_user)) -> dict:
     items: list[dict] = []
-    parcels = await db.parcels.find({"owner_id": user["user_id"]}).distinct("id")
+    parcels = await tdb.parcels.find({"owner_id": user["user_id"]}).distinct("id")
     if parcels:
-        async for t in db.evidence_timeline_events.find(
+        async for t in tdb.evidence_timeline_events.find(
                 {"parcel_id": {"$in": parcels}}, {"_id": 0}).sort("created_at", -1).limit(15):
             items.append({
                 "type": "TIMELINE", "id": t["id"], "title": t.get("event_type"),
                 "description": t.get("description"), "occurred_at": t.get("created_at"),
             })
-    async for r in db.reports.find({"requested_by": user["user_id"]}, {"_id": 0}) \
+    async for r in tdb.reports.find({"requested_by": user["user_id"]}, {"_id": 0}) \
             .sort("requested_at", -1).limit(15):
         title = "REPORT_READY" if r["status"] == "COMPLETED" else f"REPORT_{r['status']}"
         items.append({

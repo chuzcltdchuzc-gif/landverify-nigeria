@@ -14,7 +14,9 @@ from core.database import db
 from core.helpers import isoformat, new_id, now_utc
 from services.trust import (
     parcel_intelligence,
+    render_institution_report_csv,
     render_institution_report_pdf,
+    render_legal_report_csv,
     render_legal_report_pdf,
     run_trust_validation_internal,
 )
@@ -255,13 +257,16 @@ async def _execute_job(job: dict) -> dict:
             return {"skipped": True}
         intel = await parcel_intelligence(parcel)
         filename = await render_legal_report_pdf(report, parcel, intel)
+        csv_name = await render_legal_report_csv(report, parcel, intel)
         url = f"/api/legal/reports/{rid}/download"
+        csv_url = f"/api/legal/reports/{rid}/download.csv"
         await db.reports.update_one(
             {"id": rid},
             {"$set": {"status": "COMPLETED", "result_url": url, "filename": filename,
+                      "csv_url": csv_url, "csv_filename": csv_name,
                       "completed_at": isoformat(now_utc())}},
         )
-        return {"report_id": rid, "filename": filename}
+        return {"report_id": rid, "filename": filename, "csv_filename": csv_name}
     if jt == "INSTITUTION_REPORT":
         rid = payload.get("report_id")
         pf_id = payload.get("portfolio_id")
@@ -272,13 +277,16 @@ async def _execute_job(job: dict) -> dict:
         if not report or not portfolio:
             return {"skipped": True}
         filename = await render_institution_report_pdf(report, portfolio)
+        csv_name = await render_institution_report_csv(report, portfolio)
         url = f"/api/institution/reports/{rid}/download"
+        csv_url = f"/api/institution/reports/{rid}/download.csv"
         await db.reports.update_one(
             {"id": rid},
             {"$set": {"status": "COMPLETED", "result_url": url, "filename": filename,
+                      "csv_url": csv_url, "csv_filename": csv_name,
                       "completed_at": isoformat(now_utc())}},
         )
-        return {"report_id": rid, "filename": filename}
+        return {"report_id": rid, "filename": filename, "csv_filename": csv_name}
     return {"mocked": True}
 
 

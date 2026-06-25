@@ -1,6 +1,8 @@
 """Trust validation, parcel intelligence, risk engine, PDF report rendering."""
 from __future__ import annotations
 
+import csv
+from io import StringIO
 from pathlib import Path
 from typing import Any
 
@@ -380,4 +382,66 @@ async def render_institution_report_pdf(report: dict, portfolio: dict) -> str:
     ))
     SimpleDocTemplate(str(out), pagesize=A4, leftMargin=18 * mm, rightMargin=18 * mm,
                       topMargin=18 * mm, bottomMargin=18 * mm).build(story)
+    return out.name
+
+
+
+async def render_legal_report_csv(report: dict, parcel: dict, intel: dict) -> str:
+    """Render a structured CSV companion file for a legal report."""
+    out = REPORTS_DIR / f"{report['id']}.csv"
+    buf = StringIO()
+    w = csv.writer(buf)
+    w.writerow(["Section", "Key", "Value"])
+    w.writerow(["Report", "ID", report["id"]])
+    w.writerow(["Report", "Requested by", report.get("requested_by_email", "—")])
+    w.writerow(["Report", "Generated at", isoformat(now_utc())])
+    w.writerow(["Parcel", "Parcel number", parcel["parcel_number"]])
+    w.writerow(["Parcel", "Status", parcel.get("status", "—")])
+    w.writerow(["Parcel", "Confidence", parcel.get("confidence_score", 0)])
+    w.writerow(["Parcel", "Community", parcel.get("community", "—")])
+    w.writerow(["Parcel", "LGA", parcel.get("lga", "—")])
+    w.writerow(["Parcel", "Ward", parcel.get("ward", "—")])
+    w.writerow(["Parcel", "State", parcel.get("state", "—")])
+    es = intel["evidence_summary"]
+    for k, v in es.items():
+        if isinstance(v, dict):
+            for k2, v2 in v.items():
+                w.writerow(["Evidence", f"{k}.{k2}", v2])
+        else:
+            w.writerow(["Evidence", k, v])
+    a = intel["attestation_summary"]
+    for k, v in a.items():
+        w.writerow(["Attestation", k, v])
+    for i, d in enumerate(intel["disputes"], 1):
+        w.writerow(["Dispute", f"#{i} status", d.get("status", "—")])
+        w.writerow(["Dispute", f"#{i} reason", (d.get("reason") or "—")[:200]])
+        w.writerow(["Dispute", f"#{i} opened_at", d.get("opened_at") or "—"])
+    for c in intel["certificates"]:
+        w.writerow(["Certificate", f"v{c.get('version', '?')} status", c.get("status", "—")])
+        w.writerow(["Certificate", f"v{c.get('version', '?')} generated_at", c.get("generated_at") or "—"])
+    out.write_text(buf.getvalue(), encoding="utf-8")
+    return out.name
+
+
+async def render_institution_report_csv(report: dict, portfolio: dict) -> str:
+    """Render a structured CSV companion file for an institutional report."""
+    out = REPORTS_DIR / f"{report['id']}.csv"
+    buf = StringIO()
+    w = csv.writer(buf)
+    w.writerow(["#", "Parcel", "Found", "Status", "Confidence", "Risk Level", "Risk Score",
+                "Community", "LGA", "State"])
+    for i, it in enumerate(portfolio.get("items", []), 1):
+        w.writerow([
+            i,
+            it.get("parcel_number", "—"),
+            it.get("found", False),
+            it.get("status") or "NOT FOUND",
+            it.get("confidence_score", 0),
+            it.get("risk_level", "—"),
+            it.get("risk_score", 0),
+            it.get("community", "—"),
+            it.get("lga", "—"),
+            it.get("state", "—"),
+        ])
+    out.write_text(buf.getvalue(), encoding="utf-8")
     return out.name
