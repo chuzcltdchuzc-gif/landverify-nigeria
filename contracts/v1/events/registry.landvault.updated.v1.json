@@ -1,0 +1,170 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/events/registry.landvault.updated.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Domain event emitted by the `registry` bounded context for aggregate `LandVault`. Schema validates the full envelope; `payload` carries the aggregate-specific fields documented under `x-payload-fields`.",
+  "properties": {
+    "actor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "aggregate_id": {
+      "type": "string"
+    },
+    "aggregate_type": {
+      "const": "LandVault",
+      "type": "string"
+    },
+    "aggregate_version": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "causation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "correlation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "country": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "event_id": {
+      "pattern": "^evt_[a-f0-9]{32}$",
+      "type": "string"
+    },
+    "event_type": {
+      "const": "registry.landvault.updated",
+      "type": "string"
+    },
+    "event_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "organization_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "payload": {
+      "additionalProperties": true,
+      "properties": {
+        "actor": {
+          "description": "string — principal id who performed the update",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "boundary_source": {
+          "description": "string|null — present for geometry updates",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "changes": {
+          "description": "object|array — keys/values that changed (omitted for sensitive facets)",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "facet": {
+          "description": "string — 'location' | 'geometry' | 'ownership_contact' | 'ownership_transfer' | 'survey' | 'community_data'",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "reason": {
+          "description": "string|null — present for ownership_transfer",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "producer": {
+      "const": "registry",
+      "type": "string"
+    },
+    "tenant_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "aggregate_type",
+    "aggregate_id",
+    "aggregate_version",
+    "occurred_at",
+    "producer",
+    "payload"
+  ],
+  "title": "registry.landvault.updated",
+  "type": "object",
+  "x-aggregate": "LandVault",
+  "x-bounded-context": "registry",
+  "x-contract-version": "1.1.0",
+  "x-event-name": "registry.landvault.updated",
+  "x-event-version": 1,
+  "x-idempotency": "Dedup by `event_id`.",
+  "x-known-consumers": [
+    "audit-log",
+    "metrics",
+    "search-index"
+  ],
+  "x-ordering": "Per-LandVault ordering by `aggregate_version`.",
+  "x-payload-fields": {
+    "actor": "string — principal id who performed the update",
+    "boundary_source": "string|null — present for geometry updates",
+    "changes": "object|array — keys/values that changed (omitted for sensitive facets)",
+    "facet": "string — 'location' | 'geometry' | 'ownership_contact' | 'ownership_transfer' | 'survey' | 'community_data'",
+    "reason": "string|null — present for ownership_transfer"
+  },
+  "x-producer": "registry",
+  "x-replay": "Idempotent."
+}

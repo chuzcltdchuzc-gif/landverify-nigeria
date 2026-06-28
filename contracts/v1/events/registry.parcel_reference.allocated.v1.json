@@ -1,0 +1,157 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/events/registry.parcel_reference.allocated.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Domain event emitted by the `registry` bounded context for aggregate `LandVault`. Schema validates the full envelope; `payload` carries the aggregate-specific fields documented under `x-payload-fields`.",
+  "properties": {
+    "actor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "aggregate_id": {
+      "type": "string"
+    },
+    "aggregate_type": {
+      "const": "LandVault",
+      "type": "string"
+    },
+    "aggregate_version": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "causation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "correlation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "country": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "event_id": {
+      "pattern": "^evt_[a-f0-9]{32}$",
+      "type": "string"
+    },
+    "event_type": {
+      "const": "registry.parcel_reference.allocated",
+      "type": "string"
+    },
+    "event_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "organization_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "payload": {
+      "additionalProperties": true,
+      "properties": {
+        "parcel_number": {
+          "description": "string",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "registry_id": {
+          "description": "string",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "sequence_key": {
+          "description": "string — STATE-LGA-WARD-PROPTYPE",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "sequence_number": {
+          "description": "integer — strictly increasing within sequence_key",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "producer": {
+      "const": "registry",
+      "type": "string"
+    },
+    "tenant_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "aggregate_type",
+    "aggregate_id",
+    "aggregate_version",
+    "occurred_at",
+    "producer",
+    "payload"
+  ],
+  "title": "registry.parcel_reference.allocated",
+  "type": "object",
+  "x-aggregate": "LandVault",
+  "x-bounded-context": "registry",
+  "x-contract-version": "1.1.0",
+  "x-event-name": "registry.parcel_reference.allocated",
+  "x-event-version": 1,
+  "x-idempotency": "Dedup by `event_id`. The allocator itself is atomic and never reuses sequence numbers, so each event corresponds to a unique ParcelNumber.",
+  "x-known-consumers": [
+    "audit-log",
+    "metrics"
+  ],
+  "x-ordering": "Per-sequence_key ordering by sequence_number.",
+  "x-payload-fields": {
+    "parcel_number": "string",
+    "registry_id": "string",
+    "sequence_key": "string — STATE-LGA-WARD-PROPTYPE",
+    "sequence_number": "integer — strictly increasing within sequence_key"
+  },
+  "x-producer": "registry",
+  "x-replay": "Idempotent."
+}

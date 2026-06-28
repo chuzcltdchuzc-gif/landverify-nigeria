@@ -1,0 +1,23 @@
+Section,Key,Value
+Report,ID,rep_c3c180d4ef324f56
+Report,Requested by,legal.demo@landvault.test
+Report,Generated at,2026-06-28T22:36:35.281947+00:00
+Parcel,Parcel number,LAGOS-TESTLGA-TESTWARD-RES-000001
+Parcel,Status,PENDING
+Parcel,Confidence,48
+Parcel,Community,TEST_Comm_1640ae
+Parcel,LGA,TEST LGA
+Parcel,Ward,TEST Ward
+Parcel,State,Lagos
+Evidence,total,1
+Evidence,approved,0
+Evidence,rejected,0
+Evidence,pending,1
+Evidence,sealed,0
+Evidence,integrity_pass,1
+Evidence,by_type.FAMILY_DOCUMENT,1
+Attestation,total,1
+Attestation,approved,0
+Attestation,pending,1
+Attestation,contested,0
+Attestation,rejected,0

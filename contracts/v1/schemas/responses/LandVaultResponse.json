@@ -1,0 +1,33 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/LandVaultResponse.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "description": "Per-role projected response. Field set varies by viewer role; we\nkeep this Pydantic model permissive so projection happens upstream.",
+  "properties": {
+    "parcel_number": {
+      "title": "Parcel Number",
+      "type": "string"
+    },
+    "registry_id": {
+      "title": "Registry Id",
+      "type": "string"
+    },
+    "status": {
+      "title": "Status",
+      "type": "string"
+    },
+    "version": {
+      "title": "Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "registry_id",
+    "parcel_number",
+    "status",
+    "version"
+  ],
+  "title": "LandVaultResponse",
+  "type": "object",
+  "x-contract-version": "1.1.0"
+}

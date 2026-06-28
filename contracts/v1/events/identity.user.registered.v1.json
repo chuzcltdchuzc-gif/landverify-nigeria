@@ -148,7 +148,7 @@
   "type": "object",
   "x-aggregate": "User",
   "x-bounded-context": "identity",
-  "x-contract-version": "1.0.0",
+  "x-contract-version": "1.1.0",
   "x-event-name": "identity.user.registered",
   "x-event-version": 1,
   "x-idempotency": "Consumers MUST deduplicate by `event_id`. Producers guarantee exactly-once via the transactional outbox.",

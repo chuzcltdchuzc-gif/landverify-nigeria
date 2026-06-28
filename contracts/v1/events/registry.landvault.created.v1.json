@@ -1,0 +1,222 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/events/registry.landvault.created.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Domain event emitted by the `registry` bounded context for aggregate `LandVault`. Schema validates the full envelope; `payload` carries the aggregate-specific fields documented under `x-payload-fields`.",
+  "properties": {
+    "actor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "aggregate_id": {
+      "type": "string"
+    },
+    "aggregate_type": {
+      "const": "LandVault",
+      "type": "string"
+    },
+    "aggregate_version": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "causation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "correlation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "country": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "event_id": {
+      "pattern": "^evt_[a-f0-9]{32}$",
+      "type": "string"
+    },
+    "event_type": {
+      "const": "registry.landvault.created",
+      "type": "string"
+    },
+    "event_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "organization_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "payload": {
+      "additionalProperties": true,
+      "properties": {
+        "country_code": {
+          "description": "string — ISO-3166-1 alpha-2",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "created_by": {
+          "description": "string — principal id",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "has_geometry": {
+          "description": "boolean",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "origin": {
+          "description": "object — { source_system, source_id, import_batch }",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "ownership_type": {
+          "description": "string — initial OwnershipType",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "parcel_number": {
+          "description": "string — STATE-LGA-WARD-PROPTYPE-NNNNNN",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "registry_id": {
+          "description": "string — immutable internal id",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "status": {
+          "description": "string — initial LandVaultStatus (always 'draft' for native creates)",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "tenant_id": {
+          "description": "string",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "producer": {
+      "const": "registry",
+      "type": "string"
+    },
+    "tenant_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "aggregate_type",
+    "aggregate_id",
+    "aggregate_version",
+    "occurred_at",
+    "producer",
+    "payload"
+  ],
+  "title": "registry.landvault.created",
+  "type": "object",
+  "x-aggregate": "LandVault",
+  "x-bounded-context": "registry",
+  "x-contract-version": "1.1.0",
+  "x-event-name": "registry.landvault.created",
+  "x-event-version": 1,
+  "x-idempotency": "Dedup by `event_id`. Producer emits inside the same Mongo tx as the aggregate write (transactional outbox).",
+  "x-known-consumers": [
+    "audit-log",
+    "metrics",
+    "search-index",
+    "evidence",
+    "verification",
+    "community",
+    "certificate"
+  ],
+  "x-ordering": "Per-LandVault ordering by `aggregate_version`.",
+  "x-payload-fields": {
+    "country_code": "string — ISO-3166-1 alpha-2",
+    "created_by": "string — principal id",
+    "has_geometry": "boolean",
+    "origin": "object — { source_system, source_id, import_batch }",
+    "ownership_type": "string — initial OwnershipType",
+    "parcel_number": "string — STATE-LGA-WARD-PROPTYPE-NNNNNN",
+    "registry_id": "string — immutable internal id",
+    "status": "string — initial LandVaultStatus (always 'draft' for native creates)",
+    "tenant_id": "string"
+  },
+  "x-producer": "registry",
+  "x-replay": "Idempotent — events can be replayed from the outbox."
+}

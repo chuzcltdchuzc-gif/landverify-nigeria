@@ -11,6 +11,44 @@ Every entry below MUST reference its ADR.
 
 ---
 
+## [1.1.0] — 2026-06-28 — Phase 2A: Canonical LandVault Registry
+
+* **ADR-0002 — Canonical LandVault Registry**: introduces the first
+  business bounded context (`backend/contexts/registry/`) on top of the
+  frozen Phase 1C platform. LandVault is the single authoritative
+  aggregate root for land records (per ADR-001 / ADR-014). Legacy
+  identifiers remain as `legacy_aliases[]` lookups only — never
+  authoritative.
+* **Additive (`/api/v1/*`)** — 9 new endpoints under
+  `/api/v1/registry/landvaults`:
+  * `POST /` — create LandVault (allocates `parcel_number` atomically)
+  * `GET /` — list (scoped by ExecutionContext)
+  * `GET /{registry_id}` — read (role-projected)
+  * `PATCH /{registry_id}/location` — UpdateLocation
+  * `PATCH /{registry_id}/geometry` — UpdateGeometry (GeoJSON Polygon, WGS84)
+  * `PATCH /{registry_id}/ownership-contact` — UpdateOwnershipContact
+  * `POST /{registry_id}/ownership-transfer` — RecordOwnershipTransfer
+  * `PATCH /{registry_id}/survey` — UpdateSurvey
+  * `PATCH /{registry_id}/community-data` — UpdateCommunityData
+  * `POST /{registry_id}/archive` — ArchiveLandVault (super_admin only)
+* **Additive (events)** — 5 new domain events in the Event Catalog,
+  emitted via the existing transactional outbox:
+  * `registry.landvault.created.v1`
+  * `registry.landvault.updated.v1`
+  * `registry.parcel_reference.allocated.v1`
+  * `registry.ownership.recorded.v1` (emitted ONLY on legal ownership
+    changes — not on phone/email edits, per architectural directive §3)
+  * `registry.landvault.archived.v1`
+* **Additive (schemas)** — 8 new request DTOs + 2 new response DTOs
+  frozen as independent JSON Schemas under `v1/schemas/`.
+* **Additive (security)** — new `registry_actions` entries in
+  `v1/security/permissions.json`; new `registry.land_vault` projection
+  in `v1/security/field_projection.json`.
+* **Drift gate** updated — every new artifact pinned by SHA256 in
+  `v1/sdk/contract.sha256`. The frozen `v1/openapi.json` and existing
+  Phase 1 artifacts remain backward-compatible; consumers on `1.0.0`
+  continue to work without changes.
+
 ## [1.0.0] — 2026-06-28 — Platform Contract Freeze
 
 * **ADR-0001 — Platform Contract Freeze**: First publication of the

@@ -1,0 +1,46 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/UpdateOwnershipContactRequest.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "expected_version": {
+      "anyOf": [
+        {
+          "minimum": 1.0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Expected Version"
+    },
+    "owner_email": {
+      "anyOf": [
+        {
+          "format": "email",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Owner Email"
+    },
+    "owner_phone": {
+      "anyOf": [
+        {
+          "maxLength": 64,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Owner Phone"
+    }
+  },
+  "title": "UpdateOwnershipContactRequest",
+  "type": "object",
+  "x-contract-version": "1.1.0"
+}

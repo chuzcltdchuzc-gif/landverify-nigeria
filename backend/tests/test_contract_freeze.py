@@ -115,6 +115,16 @@ def test_canonical_v1_endpoints_present() -> None:
         "/api/v1/identity/delegations",
         "/api/v1/identity/delegations/{grant_id}/revoke",
         "/api/.well-known/jwks.json",
+        # Phase 2A — Registry bounded context
+        "/api/v1/registry/landvaults",
+        "/api/v1/registry/landvaults/{registry_id}",
+        "/api/v1/registry/landvaults/{registry_id}/location",
+        "/api/v1/registry/landvaults/{registry_id}/geometry",
+        "/api/v1/registry/landvaults/{registry_id}/ownership-contact",
+        "/api/v1/registry/landvaults/{registry_id}/ownership-transfer",
+        "/api/v1/registry/landvaults/{registry_id}/survey",
+        "/api/v1/registry/landvaults/{registry_id}/community-data",
+        "/api/v1/registry/landvaults/{registry_id}/archive",
     }
     missing = required_v1 - set(paths.keys())
     assert not missing, f"Frozen contract is missing canonical v1 endpoints: {missing}"

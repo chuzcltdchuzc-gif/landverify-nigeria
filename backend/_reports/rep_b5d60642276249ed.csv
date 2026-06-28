@@ -1,0 +1,22 @@
+Section,Key,Value
+Report,ID,rep_b5d60642276249ed
+Report,Requested by,legal.demo@landvault.test
+Report,Generated at,2026-06-28T22:28:11.771242+00:00
+Parcel,Parcel number,AS-LV-2026-B9F083
+Parcel,Status,UNVERIFIED
+Parcel,Confidence,10
+Parcel,Community,WRK_341e9
+Parcel,LGA,l
+Parcel,Ward,w
+Parcel,State,Lagos
+Evidence,total,0
+Evidence,approved,0
+Evidence,rejected,0
+Evidence,pending,0
+Evidence,sealed,0
+Evidence,integrity_pass,0
+Attestation,total,0
+Attestation,approved,0
+Attestation,pending,0
+Attestation,contested,0
+Attestation,rejected,0

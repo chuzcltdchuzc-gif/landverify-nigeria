@@ -1,0 +1,59 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/UpdateCommunityDataRequest.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "community_confirmed": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Community Confirmed"
+    },
+    "expected_version": {
+      "anyOf": [
+        {
+          "minimum": 1.0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Expected Version"
+    },
+    "verbal_consent": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Verbal Consent"
+    },
+    "witness_records": {
+      "anyOf": [
+        {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Witness Records"
+    }
+  },
+  "title": "UpdateCommunityDataRequest",
+  "type": "object",
+  "x-contract-version": "1.1.0"
+}

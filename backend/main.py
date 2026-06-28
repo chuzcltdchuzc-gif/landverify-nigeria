@@ -40,6 +40,11 @@ from contexts.identity.api import auth_router as identity_auth_router
 from contexts.identity.api import jwks_router as identity_jwks_router
 from contexts.identity.application.admin_service import IdentityAdminService
 from contexts.identity.application.auth_service import AuthService
+from contexts.registry.adapters.mongo_allocator import MongoRegistryNumberAllocator
+from contexts.registry.adapters.mongo_repository import MongoLandVaultRepository
+from contexts.registry.api import router as registry_router
+from contexts.registry.application import RegistryCommandService, RegistryQueryService
+from contexts.registry.authorization import register_registry_policies
 from kernel.audit import configure_audit_store
 from kernel.authorization.pep import configure_pep
 from kernel.authorization.policies import register_default_policies
@@ -85,6 +90,9 @@ api.include_router(identity_auth_router.router)
 api.include_router(identity_admin_router.router)
 api.include_router(identity_jwks_router.router)
 
+# Phase 2 — Registry bounded context endpoints live under /api/v1/registry/*
+api.include_router(registry_router.router)
+
 app.include_router(api)
 
 # Webhooks register their own absolute /api/webhook/* paths.
@@ -117,6 +125,7 @@ async def _startup() -> None:
     configure_outbox(db)
     register_default_policies()
     register_demo_resource_policies()
+    register_registry_policies()
 
     # Audit-event metric subscriber — every domain event bumps a counter.
     async def _audit_event_counter(env) -> None:
@@ -143,7 +152,22 @@ async def _startup() -> None:
     identity_auth_router.configure_router(auth_service)
     identity_admin_router.configure_admin_router(admin_service, user_repo)
     identity_jwks_router.configure_router(keystore)
+
+    # --- Phase 2 Registry context boot -----------------------------------
+    landvault_repo = MongoLandVaultRepository(db)
+    allocator = MongoRegistryNumberAllocator(db)
+    await landvault_repo.ensure_indexes()
+    await allocator.ensure_indexes()
+    registry_command = RegistryCommandService(
+        client=client, repo=landvault_repo, allocator=allocator)
+    registry_query = RegistryQueryService(repo=landvault_repo)
+    registry_router.configure_router(registry_command, registry_query)
+    # Legacy `/api/parcels` writes are delegated to the Registry (Phase 2A §2).
+    from contexts.registry.legacy_adapter import configure_legacy_adapter
+    configure_legacy_adapter(registry_command)
+
     logger.info("Phase 1A constitutional kernel + Identity admin surface ready")
+    logger.info("Phase 2A Registry bounded context ready at /api/v1/registry/*")
 
 
 @app.on_event("shutdown")

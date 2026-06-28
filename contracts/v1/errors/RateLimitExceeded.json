@@ -53,7 +53,7 @@
   ],
   "title": "RateLimitExceeded",
   "type": "object",
-  "x-contract-version": "1.0.0",
+  "x-contract-version": "1.1.0",
   "x-error-code": "common.rate_limit_exceeded",
   "x-http-status": 429,
   "x-rfc": "RFC 7807"

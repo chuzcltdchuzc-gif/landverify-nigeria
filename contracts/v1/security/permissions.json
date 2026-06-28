@@ -200,5 +200,79 @@
       "scope": "self"
     }
   ],
-  "x-contract-version": "1.0.0"
+  "registry_actions": [
+    {
+      "action": "registry.landvault.create",
+      "description": "Create a new LandVault aggregate (allocates parcel_number).",
+      "required_roles": [
+        "super_admin",
+        "field_agent",
+        "surveyor",
+        "surveyor_general",
+        "compliance_officer",
+        "licensed_surveyor",
+        "surveyor_partner"
+      ]
+    },
+    {
+      "action": "registry.landvault.read",
+      "description": "Read a LandVault with role-projected fields."
+    },
+    {
+      "action": "registry.landvault.list",
+      "description": "List LandVaults scoped to the caller's ExecutionContext."
+    },
+    {
+      "action": "registry.landvault.update.location",
+      "description": "Update administrative location facet."
+    },
+    {
+      "action": "registry.landvault.update.geometry",
+      "description": "Update boundary geometry (GeoJSON Polygon, WGS84)."
+    },
+    {
+      "action": "registry.landvault.update.ownership_contact",
+      "description": "Update owner contact fields (phone/email). Does NOT emit OwnershipRecorded."
+    },
+    {
+      "action": "registry.landvault.ownership.transfer",
+      "description": "Legal ownership change. Emits OwnershipRecorded + appends history.",
+      "required_roles": [
+        "super_admin",
+        "surveyor_general",
+        "compliance_officer",
+        "government_observer"
+      ]
+    },
+    {
+      "action": "registry.landvault.update.survey",
+      "description": "Update survey facet.",
+      "required_roles": [
+        "super_admin",
+        "surveyor_general",
+        "surveyor",
+        "licensed_surveyor",
+        "surveyor_partner",
+        "field_agent"
+      ]
+    },
+    {
+      "action": "registry.landvault.update.community_data",
+      "description": "Update community/consent facet.",
+      "required_roles": [
+        "super_admin",
+        "surveyor_general",
+        "compliance_officer",
+        "community_validator"
+      ]
+    },
+    {
+      "action": "registry.landvault.archive",
+      "description": "Soft-delete. One-way. super_admin only.",
+      "required_roles": [
+        "super_admin"
+      ]
+    }
+  ],
+  "x-contract-version": "1.1.0"
 }

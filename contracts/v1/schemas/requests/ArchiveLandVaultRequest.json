@@ -1,0 +1,31 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/ArchiveLandVaultRequest.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "expected_version": {
+      "anyOf": [
+        {
+          "minimum": 1.0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Expected Version"
+    },
+    "reason": {
+      "maxLength": 512,
+      "minLength": 3,
+      "title": "Reason",
+      "type": "string"
+    }
+  },
+  "required": [
+    "reason"
+  ],
+  "title": "ArchiveLandVaultRequest",
+  "type": "object",
+  "x-contract-version": "1.1.0"
+}

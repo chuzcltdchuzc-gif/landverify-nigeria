@@ -182,7 +182,92 @@
       "producer": "identity",
       "replay_support": "Idempotent.",
       "version": 1
+    },
+    {
+      "aggregate": "LandVault",
+      "bounded_context": "registry",
+      "event_name": "registry.landvault.created",
+      "idempotency_requirements": "Dedup by `event_id`. Producer emits inside the same Mongo tx as the aggregate write (transactional outbox).",
+      "known_consumers": [
+        "audit-log",
+        "metrics",
+        "search-index",
+        "evidence",
+        "verification",
+        "community",
+        "certificate"
+      ],
+      "ordering_guarantees": "Per-LandVault ordering by `aggregate_version`.",
+      "payload_schema": "v1/events/registry.landvault.created.v1.json",
+      "producer": "registry",
+      "replay_support": "Idempotent — events can be replayed from the outbox.",
+      "version": 1
+    },
+    {
+      "aggregate": "LandVault",
+      "bounded_context": "registry",
+      "event_name": "registry.landvault.updated",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "metrics",
+        "search-index"
+      ],
+      "ordering_guarantees": "Per-LandVault ordering by `aggregate_version`.",
+      "payload_schema": "v1/events/registry.landvault.updated.v1.json",
+      "producer": "registry",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "LandVault",
+      "bounded_context": "registry",
+      "event_name": "registry.parcel_reference.allocated",
+      "idempotency_requirements": "Dedup by `event_id`. The allocator itself is atomic and never reuses sequence numbers, so each event corresponds to a unique ParcelNumber.",
+      "known_consumers": [
+        "audit-log",
+        "metrics"
+      ],
+      "ordering_guarantees": "Per-sequence_key ordering by sequence_number.",
+      "payload_schema": "v1/events/registry.parcel_reference.allocated.v1.json",
+      "producer": "registry",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "LandVault",
+      "bounded_context": "registry",
+      "event_name": "registry.ownership.recorded",
+      "idempotency_requirements": "Dedup by `event_id`. Producers emit ONLY on legal ownership changes — ordinary contact edits (phone/email) MUST NOT emit this event.",
+      "known_consumers": [
+        "audit-log",
+        "metrics",
+        "notifications",
+        "search-index"
+      ],
+      "ordering_guarantees": "Per-LandVault ordering by `aggregate_version`.",
+      "payload_schema": "v1/events/registry.ownership.recorded.v1.json",
+      "producer": "registry",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "LandVault",
+      "bounded_context": "registry",
+      "event_name": "registry.landvault.archived",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "metrics",
+        "search-index",
+        "evidence"
+      ],
+      "ordering_guarantees": "Per-LandVault ordering by `aggregate_version`. Always the terminal event for an aggregate.",
+      "payload_schema": "v1/events/registry.landvault.archived.v1.json",
+      "producer": "registry",
+      "replay_support": "Idempotent. Archive is one-way.",
+      "version": 1
     }
   ],
-  "x-contract-version": "1.0.0"
+  "x-contract-version": "1.1.0"
 }

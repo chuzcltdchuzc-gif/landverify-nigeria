@@ -1,0 +1,183 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/events/registry.ownership.recorded.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Domain event emitted by the `registry` bounded context for aggregate `LandVault`. Schema validates the full envelope; `payload` carries the aggregate-specific fields documented under `x-payload-fields`.",
+  "properties": {
+    "actor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "aggregate_id": {
+      "type": "string"
+    },
+    "aggregate_type": {
+      "const": "LandVault",
+      "type": "string"
+    },
+    "aggregate_version": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "causation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "correlation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "country": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "event_id": {
+      "pattern": "^evt_[a-f0-9]{32}$",
+      "type": "string"
+    },
+    "event_type": {
+      "const": "registry.ownership.recorded",
+      "type": "string"
+    },
+    "event_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "organization_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "payload": {
+      "additionalProperties": true,
+      "properties": {
+        "history_length": {
+          "description": "integer — append-only history depth after this event",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "owner_name": {
+          "description": "string — current owner name",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "ownership_type": {
+          "description": "string — current OwnershipType",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "reason": {
+          "description": "string — 'initial registration' | 'purchase' | 'inheritance' | ...",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "recorded_by": {
+          "description": "string|null — principal id",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "registry_id": {
+          "description": "string",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "producer": {
+      "const": "registry",
+      "type": "string"
+    },
+    "tenant_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "aggregate_type",
+    "aggregate_id",
+    "aggregate_version",
+    "occurred_at",
+    "producer",
+    "payload"
+  ],
+  "title": "registry.ownership.recorded",
+  "type": "object",
+  "x-aggregate": "LandVault",
+  "x-bounded-context": "registry",
+  "x-contract-version": "1.1.0",
+  "x-event-name": "registry.ownership.recorded",
+  "x-event-version": 1,
+  "x-idempotency": "Dedup by `event_id`. Producers emit ONLY on legal ownership changes — ordinary contact edits (phone/email) MUST NOT emit this event.",
+  "x-known-consumers": [
+    "audit-log",
+    "metrics",
+    "notifications",
+    "search-index"
+  ],
+  "x-ordering": "Per-LandVault ordering by `aggregate_version`.",
+  "x-payload-fields": {
+    "history_length": "integer — append-only history depth after this event",
+    "owner_name": "string — current owner name",
+    "ownership_type": "string — current OwnershipType",
+    "reason": "string — 'initial registration' | 'purchase' | 'inheritance' | ...",
+    "recorded_by": "string|null — principal id",
+    "registry_id": "string"
+  },
+  "x-producer": "registry",
+  "x-replay": "Idempotent."
+}

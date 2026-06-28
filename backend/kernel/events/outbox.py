@@ -39,6 +39,12 @@ EVENT_TYPES = (
     "identity.session.revoked",
     "identity.login.success",
     "identity.login.failed",
+    # Phase 2 — Registry bounded context
+    "registry.landvault.created",
+    "registry.landvault.updated",
+    "registry.parcel_reference.allocated",
+    "registry.ownership.recorded",
+    "registry.landvault.archived",
 )
 
 # In-process subscriber registry — handler(envelope) -> awaitable

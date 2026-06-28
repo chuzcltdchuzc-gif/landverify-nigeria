@@ -1,0 +1,112 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/RecordOwnershipTransferRequest.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A LEGAL ownership change. Distinct from contact edits.",
+  "properties": {
+    "expected_version": {
+      "anyOf": [
+        {
+          "minimum": 1.0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Expected Version"
+    },
+    "family_head": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Family Head"
+    },
+    "family_members": {
+      "anyOf": [
+        {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Family Members"
+    },
+    "owner_name": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Owner Name"
+    },
+    "owner_nin": {
+      "anyOf": [
+        {
+          "maxLength": 64,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Owner Nin"
+    },
+    "ownership_type": {
+      "anyOf": [
+        {
+          "$ref": "#/components/schemas/OwnershipType"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "reason": {
+      "default": "ownership change",
+      "maxLength": 512,
+      "title": "Reason",
+      "type": "string"
+    },
+    "representative_authority": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Representative Authority"
+    },
+    "representative_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Representative Name"
+    }
+  },
+  "title": "RecordOwnershipTransferRequest",
+  "type": "object",
+  "x-contract-version": "1.1.0"
+}

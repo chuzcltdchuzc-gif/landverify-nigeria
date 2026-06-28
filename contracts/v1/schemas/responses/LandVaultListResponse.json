@@ -1,0 +1,36 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/LandVaultListResponse.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "items": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "limit": {
+      "title": "Limit",
+      "type": "integer"
+    },
+    "skip": {
+      "title": "Skip",
+      "type": "integer"
+    },
+    "total": {
+      "title": "Total",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "items",
+    "total",
+    "limit",
+    "skip"
+  ],
+  "title": "LandVaultListResponse",
+  "type": "object",
+  "x-contract-version": "1.1.0"
+}
