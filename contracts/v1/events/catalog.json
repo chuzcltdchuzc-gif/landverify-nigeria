@@ -1,0 +1,188 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/events/catalog.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Authoritative catalog of every domain event emitted by the platform. New events are added by minor version bumps; breaking changes to an existing event MUST mint a new `event_type` per kernel.events.envelope versioning policy.",
+  "events": [
+    {
+      "aggregate": "User",
+      "bounded_context": "identity",
+      "event_name": "identity.user.registered",
+      "idempotency_requirements": "Consumers MUST deduplicate by `event_id`. Producers guarantee exactly-once via the transactional outbox.",
+      "known_consumers": [
+        "audit-log",
+        "metrics",
+        "notifications"
+      ],
+      "ordering_guarantees": "Per-aggregate (User) ordering by `aggregate_version`. No global ordering across aggregates.",
+      "payload_schema": "v1/events/identity.user.registered.v1.json",
+      "producer": "identity",
+      "replay_support": "Idempotent — events can be replayed from the outbox.",
+      "version": 1
+    },
+    {
+      "aggregate": "User",
+      "bounded_context": "identity",
+      "event_name": "identity.account.activated",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "metrics"
+      ],
+      "ordering_guarantees": "Per-User ordering by `aggregate_version`.",
+      "payload_schema": "v1/events/identity.account.activated.v1.json",
+      "producer": "identity",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "User",
+      "bounded_context": "identity",
+      "event_name": "identity.account.suspended",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "metrics",
+        "notifications"
+      ],
+      "ordering_guarantees": "Per-User ordering by `aggregate_version`.",
+      "payload_schema": "v1/events/identity.account.suspended.v1.json",
+      "producer": "identity",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "User",
+      "bounded_context": "identity",
+      "event_name": "identity.password.changed",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "notifications"
+      ],
+      "ordering_guarantees": "Per-User ordering by `aggregate_version`.",
+      "payload_schema": "v1/events/identity.password.changed.v1.json",
+      "producer": "identity",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "User",
+      "bounded_context": "identity",
+      "event_name": "identity.role.assigned",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "metrics"
+      ],
+      "ordering_guarantees": "Per-User ordering by `aggregate_version`.",
+      "payload_schema": "v1/events/identity.role.assigned.v1.json",
+      "producer": "identity",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "Delegation",
+      "bounded_context": "identity",
+      "event_name": "identity.delegation.granted",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log"
+      ],
+      "ordering_guarantees": "Per-Delegation ordering.",
+      "payload_schema": "v1/events/identity.delegation.granted.v1.json",
+      "producer": "identity",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "Delegation",
+      "bounded_context": "identity",
+      "event_name": "identity.delegation.revoked",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log"
+      ],
+      "ordering_guarantees": "Per-Delegation ordering.",
+      "payload_schema": "v1/events/identity.delegation.revoked.v1.json",
+      "producer": "identity",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "ServiceAccount",
+      "bounded_context": "identity",
+      "event_name": "identity.service_account.created",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log"
+      ],
+      "ordering_guarantees": "Per-ServiceAccount ordering.",
+      "payload_schema": "v1/events/identity.service_account.created.v1.json",
+      "producer": "identity",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "ServiceAccount",
+      "bounded_context": "identity",
+      "event_name": "identity.service_account.revoked",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log"
+      ],
+      "ordering_guarantees": "Per-ServiceAccount ordering.",
+      "payload_schema": "v1/events/identity.service_account.revoked.v1.json",
+      "producer": "identity",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "Session",
+      "bounded_context": "identity",
+      "event_name": "identity.session.revoked",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "metrics"
+      ],
+      "ordering_guarantees": "Per-Session ordering.",
+      "payload_schema": "v1/events/identity.session.revoked.v1.json",
+      "producer": "identity",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "Session",
+      "bounded_context": "identity",
+      "event_name": "identity.login.success",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "metrics",
+        "fraud-detection"
+      ],
+      "ordering_guarantees": "No global ordering required.",
+      "payload_schema": "v1/events/identity.login.success.v1.json",
+      "producer": "identity",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "User",
+      "bounded_context": "identity",
+      "event_name": "identity.login.failed",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "metrics",
+        "fraud-detection"
+      ],
+      "ordering_guarantees": "No global ordering required.",
+      "payload_schema": "v1/events/identity.login.failed.v1.json",
+      "producer": "identity",
+      "replay_support": "Idempotent.",
+      "version": 1
+    }
+  ],
+  "x-contract-version": "1.0.0"
+}

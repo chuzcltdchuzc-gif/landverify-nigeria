@@ -1,0 +1,24 @@
+{
+  "$comment": "Example domain event envelope for `identity.user.registered` v1 (contract v1.0.0).",
+  "event_id": "evt_2c0b8a7f4d3e4c5fb6a1d2e3f4051a6b",
+  "event_type": "identity.user.registered",
+  "event_version": 1,
+  "aggregate_type": "User",
+  "aggregate_id": "usr_5b3f9c1e9b3a4d6f8f1e2c1a4b6d8e7f",
+  "aggregate_version": 0,
+  "occurred_at": "2026-06-28T10:11:12.345678+00:00",
+  "producer": "identity",
+  "tenant_id": "tn_aq_default",
+  "country": "NG",
+  "organization_id": null,
+  "correlation_id": "9c0c5fd1-4f7f-4a12-bc46-3c0e2b6a1c11",
+  "causation_id": null,
+  "actor": "usr_5b3f9c1e9b3a4d6f8f1e2c1a4b6d8e7f",
+  "payload": {
+    "user_id": "usr_5b3f9c1e9b3a4d6f8f1e2c1a4b6d8e7f",
+    "email": "ada@example.com",
+    "country": "NG",
+    "roles": ["general_user"],
+    "registration_source": "local"
+  }
+}

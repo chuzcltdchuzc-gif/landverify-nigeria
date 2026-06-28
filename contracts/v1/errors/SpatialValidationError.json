@@ -1,0 +1,76 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/errors/SpatialValidationError.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Geometry (parcel, survey, or polygon) failed spatial validation — for example invalid coordinates, overlap with an existing approved record, or outside the permitted country envelope.",
+  "properties": {
+    "code": {
+      "const": "spatial.validation_error",
+      "type": "string"
+    },
+    "correlation_id": {
+      "description": "Request correlation id for support tooling.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "detail": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "instance": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "const": 422,
+      "type": "integer"
+    },
+    "title": {
+      "const": "Spatial validation failed",
+      "type": "string"
+    },
+    "type": {
+      "description": "Stable, dereferenceable URI identifying the problem type.",
+      "format": "uri",
+      "type": "string"
+    },
+    "violations": {
+      "description": "List of spatial constraint violations.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "constraint": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "constraint",
+          "detail"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "title",
+    "status",
+    "code",
+    "type"
+  ],
+  "title": "SpatialValidationError",
+  "type": "object",
+  "x-contract-version": "1.0.0",
+  "x-error-code": "spatial.validation_error",
+  "x-http-status": 422,
+  "x-rfc": "RFC 7807"
+}

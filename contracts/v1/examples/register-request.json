@@ -1,0 +1,22 @@
+{
+  "$comment": "Example payload for POST /api/v1/auth/register (contract v1.0.0).",
+  "request": {
+    "email": "ada@example.com",
+    "password": "Sup3rSecret!",
+    "full_name": "Ada Lovelace",
+    "country": "NG"
+  },
+  "response_201": {
+    "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Imt-...",
+    "token_type": "Bearer",
+    "expires_in": 900,
+    "user": {
+      "user_id": "usr_5b3f9c1e9b3a4d6f8f1e2c1a4b6d8e7f",
+      "email": "ada@example.com",
+      "full_name": "Ada Lovelace",
+      "roles": ["general_user"],
+      "country": "NG",
+      "account_status": "active"
+    }
+  }
+}

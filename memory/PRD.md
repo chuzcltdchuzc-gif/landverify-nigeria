@@ -1,6 +1,53 @@
 # Aquasavannah LandVault — Product Requirements Document (Living)
 
-_Last updated: 2026-06-24_
+_Last updated: 2026-06-28_
+
+## ⏱ 2026-06-28 — Phase 1C COMPLETE: Platform Contract Freeze
+
+Implemented the **AquaSavannah LandVault Platform Contract Package** at
+`/app/contracts/` per the binding Phase 1C directive. The platform now
+publishes a single, versioned, machine-readable source of truth for every
+external contract.
+
+### Delivered artifacts (contract version `1.0.0`)
+- `contracts/VERSION` (semver pin) + `CHANGELOG.md` + `deprecation-policy.md`
+- `contracts/v1/openapi.json` — frozen OpenAPI 3 for both surfaces
+  (`/api/v1/*` canonical + `/api/*` deprecated)
+- `contracts/v1/schemas/requests/*.json` and `responses/*.json` — every
+  Phase 1 DTO frozen as an independent JSON Schema (8 request + 1 response)
+- `contracts/v1/errors/*.json` — 7 RFC 7807 problem+json contracts
+  (ValidationError, AuthorizationDenied, ConcurrencyConflict, NotFound,
+  RateLimitExceeded, SpatialValidationError, BusinessRuleViolation)
+- `contracts/v1/events/catalog.json` + 12 per-event JSON Schemas (the
+  full identity.* domain event stream); event_name/version mirror
+  `kernel.events.outbox.EVENT_TYPES`
+- `contracts/v1/security/permissions.json`, `role_matrix.json`,
+  `field_projection.json` — machine-readable authorization spec for
+  the 10 canonical roles and the ABAC pattern library
+- `contracts/v1/sdk/sdk.version`, `compatibility.json`, `contract.sha256`
+  — SDK fingerprint for downstream generators
+- `contracts/release-manifest.json` — release-level metadata (git commit,
+  build timestamp, per-file SHA256, aggregate checksums)
+- `contracts/v1/adr/ADR-0001-platform-contract-freeze.md`
+
+### Governance
+- `contracts/generate.py` — single source of truth. Run
+  `python -m contracts.generate` to regenerate the entire tree
+  deterministically (sorted keys, indent=2).
+- `contracts/ci_check_drift.sh` + `backend/tests/test_contract_freeze.py`
+  (8 strict assertions) — CI gate that fails on byte-level drift, missing
+  canonical endpoints, untagged legacy endpoints, event-catalog/outbox
+  skew, role-matrix/runtime skew, and malformed SHA fingerprints.
+- All `/api/*` non-v1 routes auto-tagged `deprecated: true` + `legacy`
+  in the frozen OpenAPI per the deprecation policy.
+- Verified: tamper test (mutated `openapi.json`) → drift gate fired with
+  remediation instructions; full backend suite still **130 passed, 2
+  skipped** including 8 new contract-freeze tests.
+
+_Original 2026-06-24 entry below._
+
+---
+
 
 ## 1. Original problem statement
 Build Aquasavannah LandVault — a subscription-based, production-ready web application that
@@ -95,6 +142,197 @@ audit trail, trust validation, and admin command centre.
 - Bulk verification API for institutional users
 - Recovery test runner + scheduled backups
 - Multi-region Neon read replicas (Lagos)
+
+## 11. Phase 1 — Identity & Authorization (2026-06-26) — COMPLETE
+
+**Scope (per Chief Architect sign-off — Decisions 1a, 2b, 3a, 4a-modified, 5-modified):**
+Constitutional Platform Kernel + Identity bounded context layered alongside
+the existing application. No business features migrated in Phase 1.
+
+### Platform Kernel (`/app/backend/kernel/` — ADR-012, immutable core)
+- **`kernel/config/`** — typed PlatformSettings, fail-fast load from env
+- **`kernel/security/`** — RS256 JWT + JWKS publication, key rotation with
+  configurable grace, bcrypt password hashing (cost 12), opaque refresh
+  tokens (SHA-256-hashed at rest, 32-byte secrets, httpOnly secure cookies)
+- **`kernel/persistence/`** — `ExecutionContext` ContextVar carrying the
+  authenticated identity (principal/email/country/tenant/org/roles/scopes/
+  session_id/correlation_id) — single source of truth per the architectural
+  clarification. `BaseRepository` auto-injects tenant + country from the
+  context, refuses client-supplied scope, stamps audit metadata, applies
+  optimistic concurrency via `version`
+- **`kernel/audit/`** — Append-only `AuditStore` (ADR-005) with monotonic
+  sequence counter and SHA-256 hash chain. Transaction-wrapped chain-tip
+  read + insert prevents concurrent-writer hash collisions. No update /
+  delete / replace methods on the public API
+- **`kernel/authorization/`** — Full PEP/PDP/PIP/PAP engine (ADR-002).
+  Default-deny, fail-closed, role + attribute + tenant + country
+  isolation policies. Anonymous principals limited to whitelisted public
+  actions. Programmatic `enforce()` audits both PERMIT and DENY
+- **`kernel/errors/`** — RFC 7807 problem+json with correlation_id (binding,
+  API standards §7)
+- **`kernel/observability/`** — JSON structured logs + correlation id ContextVar
+
+### Identity bounded context (`/app/backend/contexts/identity/`)
+DDD-shaped: `domain/` (User, Session, ProviderIdentity, value objects) ·
+`ports/` (UserRepositoryPort, SessionRepositoryPort, IdentityProviderPort) ·
+`adapters/` (Mongo* repos) · `application/` (AuthService + providers) ·
+`api/` (auth_router, jwks_router, DTOs).
+
+**Identity is the canonical authority** — User, Identity, Roles, Country,
+Tenant, Organisation, Sessions, Security Policies, and Audit Metadata all
+live in this context. External authentication providers are adapters behind
+`IdentityProviderPort`:
+- `LocalIdentityProvider` — email + bcrypt password
+- `EmergentGoogleIdentityProvider` — wraps Emergent OAuth as an
+  Anti-Corruption Layer (§13). Translates external profile into the
+  internal `AuthenticatedSubject` type; never leaks external schema into
+  the domain
+- Architecture is provider-agnostic — Microsoft Entra, government IDPs,
+  SAML/OIDC providers all plug in via the same port
+
+### HTTP API (mounted under `/api/v1/auth/*`)
+- `POST /v1/auth/register` — create local user, return tokens
+- `POST /v1/auth/login` — local email+password
+- `POST /v1/auth/login/google` — Emergent Google OAuth session exchange
+- `POST /v1/auth/refresh` — rotates the refresh token; replay detection
+  kills the entire session chain (token-theft heuristic)
+- `POST /v1/auth/logout` — revokes the current session
+- `GET  /v1/auth/me` — returns the authenticated ExecutionContext
+- `GET  /.well-known/jwks.json` — public RSA verification keys for any
+  future relying party (federated identity ready)
+
+### Country handling (Decision 5 — modified)
+- Country is a first-class architectural concept from day one
+- `country` is a JWT claim, in the ExecutionContext, persisted on the User,
+  and participates in repository scoping + authorization isolation
+- Default operational country = NG; multi-country onboarding requires no
+  structural code changes (only PlatformSettings + reference data)
+
+### Coexistence with legacy
+- Existing business routes (`/api/parcels`, `/api/evidence`, `/api/payments`, …)
+  continue to operate unchanged via the legacy `session_token` cookie
+- Phase 1 endpoints live under `/api/v1/...` so legacy + new ship side-by-side
+- Legacy `/api/auth/dev-login` is preserved for the existing test suite
+
+### Test coverage (iteration 5)
+- Backend: **67 passed, 2 skipped, 0 failed** (was 51)
+  - +12 Phase 1 identity flow tests (`tests/test_phase1_identity.py`)
+  - +7 PDP / authorization engine unit tests (`tests/test_authorization_engine.py`)
+  - +3 audit-store / hash-chain tests (`tests/test_audit_store.py`)
+- Lint clean on `/app/backend/kernel` and `/app/backend/contexts`
+
+### Operational notes
+- `PLATFORM_JWT_ISSUER`, `PLATFORM_JWT_AUDIENCE`, `PLATFORM_ACCESS_TTL_SECONDS`,
+  `PLATFORM_REFRESH_TTL_SECONDS`, `PLATFORM_KEY_GRACE_SECONDS`,
+  `PLATFORM_DEFAULT_COUNTRY`, `PLATFORM_REFRESH_COOKIE`, `PLATFORM_COOKIE_SECURE`,
+  `PLATFORM_COOKIE_SAMESITE` all configurable via env; sensible defaults baked
+- Signing keys auto-generated on first startup in `kernel_signing_keys`
+  collection. Call `KeyStore.rotate()` programmatically when needed
+- Audit log + counter collections: `kernel_audit_log`, `kernel_audit_counters`
+- Identity collections: `identity_users`, `identity_sessions`
+
+## 12. Phase 1A — Constitutional Completion (2026-06-28) — COMPLETE
+
+Per the Chief Architect's Phase 1 Definitive Delivery Spec sign-off (Phase 1A:
+Identity / Service Accounts / Delegation / Specifications / ABAC Policy
+Library / Domain Events / Business Observability / Authorization Test Matrix).
+
+### Identity — 10-role canonical model
+- `contexts/identity/domain/value_objects.Role` enum with the EXACT legacy
+  set: general_user, surveyor_general, surveyor, field_agent, super_admin,
+  compliance_officer, licensed_surveyor, surveyor_partner,
+  community_validator, government_observer
+- Named privileged role sets (`GOVERNANCE_ROLES`, `SURVEY_ROLES`,
+  `COMMUNITY_ROLES`, `OBSERVER_ROLES`, `FIELD_ROLES`) for ABAC policies
+- Extended `User` aggregate: phone, organization, organization_id,
+  avatar_url, license_number, lga_code, role_confirmed,
+  suspension_reason / suspended_by / suspended_at
+- Account-status enforcement at every auth path (`User.can_authenticate()`)
+- Backwards-compatible role aliases preserved during transition grace
+
+### Service Accounts + Delegation Grants
+- `contexts/identity/domain/service_account.ServiceAccount` — non-human
+  principal with explicit minimal scopes, SHA-256 secret_hash (plaintext
+  returned exactly once at creation), ACTIVE/REVOKED lifecycle
+- `contexts/identity/domain/delegation.DelegationGrant` — time-bounded,
+  revocable, audited grant of named scopes from delegator to delegate
+- `IdentityAdminService` (under `contexts/identity/application/admin_service.py`)
+  orchestrates suspend / activate / assign_role / create_service_account /
+  revoke_service_account / grant_delegation / revoke_delegation — every
+  operation publishes a versioned Domain Event + writes an audit entry +
+  emits a business metric
+
+### Repository Specification Pattern
+- `kernel/persistence/specification.Specification` base class — composable
+  clauses translated to Mongo filters ONLY by the repository
+- `contexts/identity/ports/specifications.py`: ActiveUsersSpecification,
+  SuspendedUsersSpecification, UsersByTenantSpecification,
+  UsersByCountrySpecification, UsersByRoleSpecification,
+  UsersByOrganizationSpecification
+- `MongoUserRepository.find(spec)` / `.count(spec)` accept specifications
+  — no Mongo syntax in callers
+
+### Reusable ABAC Policy Library (`kernel/authorization/policy_library.py`)
+- `create_owner_stamp_policy` — legacy CREATE: caller becomes owner via
+  `stamp_owner` obligation; optional role restriction
+- `owner_or_privileged_read_policy` — legacy READ pattern with optional
+  field-projection obligation
+- `locked_state_guard_policy` — denies owner updates on locked records
+  (approved_locked, certificate_issued, evidence_sealed, audit_finalised);
+  privileged roles bypass
+- `role_conditional_on_status_policy` — surveyor only at assigned/in_progress,
+  community_validator only at validation_pending, etc.
+- `delete_super_admin_only_policy` — DELETE reserved for super_admin
+- `register_demo_resource_policies()` boots the canonical policy set against
+  an internal `demo` resource for the authorization test matrix
+
+### Immutable Domain Events + Transactional Outbox
+- `kernel/events/envelope.Envelope` — versioned envelope with event_id,
+  event_type, event_version, aggregate_type/id/version, occurred_at,
+  producer, tenant/country/org scope, correlation_id, causation_id, actor
+- `kernel/events/outbox.Outbox` — `kernel_outbox` collection, atomic claim
+  via `find_one_and_update`, in-process subscriber registry with glob
+  pattern matching; background publisher loop started in main.py lifecycle
+- Phase 1 events emitted: identity.user.registered, identity.login.success,
+  identity.login.failed, identity.account.suspended, identity.account.activated,
+  identity.role.assigned, identity.delegation.granted, identity.delegation.revoked,
+  identity.service_account.created, identity.service_account.revoked,
+  identity.session.revoked
+- Broker abstraction ready — Phase 3+ swap to Kafka/Rabbit/SQS without
+  touching producers or subscribers
+
+### Business + Technical Observability (`kernel/observability/metrics.py`)
+- In-process counter store mirrored to `kernel_metrics` collection
+- Auto-emitted by the kernel (callers don't instrument): login_success,
+  login_failed, account_lockout, authz_denial, authz_permit,
+  delegation_granted, suspension, role_change, audit_event_count,
+  active_sessions, revoked_sessions, policy_evaluation_time_ms (TBD)
+- One-line snapshot API for dashboards
+
+### Identity Admin API — `/api/v1/identity/*`
+- `GET  /v1/identity/users?role=&country=&tenant_id=&status=` — Specifications-backed
+- `POST /v1/identity/users/{id}/suspend` — body: `{reason}`
+- `POST /v1/identity/users/{id}/activate`
+- `POST /v1/identity/users/{id}/role` — body: `{role}` (must be one of the 10)
+- `POST /v1/identity/service-accounts` — returns secret plaintext exactly once
+- `POST /v1/identity/service-accounts/{id}/revoke`
+- `POST /v1/identity/delegations` — `{delegator_id, delegate_id, scope, valid_from, valid_until, reason}`
+- `POST /v1/identity/delegations/{id}/revoke`
+
+### Test coverage (iteration 6)
+- **122 passed, 2 skipped, 0 failed** (was 73)
+  - +30 authorization test matrix tests (all 10 roles × CRUD + projection +
+    isolation + locked-state + role-status gate)
+  - +15 admin / service-account / delegation / specifications / events tests
+- Phase 1A lint clean
+
+### Outstanding (Phase 1B → 1D)
+- **Phase 1B — Constitutional Verification review** (architecture / security
+  / platform gates; documentation pass + final sign-off)
+- **Phase 1C — Contract Freeze** (publish OpenAPI v1; publish event contract
+  registry; contract tests in CI; freeze versions)
+- **Phase 1D — Frontend SDK Compatibility Layer** (auth facade + entities/invoke
+  proxy stub; legacy frontend migrates incrementally)
 
 ## 8. Known limitations
 - Email/password sign-up flow not exposed in UI (Google + demo only)

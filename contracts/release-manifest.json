@@ -1,0 +1,164 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/release-manifest.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "adr_references": [
+    "ADR-0001 — Platform Contract Freeze (v1/adr/ADR-0001-platform-contract-freeze.md)",
+    "ADR-002 — Centralized Authorization Engine (default DENY)",
+    "ADR-007 — Routers are composition only"
+  ],
+  "build_timestamp": "2026-06-28T00:00:00+00:00",
+  "checksums": {
+    "event_catalog_sha256": "ab1b6fe901246c22cb89b39642cf1609168f93f109f6fbd45e931a06657802ed",
+    "openapi_sha256": "7425ac8f43dec1f0dca4cdcf3444df134bf034c21f680fde6383f0ba1e7b84ca",
+    "schema_aggregate_sha256": "bf8958d995e698c40158a7edce5d55735af5d3a34363a01d2632562f22cd178f",
+    "sdk_contract_sha256": "f75465613d43a5c816096d8f062d8375a36f36a669ff4b8951d9cf3970adb5d5"
+  },
+  "contract_version": "1.0.0",
+  "files": [
+    {
+      "path": "v1/errors/AuthorizationDenied.json",
+      "sha256": "90927b40cac49f32c5101034708e76702765f4bf0052ca54e1eb24eadf232270"
+    },
+    {
+      "path": "v1/errors/BusinessRuleViolation.json",
+      "sha256": "64e784c2736b8b837213f352b28d197589aaa042e07b1b5bce41ee02ef248ea5"
+    },
+    {
+      "path": "v1/errors/ConcurrencyConflict.json",
+      "sha256": "943f16223b401d0bc703cf282c3b02ff4d1447d1a228a6eb49440bc9f5a8b9af"
+    },
+    {
+      "path": "v1/errors/NotFound.json",
+      "sha256": "0bc7438a54facfd234b0e5cd40b6b2db1dfa6ea0ec8781233391e82914cf9f83"
+    },
+    {
+      "path": "v1/errors/RateLimitExceeded.json",
+      "sha256": "0d8e6baad0d40138814e4219e119b80fac73bd65f9bef979ba916ae6a0a5711f"
+    },
+    {
+      "path": "v1/errors/SpatialValidationError.json",
+      "sha256": "ba74bc98422d98ab9ebca736e81ca9486661908296f78d01b0c5ad74b052405b"
+    },
+    {
+      "path": "v1/errors/ValidationError.json",
+      "sha256": "7f9391f895b94532face9afe268508cb8701fab9b0f702b3bac7b0e632cbcaab"
+    },
+    {
+      "path": "v1/events/catalog.json",
+      "sha256": "ab1b6fe901246c22cb89b39642cf1609168f93f109f6fbd45e931a06657802ed"
+    },
+    {
+      "path": "v1/events/identity.account.activated.v1.json",
+      "sha256": "e8528a344839c47b4b43e94887307ba95ea413a2a2f1bf40826557108961507a"
+    },
+    {
+      "path": "v1/events/identity.account.suspended.v1.json",
+      "sha256": "5b992054dd9b6397e2749e09bb841f9cb98ae690ecb37d270de9f84df2d0fcda"
+    },
+    {
+      "path": "v1/events/identity.delegation.granted.v1.json",
+      "sha256": "a4f852e6ae0850fa193a9057ceafb44f04d568e536f47b35f307370b3138e2cb"
+    },
+    {
+      "path": "v1/events/identity.delegation.revoked.v1.json",
+      "sha256": "b79dbfc93645e32afcb65713caa519911b21dd35bd9badcc4367d35a6a05fffe"
+    },
+    {
+      "path": "v1/events/identity.login.failed.v1.json",
+      "sha256": "a14b17efc2231ca8768ba92242e3d0b05e4a68f2f5ba0b59a893e79ef3931646"
+    },
+    {
+      "path": "v1/events/identity.login.success.v1.json",
+      "sha256": "2330851033dd455766a243ccb935b6d14daffad6b1e6369f133c2d88a6b382c7"
+    },
+    {
+      "path": "v1/events/identity.password.changed.v1.json",
+      "sha256": "adda5e498c2247f4bee69b3e546e9992f5a48a41ada2a9bd975f89ab0487d51e"
+    },
+    {
+      "path": "v1/events/identity.role.assigned.v1.json",
+      "sha256": "c49d9a0330e7559cc37ca9477754afdbc5fdb7088e981c0bc1b138fbf0b9c3c1"
+    },
+    {
+      "path": "v1/events/identity.service_account.created.v1.json",
+      "sha256": "b29e7c424e09a225f5a68016540d4783629d144cd3cf1241f161220a2448ad09"
+    },
+    {
+      "path": "v1/events/identity.service_account.revoked.v1.json",
+      "sha256": "e593aad48e69709229721eed2517263727d685afd9d1480c4914c12bdd407620"
+    },
+    {
+      "path": "v1/events/identity.session.revoked.v1.json",
+      "sha256": "47210088788a36f8690bb7a90c2282db662fee5a41219a286d7ef3a3646fa2e3"
+    },
+    {
+      "path": "v1/events/identity.user.registered.v1.json",
+      "sha256": "24140b3524ec67e5b4a7b5d9bf3bdc69be11404dbb47f60a98f25c6fa2f5710f"
+    },
+    {
+      "path": "v1/openapi.json",
+      "sha256": "7425ac8f43dec1f0dca4cdcf3444df134bf034c21f680fde6383f0ba1e7b84ca"
+    },
+    {
+      "path": "v1/schemas/requests/AssignRoleRequest.json",
+      "sha256": "491c3099f71d0ad28ceb62611dd0506ba4266aa6fea87a711f233122b87a9cea"
+    },
+    {
+      "path": "v1/schemas/requests/CreateServiceAccountRequest.json",
+      "sha256": "2ea4d489daabee522f5c7b8cf8e664f734c99736a6f05f2660e92f6fe74b73eb"
+    },
+    {
+      "path": "v1/schemas/requests/DelegationRequest.json",
+      "sha256": "b741bc509f848b6a503b8cc308a1358c7d887b19fa5caf59ee5e97325e033ec8"
+    },
+    {
+      "path": "v1/schemas/requests/LoginGoogleRequest.json",
+      "sha256": "ced51d997c04fbf9c45884a6ca1b50531df7a27b6462479cc4624f471486a7d7"
+    },
+    {
+      "path": "v1/schemas/requests/LoginLocalRequest.json",
+      "sha256": "f5e875afa0fd47109949f4357f1474a43298fa685d831e1767566162f1aa8c37"
+    },
+    {
+      "path": "v1/schemas/requests/RegisterRequest.json",
+      "sha256": "5375c37fd657d716f3dbe6f6b00da99616143c5f926912f18646353e58288cd7"
+    },
+    {
+      "path": "v1/schemas/requests/RevokeRequest.json",
+      "sha256": "5821bc68151a5cf6564e77d10a29b4e2855b19f21378110b473802be05857eea"
+    },
+    {
+      "path": "v1/schemas/requests/SuspendRequest.json",
+      "sha256": "9112a8b75c0ecc7b5b0a9d3a44da5ce6226cd23c5ca3d7707b20237b16172c4f"
+    },
+    {
+      "path": "v1/schemas/responses/TokenResponse.json",
+      "sha256": "b62e035cd11e20d9b33eabb3ea4a7f36fdd6fa694225978ebd29324325d0770a"
+    },
+    {
+      "path": "v1/sdk/compatibility.json",
+      "sha256": "af62e7a3e99eeb5b6400299fffa802c170abe1d54e2af53d23b1258a6f70e854"
+    },
+    {
+      "path": "v1/sdk/contract.sha256",
+      "sha256": "f75465613d43a5c816096d8f062d8375a36f36a669ff4b8951d9cf3970adb5d5"
+    },
+    {
+      "path": "v1/sdk/sdk.version",
+      "sha256": "9fc73520aa0ec845ac7819aac3a708a882bd5cb3a9a501b532741f8cb25061c6"
+    },
+    {
+      "path": "v1/security/field_projection.json",
+      "sha256": "abe175518177c224cfd96f1312495938b92441a88bc8a4cca74c8b499d0c0e77"
+    },
+    {
+      "path": "v1/security/permissions.json",
+      "sha256": "cefc9f7aca8da6dfedf05e229305d6f38538551f796c4ab6b269b03bcceff90d"
+    },
+    {
+      "path": "v1/security/role_matrix.json",
+      "sha256": "1a4d92c60da4ea3811b509b581c312758345f751b62a1ec159df06d0c39203d5"
+    }
+  ],
+  "git_commit": "e2bf5c7bcf0426baa45cbf8a88d097c75b8c130a"
+}

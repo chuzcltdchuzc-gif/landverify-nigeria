@@ -1,0 +1,60 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/errors/BusinessRuleViolation.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "The requested operation would violate an invariant of the target aggregate (for example, suspending a user that is already suspended, or revoking a delegation outside its validity window).",
+  "properties": {
+    "code": {
+      "const": "business.rule_violation",
+      "type": "string"
+    },
+    "correlation_id": {
+      "description": "Request correlation id for support tooling.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "detail": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "instance": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "rule": {
+      "description": "Identifier of the violated rule.",
+      "type": "string"
+    },
+    "status": {
+      "const": 422,
+      "type": "integer"
+    },
+    "title": {
+      "const": "Business rule violation",
+      "type": "string"
+    },
+    "type": {
+      "description": "Stable, dereferenceable URI identifying the problem type.",
+      "format": "uri",
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "status",
+    "code",
+    "type"
+  ],
+  "title": "BusinessRuleViolation",
+  "type": "object",
+  "x-contract-version": "1.0.0",
+  "x-error-code": "business.rule_violation",
+  "x-http-status": 422,
+  "x-rfc": "RFC 7807"
+}

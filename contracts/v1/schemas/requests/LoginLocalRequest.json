@@ -1,0 +1,25 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/LoginLocalRequest.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "email": {
+      "format": "email",
+      "title": "Email",
+      "type": "string"
+    },
+    "password": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Password",
+      "type": "string"
+    }
+  },
+  "required": [
+    "email",
+    "password"
+  ],
+  "title": "LoginLocalRequest",
+  "type": "object",
+  "x-contract-version": "1.0.0"
+}

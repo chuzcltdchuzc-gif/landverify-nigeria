@@ -1,0 +1,19 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/AssignRoleRequest.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "role": {
+      "maxLength": 64,
+      "minLength": 2,
+      "title": "Role",
+      "type": "string"
+    }
+  },
+  "required": [
+    "role"
+  ],
+  "title": "AssignRoleRequest",
+  "type": "object",
+  "x-contract-version": "1.0.0"
+}

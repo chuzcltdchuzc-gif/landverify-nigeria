@@ -1,0 +1,69 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/security/role_matrix.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "The 10 canonical platform roles. This list is binding — no new roles may be introduced. Future domains add namespaced permissions, not new roles.",
+  "role_sets": {
+    "COMMUNITY_ROLES": [
+      "community_validator"
+    ],
+    "FIELD_ROLES": [
+      "field_agent"
+    ],
+    "GOVERNANCE_ROLES": [
+      "compliance_officer",
+      "super_admin",
+      "surveyor_general"
+    ],
+    "OBSERVER_ROLES": [
+      "government_observer"
+    ],
+    "SURVEY_ROLES": [
+      "licensed_surveyor",
+      "surveyor",
+      "surveyor_partner"
+    ]
+  },
+  "roles": [
+    {
+      "description": "Community validator — chairman, traditional ruler.",
+      "name": "community_validator"
+    },
+    {
+      "description": "Compliance & audit overseer. Governance role.",
+      "name": "compliance_officer"
+    },
+    {
+      "description": "Field operator executing tasks assigned to them by email.",
+      "name": "field_agent"
+    },
+    {
+      "description": "Default authenticated principal — owns their own data only.",
+      "name": "general_user"
+    },
+    {
+      "description": "Government observer — read-only oversight access.",
+      "name": "government_observer"
+    },
+    {
+      "description": "Externally-licensed surveyor authorized to file plans.",
+      "name": "licensed_surveyor"
+    },
+    {
+      "description": "Platform super-admin — bypasses tenant/country isolation.",
+      "name": "super_admin"
+    },
+    {
+      "description": "Operational surveyor — may update assignments while in progress.",
+      "name": "surveyor"
+    },
+    {
+      "description": "Country-level survey authority. Governance role.",
+      "name": "surveyor_general"
+    },
+    {
+      "description": "Surveying firm/partner organisation member.",
+      "name": "surveyor_partner"
+    }
+  ],
+  "x-contract-version": "1.0.0"
+}

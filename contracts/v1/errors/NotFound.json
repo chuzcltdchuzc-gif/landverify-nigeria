@@ -1,0 +1,56 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/errors/NotFound.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "The requested resource does not exist or is outside the caller's scope.",
+  "properties": {
+    "code": {
+      "const": "common.not_found",
+      "type": "string"
+    },
+    "correlation_id": {
+      "description": "Request correlation id for support tooling.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "detail": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "instance": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "const": 404,
+      "type": "integer"
+    },
+    "title": {
+      "const": "Resource not found",
+      "type": "string"
+    },
+    "type": {
+      "description": "Stable, dereferenceable URI identifying the problem type.",
+      "format": "uri",
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "status",
+    "code",
+    "type"
+  ],
+  "title": "NotFound",
+  "type": "object",
+  "x-contract-version": "1.0.0",
+  "x-error-code": "common.not_found",
+  "x-http-status": 404,
+  "x-rfc": "RFC 7807"
+}

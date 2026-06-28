@@ -1,0 +1,11 @@
+{
+  "$comment": "Example RFC 7807 problem+json error response (contract v1.0.0). See contracts/v1/errors/AuthorizationDenied.json.",
+  "type": "https://aquasavannah.landvault/problems/auth.forbidden",
+  "title": "Forbidden",
+  "status": 403,
+  "code": "auth.forbidden",
+  "detail": "Action identity.user.suspend requires one of: super_admin, surveyor_general, compliance_officer.",
+  "instance": "/api/v1/identity/users/usr_7e1.../suspend",
+  "correlation_id": "9c0c5fd1-4f7f-4a12-bc46-3c0e2b6a1c11",
+  "policy_id": "platform.default_deny"
+}

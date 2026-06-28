@@ -1,0 +1,103 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/security/field_projection.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Per-resource field projection rules. Backend AND frontend MUST derive PII/visibility behaviour from this table — never by copying logic across layers. The `owner` projection is applied as an obligation by the PEP; the `public` projection is what un-elevated callers see; the `privileged` projection is what governance roles see.",
+  "projections": {
+    "identity.delegation": {
+      "owner": [
+        "delegation_id",
+        "delegator_id",
+        "delegate_id",
+        "scope",
+        "valid_from",
+        "valid_until"
+      ],
+      "pii_fields": [],
+      "privileged": [
+        "delegation_id",
+        "delegator_id",
+        "delegate_id",
+        "scope",
+        "valid_from",
+        "valid_until",
+        "reason",
+        "revoked",
+        "revoked_at",
+        "created_at"
+      ],
+      "public": []
+    },
+    "identity.service_account": {
+      "owner": [
+        "account_id",
+        "name",
+        "scopes",
+        "tenant_id",
+        "country",
+        "organization_id",
+        "created_at"
+      ],
+      "pii_fields": [],
+      "privileged": [
+        "account_id",
+        "name",
+        "description",
+        "scopes",
+        "tenant_id",
+        "country",
+        "organization_id",
+        "revoked",
+        "created_at",
+        "revoked_at"
+      ],
+      "public": []
+    },
+    "identity.user": {
+      "owner": [
+        "user_id",
+        "email",
+        "full_name",
+        "roles",
+        "country",
+        "tenant_id",
+        "organization_id",
+        "account_status",
+        "created_at"
+      ],
+      "pii_fields": [
+        "email",
+        "full_name"
+      ],
+      "privileged": [
+        "user_id",
+        "email",
+        "full_name",
+        "roles",
+        "country",
+        "tenant_id",
+        "organization_id",
+        "lga_code",
+        "account_status",
+        "suspension_reason",
+        "last_login_at",
+        "created_at",
+        "updated_at"
+      ],
+      "public": [
+        "user_id",
+        "full_name",
+        "roles",
+        "country"
+      ],
+      "redacted_for_public": [
+        "email",
+        "tenant_id",
+        "organization_id",
+        "lga_code",
+        "suspension_reason",
+        "last_login_at"
+      ]
+    }
+  },
+  "x-contract-version": "1.0.0"
+}

@@ -1,0 +1,48 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/DelegationRequest.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "delegate_id": {
+      "title": "Delegate Id",
+      "type": "string"
+    },
+    "delegator_id": {
+      "title": "Delegator Id",
+      "type": "string"
+    },
+    "reason": {
+      "maxLength": 300,
+      "minLength": 3,
+      "title": "Reason",
+      "type": "string"
+    },
+    "scope": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Scope",
+      "type": "array"
+    },
+    "valid_from": {
+      "title": "Valid From",
+      "type": "string"
+    },
+    "valid_until": {
+      "title": "Valid Until",
+      "type": "string"
+    }
+  },
+  "required": [
+    "delegator_id",
+    "delegate_id",
+    "scope",
+    "valid_from",
+    "valid_until",
+    "reason"
+  ],
+  "title": "DelegationRequest",
+  "type": "object",
+  "x-contract-version": "1.0.0"
+}

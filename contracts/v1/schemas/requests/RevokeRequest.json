@@ -1,0 +1,19 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/RevokeRequest.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "reason": {
+      "maxLength": 300,
+      "minLength": 3,
+      "title": "Reason",
+      "type": "string"
+    }
+  },
+  "required": [
+    "reason"
+  ],
+  "title": "RevokeRequest",
+  "type": "object",
+  "x-contract-version": "1.0.0"
+}

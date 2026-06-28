@@ -1,0 +1,83 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/errors/ValidationError.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Request body or query parameters failed schema validation. `errors` lists the offending fields and reasons.",
+  "properties": {
+    "code": {
+      "const": "common.validation_error",
+      "type": "string"
+    },
+    "correlation_id": {
+      "description": "Request correlation id for support tooling.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "detail": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "errors": {
+      "description": "Per-field validation failures.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "loc": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "msg": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "instance": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "const": 422,
+      "type": "integer"
+    },
+    "title": {
+      "const": "Validation failed",
+      "type": "string"
+    },
+    "type": {
+      "description": "Stable, dereferenceable URI identifying the problem type.",
+      "format": "uri",
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "status",
+    "code",
+    "type"
+  ],
+  "title": "ValidationError",
+  "type": "object",
+  "x-contract-version": "1.0.0",
+  "x-error-code": "common.validation_error",
+  "x-http-status": 422,
+  "x-rfc": "RFC 7807"
+}

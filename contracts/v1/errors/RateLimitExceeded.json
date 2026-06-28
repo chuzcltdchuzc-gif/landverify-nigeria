@@ -1,0 +1,60 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/errors/RateLimitExceeded.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "The caller has exceeded their rate-limit budget for this endpoint or action. `retry_after_seconds` indicates when the budget will refresh.",
+  "properties": {
+    "code": {
+      "const": "common.rate_limit_exceeded",
+      "type": "string"
+    },
+    "correlation_id": {
+      "description": "Request correlation id for support tooling.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "detail": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "instance": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "retry_after_seconds": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "status": {
+      "const": 429,
+      "type": "integer"
+    },
+    "title": {
+      "const": "Rate limit exceeded",
+      "type": "string"
+    },
+    "type": {
+      "description": "Stable, dereferenceable URI identifying the problem type.",
+      "format": "uri",
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "status",
+    "code",
+    "type"
+  ],
+  "title": "RateLimitExceeded",
+  "type": "object",
+  "x-contract-version": "1.0.0",
+  "x-error-code": "common.rate_limit_exceeded",
+  "x-http-status": 429,
+  "x-rfc": "RFC 7807"
+}

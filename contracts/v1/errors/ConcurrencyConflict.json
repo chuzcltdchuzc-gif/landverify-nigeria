@@ -1,0 +1,62 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/errors/ConcurrencyConflict.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Optimistic concurrency check failed: the aggregate's `version` did not match the version supplied by the caller. Re-read the aggregate and retry.",
+  "properties": {
+    "code": {
+      "const": "common.concurrency_conflict",
+      "type": "string"
+    },
+    "correlation_id": {
+      "description": "Request correlation id for support tooling.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "current_version": {
+      "type": "integer"
+    },
+    "detail": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "expected_version": {
+      "type": "integer"
+    },
+    "instance": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "const": 409,
+      "type": "integer"
+    },
+    "title": {
+      "const": "Concurrency conflict",
+      "type": "string"
+    },
+    "type": {
+      "description": "Stable, dereferenceable URI identifying the problem type.",
+      "format": "uri",
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "status",
+    "code",
+    "type"
+  ],
+  "title": "ConcurrencyConflict",
+  "type": "object",
+  "x-contract-version": "1.0.0",
+  "x-error-code": "common.concurrency_conflict",
+  "x-http-status": 409,
+  "x-rfc": "RFC 7807"
+}

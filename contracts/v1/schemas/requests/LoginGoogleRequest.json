@@ -1,0 +1,19 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/LoginGoogleRequest.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "session_id": {
+      "maxLength": 512,
+      "minLength": 10,
+      "title": "Session Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "session_id"
+  ],
+  "title": "LoginGoogleRequest",
+  "type": "object",
+  "x-contract-version": "1.0.0"
+}

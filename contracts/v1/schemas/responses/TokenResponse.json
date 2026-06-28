@@ -1,0 +1,33 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/TokenResponse.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "access_token": {
+      "title": "Access Token",
+      "type": "string"
+    },
+    "expires_in": {
+      "title": "Expires In",
+      "type": "integer"
+    },
+    "token_type": {
+      "default": "Bearer",
+      "title": "Token Type",
+      "type": "string"
+    },
+    "user": {
+      "additionalProperties": true,
+      "title": "User",
+      "type": "object"
+    }
+  },
+  "required": [
+    "access_token",
+    "expires_in",
+    "user"
+  ],
+  "title": "TokenResponse",
+  "type": "object",
+  "x-contract-version": "1.0.0"
+}

@@ -1,0 +1,204 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/security/permissions.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "abac_patterns": [
+    {
+      "applies_to_actions": [
+        "<resource_type>.read"
+      ],
+      "default": "DEFER (no decision -> default DENY)",
+      "obligations": [
+        "project_fields(fields=projection_fields) when principal is owner-only"
+      ],
+      "pattern": "owner_or_privileged_read",
+      "permit_when": [
+        "principal has any role in `privileged_roles`",
+        "principal owns the resource (owner_id == principal_id)",
+        "principal email == owner_email",
+        "principal email == assigned_to"
+      ]
+    },
+    {
+      "applies_to_actions": [
+        "<resource_type>.update"
+      ],
+      "deny_when": [
+        "resource.status in LOCKED_STATES AND principal owns resource AND principal lacks any privileged role"
+      ],
+      "locked_states": [
+        "approved_locked",
+        "audit_finalised",
+        "certificate_issued",
+        "evidence_sealed"
+      ],
+      "pattern": "locked_state_guard"
+    },
+    {
+      "applies_to_actions": [
+        "<resource_type>.<action>"
+      ],
+      "deny_when": [
+        "role in principal.roles AND resource.status not in allowed_statuses"
+      ],
+      "pattern": "role_conditional_on_status",
+      "permit_when": [
+        "role in principal.roles AND resource.status in allowed_statuses"
+      ]
+    },
+    {
+      "applies_to_actions": [
+        "<resource_type>.delete"
+      ],
+      "deny_when": [
+        "otherwise"
+      ],
+      "notes": "Prefer soft delete; all deletes are always audited.",
+      "pattern": "delete_super_admin_only",
+      "permit_when": [
+        "principal has role super_admin"
+      ]
+    },
+    {
+      "applies_to_actions": [
+        "<resource_type>.create"
+      ],
+      "obligations": [
+        "stamp_owner(principal_id=principal_id)"
+      ],
+      "pattern": "create_owner_stamp",
+      "permit_when": [
+        "principal is authenticated",
+        "principal has any role in `creator_roles` (if restricted)"
+      ]
+    }
+  ],
+  "default_decision": "DENY",
+  "description": "ABAC permission patterns + concrete identity-bound permissions. The PDP evaluates these in priority order; default DENY (ADR-002, fail closed).",
+  "identity_actions": [
+    {
+      "action": "identity.register",
+      "anonymous": true,
+      "description": "Create a local user account."
+    },
+    {
+      "action": "identity.login",
+      "anonymous": true,
+      "description": "Local email+password login."
+    },
+    {
+      "action": "identity.refresh",
+      "anonymous": true,
+      "description": "Refresh-token rotation."
+    },
+    {
+      "action": "identity.jwks.read",
+      "anonymous": true,
+      "description": "RFC 7517 public key set."
+    },
+    {
+      "action": "identity.self.read",
+      "anonymous": false,
+      "description": "Read own user record (GET /v1/auth/me)."
+    },
+    {
+      "action": "identity.self.logout",
+      "anonymous": false,
+      "description": "Revoke own session."
+    },
+    {
+      "action": "identity.user.read",
+      "anonymous": false,
+      "description": "Read a user record (self or governance).",
+      "required_roles": []
+    },
+    {
+      "action": "identity.user.suspend",
+      "required_roles": [
+        "compliance_officer",
+        "super_admin",
+        "surveyor_general"
+      ]
+    },
+    {
+      "action": "identity.user.activate",
+      "required_roles": [
+        "compliance_officer",
+        "super_admin",
+        "surveyor_general"
+      ]
+    },
+    {
+      "action": "identity.role.assign",
+      "required_roles": [
+        "super_admin",
+        "compliance_officer"
+      ]
+    },
+    {
+      "action": "identity.service_account.create",
+      "required_roles": [
+        "super_admin"
+      ]
+    },
+    {
+      "action": "identity.service_account.revoke",
+      "required_roles": [
+        "super_admin"
+      ]
+    },
+    {
+      "action": "identity.delegation.grant",
+      "required_roles": [
+        "compliance_officer",
+        "super_admin",
+        "surveyor_general"
+      ]
+    },
+    {
+      "action": "identity.delegation.revoke",
+      "required_roles": [
+        "compliance_officer",
+        "super_admin",
+        "surveyor_general"
+      ]
+    }
+  ],
+  "platform_policies": [
+    {
+      "description": "Deny cross-tenant access unless super_admin.",
+      "effect": "DENY",
+      "id": "platform.tenant_isolation",
+      "priority": 10,
+      "scope": "tenant"
+    },
+    {
+      "description": "Deny cross-country access unless super_admin.",
+      "effect": "DENY",
+      "id": "platform.country_isolation",
+      "priority": 11,
+      "scope": "country"
+    },
+    {
+      "description": "super_admin can do anything within their scope.",
+      "effect": "PERMIT",
+      "id": "platform.super_admin",
+      "priority": 20,
+      "scope": "global"
+    },
+    {
+      "description": "Anonymous principals may only perform whitelisted actions: identity.register, identity.login, identity.refresh, identity.jwks.read, and platform.public.*.",
+      "effect": "PERMIT/DENY",
+      "id": "platform.anonymous_public",
+      "priority": 30,
+      "scope": "anonymous"
+    },
+    {
+      "description": "Authenticated principals may operate on their own user record (identity.self.read, identity.self.logout, and identity.user.read when targeting self).",
+      "effect": "PERMIT",
+      "id": "identity.self",
+      "priority": 40,
+      "scope": "self"
+    }
+  ],
+  "x-contract-version": "1.0.0"
+}

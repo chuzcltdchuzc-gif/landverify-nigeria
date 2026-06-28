@@ -1,0 +1,60 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/errors/AuthorizationDenied.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "The authenticated principal is not authorized to perform the requested action on the target resource. The PDP default-denies; this response means a policy returned an explicit DENY or no policy returned PERMIT.",
+  "properties": {
+    "code": {
+      "const": "auth.forbidden",
+      "type": "string"
+    },
+    "correlation_id": {
+      "description": "Request correlation id for support tooling.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "detail": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "instance": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "policy_id": {
+      "description": "Identifier of the policy that produced the DENY decision.",
+      "type": "string"
+    },
+    "status": {
+      "const": 403,
+      "type": "integer"
+    },
+    "title": {
+      "const": "Forbidden",
+      "type": "string"
+    },
+    "type": {
+      "description": "Stable, dereferenceable URI identifying the problem type.",
+      "format": "uri",
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "status",
+    "code",
+    "type"
+  ],
+  "title": "AuthorizationDenied",
+  "type": "object",
+  "x-contract-version": "1.0.0",
+  "x-error-code": "auth.forbidden",
+  "x-http-status": 403,
+  "x-rfc": "RFC 7807"
+}
