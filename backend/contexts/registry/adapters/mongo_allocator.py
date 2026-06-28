@@ -29,6 +29,10 @@ def _normalize(token: str, *, length: int = 8) -> str:
     cleaned = re.sub(r"[^A-Za-z0-9]", "", token).upper()
     if not cleaned:
         raise ValueError(f"sequence-key component reduces to empty: {token!r}")
+    if len(cleaned) < 2:
+        raise ValueError(
+            f"sequence-key component too short (<2 chars): {token!r}"
+        )
     return cleaned[:length]
 
 

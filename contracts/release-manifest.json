@@ -9,9 +9,9 @@
   "build_timestamp": "2026-06-28T00:00:00+00:00",
   "checksums": {
     "event_catalog_sha256": "6a1b094d4df80b1b46bbdf6a767dc2225ead3e34ad8f31229718bdd791dc8cf9",
-    "openapi_sha256": "3c187930a592353dbcfdbc4976aef3e3fb1393627dc92a7029ab5bf9dbb3ff74",
+    "openapi_sha256": "d6ed18a58866ea981f9b18a6ce97fa6580812b3dce8924fec1eaa214b5f873ea",
     "schema_aggregate_sha256": "f76fe7b41916f988ac561cc9a57cb5804d86e94ef8c18b9ee033a0aed55654f9",
-    "sdk_contract_sha256": "6e4cc0926c4eb3349f731ee969037177f64eaab3129a88e8c46353f4a951f531"
+    "sdk_contract_sha256": "4667ab4f0d2ad0975913ed1ee0023fbb58e489236aa5f979b2c239ceaf34f066"
   },
   "contract_version": "1.1.0",
   "files": [
@@ -117,7 +117,7 @@
     },
     {
       "path": "v1/openapi.json",
-      "sha256": "3c187930a592353dbcfdbc4976aef3e3fb1393627dc92a7029ab5bf9dbb3ff74"
+      "sha256": "d6ed18a58866ea981f9b18a6ce97fa6580812b3dce8924fec1eaa214b5f873ea"
     },
     {
       "path": "v1/schemas/requests/ArchiveLandVaultRequest.json",
@@ -197,11 +197,11 @@
     },
     {
       "path": "v1/sdk/compatibility.json",
-      "sha256": "4bf8e94cbd46cd1270f739ca413e77752e22dd3a09fe7c16e87c8146ee93e020"
+      "sha256": "3909b2394ac78ff2e7d4222b3f0c768614f1ef230647e41ca82953537a9a90f2"
     },
     {
       "path": "v1/sdk/contract.sha256",
-      "sha256": "6e4cc0926c4eb3349f731ee969037177f64eaab3129a88e8c46353f4a951f531"
+      "sha256": "4667ab4f0d2ad0975913ed1ee0023fbb58e489236aa5f979b2c239ceaf34f066"
     },
     {
       "path": "v1/sdk/sdk.version",
@@ -220,5 +220,5 @@
       "sha256": "f9db80ff8ebfdbd72470dee0c387e82145cf807f922cb5afc2c824b699334fe6"
     }
   ],
-  "git_commit": "80b144a30bc9cfda00bbb05533d07cd22bb7cb1d"
+  "git_commit": "d32ec1ce3374301477b12dbe8e7347d6747700b5"
 }

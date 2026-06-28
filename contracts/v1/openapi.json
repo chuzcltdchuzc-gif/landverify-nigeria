@@ -5149,7 +5149,7 @@
       },
       "post": {
         "deprecated": true,
-        "description": "Deprecated — delegates to /api/v1/registry/landvaults.\n\nThe legacy `parcels` collection is mirrored from the canonical\nRegistry record so existing readers (legacy admin views, evidence\nroutes, etc.) keep working during the migration window.",
+        "description": "Deprecated — delegates to /api/v1/registry/landvaults.\n\nThe legacy `parcels` collection is mirrored from the canonical\nRegistry record so existing readers (legacy admin views, evidence\nroutes, etc.) keep working during the migration window. Credit\ndeduction (a legacy billing side-effect) is preserved.",
         "operationId": "create_parcel_api_parcels_post",
         "parameters": [
           {

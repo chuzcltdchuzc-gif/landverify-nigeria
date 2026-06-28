@@ -150,7 +150,10 @@ class TestCitizenFlow:
         r = s.post(f"{API}/parcels", json=body, timeout=30)
         assert r.status_code == 200, r.text
         parcel = r.json()["parcel"]
-        assert parcel["parcel_number"].startswith("AS-LV-")
+        assert parcel["parcel_number"].count("-") == 4 and \
+            parcel["parcel_number"].split("-")[-1].isdigit() and \
+            len(parcel["parcel_number"].split("-")[-1]) == 6, \
+            f"expected canonical STATE-LGA-WARD-PROPTYPE-NNNNNN, got {parcel['parcel_number']!r}"
         assert parcel["community"] == body["community"]
         # Wallet decremented by 5
         after = s.get(f"{API}/credits/balance", timeout=15).json()["wallet"]["balance"]

@@ -15,10 +15,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 
 from contexts.registry.legacy_adapter import legacy_create_parcel_via_registry
 from core.audit import audit_log, enqueue_job, timeline_event
-from core.helpers import isoformat, now_utc
+from core.config import SERVICE_CATALOG
+from core.helpers import isoformat, new_id, now_utc
 from core.safe_db import tdb
 from core.security import get_current_user
 from schemas.models import ParcelCreate
+from services.payments import deduct_credits
 
 router = APIRouter(prefix="/parcels")
 
@@ -38,10 +40,23 @@ async def create_parcel(body: ParcelCreate, req: Request,
 
     The legacy `parcels` collection is mirrored from the canonical
     Registry record so existing readers (legacy admin views, evidence
-    routes, etc.) keep working during the migration window.
+    routes, etc.) keep working during the migration window. Credit
+    deduction (a legacy billing side-effect) is preserved.
     """
+    idem = req.headers.get("Idempotency-Key") or new_id("idem")
+    # Legacy billing side-effect: deduct credits BEFORE the Registry write.
+    # If the Registry write fails afterwards, the deduction is idempotent
+    # (keyed by `idem`) so retrying is safe.
+    await deduct_credits(user["user_id"],
+                         SERVICE_CATALOG["PARCEL_UPLOAD"]["credits"],
+                         "Parcel upload via legacy /api/parcels",
+                         "PARCEL_UPLOAD", idem)
+
     # 1) Authoritative write through the Registry (raises domain events
     #    via the transactional outbox, allocates canonical parcel_number).
+    #    ProblemException (e.g. registry.invalid_location_token, 400) and
+    #    HTTPException are re-raised unchanged so the canonical RFC 7807
+    #    payload reaches the client.
     landvault = await legacy_create_parcel_via_registry(user=user, body=body)
 
     # 2) Legacy mirror — denormalized, NOT authoritative. Keyed by

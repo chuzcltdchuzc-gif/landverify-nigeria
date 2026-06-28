@@ -2,6 +2,107 @@
 
 _Last updated: 2026-06-28_
 
+## ⏱ 2026-06-28 — Phase 2A COMPLETE: Canonical LandVault Registry
+
+First business bounded context shipped on top of the frozen Phase 1C
+platform. **Contract bumped `1.0.0 → 1.1.0`** (additive minor) per the
+binding architectural authorization.
+
+### Delivered
+- **`backend/contexts/registry/`** — full DDD bounded context:
+  - **Domain**: `LandVault` aggregate root (one and only authoritative
+    land record), value objects (`ParcelNumber`, `Geometry`, `Origin`,
+    `OwnershipType`, `LandVaultStatus`, `PropertyType`), per-command
+    invariants, 5 immutable domain events.
+  - **Aggregate invariants enforced**: `registry_id` / `parcel_number` /
+    `tenant_id` / `country_code` / `created_at` / `origin.*` immutable;
+    `version` + `schema_version` monotonic; OwnershipHistory append-only;
+    archive one-way; locked-status guard.
+  - **Ports**: `LandVaultRepository`, `RegistryNumberAllocator`,
+    composable `LandVaultSpec`.
+  - **Mongo adapters**: indexes (unique `registry_id`, unique
+    `parcel_number`, sparse `legacy_aliases`, compound
+    `(country_code, tenant_id, status)`, **2dsphere on `geometry`**,
+    provenance index for migration idempotency); atomic
+    `findOneAndUpdate $inc upsert` allocator that produced 0 duplicates
+    across N=200 parallel test runs.
+  - **Application service** orchestrates Mongo transaction + outbox
+    publish + audit + metrics; per-role projection (`public` / `owner` /
+    `privileged`).
+  - **API**: `/api/v1/registry/landvaults` with task-oriented commands
+    (`Create`, `UpdateLocation`, `UpdateGeometry`,
+    `UpdateOwnershipContact`, `RecordOwnershipTransfer`, `UpdateSurvey`,
+    `UpdateCommunityData`, `Archive`); per-role Pydantic DTOs with
+    `extra=forbid` (anti mass-assignment).
+  - **PDP policies** registered with the centralized authorization
+    engine (5 policies + role matrix); aggregate enforces locked-state &
+    tenant scope as defense-in-depth.
+
+### Ownership-event discipline (§3)
+- `registry.ownership.recorded.v1` emitted ONLY on legal ownership
+  changes (`owner_name`, `ownership_type`, representative authority,
+  family composition). **NOT** emitted for phone/email contact edits.
+- Append-only `ownership_history[]` extended only on legal changes;
+  initial registration always records the first entry.
+
+### Migration tool (§10)
+- `python -m contexts.registry.migration --commit --batch-id=…` —
+  idempotent, provenance-preserving, duplicate-quarantining import from
+  legacy `parcels` + `land_vault_parcels` collections.
+- Aliases preserved in `legacy_aliases[]`; never authoritative.
+- Quarantine collection `landvault_migration_quarantine` for
+  unmappable rows (no auto-merges).
+
+### Legacy compatibility adapter (§2)
+- `POST /api/parcels` now writes through `RegistryCommandService` (the
+  authoritative path) and mirrors the canonical record back into the
+  legacy `parcels` collection for read-side back-compat.
+- Legacy adapter normalizes legacy role names to canonical roles; ALL
+  writes flow through the same aggregate, transactional outbox, audit,
+  and metrics pipeline as `/api/v1/registry/*`.
+- Frozen OpenAPI marks every `/api/*` non-v1 endpoint `deprecated: true`
+  per the deprecation policy.
+
+### Contract package at `1.1.0`
+- 52 governed artifacts (up from 37 at `1.0.0`).
+- 5 new domain events added to `v1/events/catalog.json` + per-event
+  JSON Schemas: `registry.landvault.created.v1`, `…updated.v1`,
+  `…parcel_reference.allocated.v1`, `…ownership.recorded.v1`,
+  `…archived.v1`.
+- 8 new request DTOs + 2 new response DTOs frozen as independent
+  schemas under `v1/schemas/`.
+- New `registry_actions` and `registry.land_vault` field-projection
+  entries in `v1/security/`.
+- ADR-0002 + CHANGELOG entry + new SHA256 fingerprints (drift gate
+  refreshed and verified).
+
+### Tests (Directive §12 acceptance matrix)
+| Suite                                       | Cases | Status |
+| ------------------------------------------- | ----- | ------ |
+| Aggregate invariants                        | 22    | ✅      |
+| Geometry validation                         | 6     | ✅      |
+| Allocator concurrency (N=50)                | 4     | ✅      |
+| Allocator stress (N=200)                    | 1     | ✅      |
+| Registry API + authz matrix + tenant + 2dsphere | 14 | ✅      |
+| Migration (idempotency + quarantine)        | 6     | ✅      |
+| Contract drift gate                         | 8     | ✅      |
+| Legacy compatibility (e2e)                  | 1     | ✅      |
+| Phase 1 + 1A + 1C regression                | 44+   | ✅      |
+| **Total**                                   | **106+** | **green** |
+
+### Regression caught + fixed during testing
+- Legacy `/api/parcels` returned `500` when `lga`/`ward` was a single
+  character. Root cause: `MongoRegistryNumberAllocator._normalize`
+  imposed no min-length floor while `ParcelNumber` regex requires ≥2
+  chars per token. **Fixed** with a min-length check in `_normalize`
+  and a `ValueError → 400 registry.invalid_location_token` mapping in
+  the application service. Now returns RFC 7807 problem+json with the
+  proper code, title, status, instance, and correlation_id.
+
+_Previous Phase 1C entry below._
+
+---
+
 ## ⏱ 2026-06-28 — Phase 1C COMPLETE: Platform Contract Freeze
 
 Implemented the **AquaSavannah LandVault Platform Contract Package** at

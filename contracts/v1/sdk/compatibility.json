@@ -1,7 +1,7 @@
 {
   "$id": "https://aquasavannah.landvault/contracts/v1/sdk/compatibility.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "aggregate_sha256": "83c48157935bf023e7b09f4094252b9333d186ea386fc39ccdc0dbd5c3d8d164",
+  "aggregate_sha256": "e8f8995ac2494d15af7d121cce6cca3a6602c462ed428a592b86b915b3f22ac3",
   "artifacts": [
     {
       "path": "v1/errors/AuthorizationDenied.json",
@@ -105,7 +105,7 @@
     },
     {
       "path": "v1/openapi.json",
-      "sha256": "3c187930a592353dbcfdbc4976aef3e3fb1393627dc92a7029ab5bf9dbb3ff74"
+      "sha256": "d6ed18a58866ea981f9b18a6ce97fa6580812b3dce8924fec1eaa214b5f873ea"
     },
     {
       "path": "v1/schemas/requests/ArchiveLandVaultRequest.json",

@@ -143,11 +143,18 @@ class RegistryCommandService:
             raise bad_request(str(exc), code="registry.geometry_invalid") from exc
 
         async def _run(session):
-            pn_value = await self._allocator.allocate(
-                country=country_code, state=state, lga=lga, ward=ward,
-                property_type=property_type, session=session,
-            )
-            parcel_number = ParcelNumber(pn_value)
+            try:
+                pn_value = await self._allocator.allocate(
+                    country=country_code, state=state, lga=lga, ward=ward,
+                    property_type=property_type, session=session,
+                )
+                parcel_number = ParcelNumber(pn_value)
+            except ValueError as exc:
+                # Allocator rejected a malformed STATE/LGA/WARD/property_type
+                # OR the assembled ParcelNumber failed the canonical regex.
+                # Surface as HTTP 400 with a stable error code.
+                raise bad_request(str(exc),
+                                  code="registry.invalid_location_token") from exc
             origin = Origin(source_system=origin_source,
                             source_id=origin_source_id,
                             import_batch=import_batch)
