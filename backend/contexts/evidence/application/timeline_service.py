@@ -56,11 +56,21 @@ _EVENT_TO_TIMELINE: dict[str, tuple[str, str]] = {
 class TimelineProjector:
     """Outbox subscriber that materialises an immutable evidence timeline."""
 
+    name = "evidence.timeline"
+    version = 1
+    event_glob = "evidence.*"
+
     def __init__(self, db, timeline_repo: MongoTimelineRepository,
                  custody_repo: MongoCustodyRepository) -> None:
         self._db = db
         self._timeline = timeline_repo
         self._custody = custody_repo
+
+    async def reset(self) -> None:
+        """Disposable: delete every timeline + custody row. Phase 3.8
+        replay will rebuild from the outbox event stream."""
+        await self._db["evidence_timeline"].delete_many({})
+        await self._db["evidence_custody"].delete_many({})
 
     async def on_event(self, env) -> None:
         if env.event_type not in _EVENT_TO_TIMELINE:
