@@ -2,6 +2,43 @@
 
 _Last updated: 2026-06-29_
 
+## ⏱ 2026-06-29 — Phase 3.6 DECISIONS & BLUEPRINT CHECKPOINT (no implementation)
+
+Operator approved ADR-0008 with **five locked architectural decisions**
+and **twelve binding constitutional invariants**. This session is the
+formal architectural checkpoint; **no implementation code lands**.
+
+### Frozen artifacts
+- **`/app/contracts/v1/adr/ADR-0008-evidence-anchoring-and-integrity-saga.md`** §15 — APPROVED:
+  1. **CheckpointPublisherPort**: disabled by default; dev = local-FS; prod = R2 / IPFS / both via fan-out (operator-configurable, env: `EVIDENCE_CHECKPOINT_PUBLISHERS`).
+  2. **OTS calendars**: `btc.calendar.opentimestamps.org`, `alice.btc.calendar.opentimestamps.org`, `finney.calendar.eternitywall.com`; **2-of-N quorum**; **single-calendar failure does NOT fail the saga**.
+  3. **Saga cadence**: batcher 60s, confirmer backoff `[10s, 60s, 5min, 1h, 6h, 24h]`, max 12 attempts → DLQ. All env-tunable.
+  4. **Integrity verification cadence**: scheduled 30d baseline **plus 7 mandatory triggers** — `pre_certificate`, `pre_public_verification`, `pre_ownership_transfer`, `pre_subdivision`, `post_storage_migration`, `on_demand`, `security_incident`.
+  5. **Max Merkle batch size**: 256 seals with automatic splitting; deterministic ordering; replay-safe; idempotent.
+
+  **12 constitutional invariants** locked into ADR-0008 §15 — every Phase 3.6+ release must demonstrate them green via named tests (evidence immutability post-seal, no registry mutation, event-only cross-context comms, append-only anchor records, deterministic Merkle roots, CT-log primary, OTS secondary independent, idempotent replay, resumable DLQ, 100% audit coverage, no binaries in Mongo, no PII in checkpoints/anchors).
+
+- **`/app/memory/PHASE3_SPEC.md` §3.6, §3.6.1, §3.7** — updated to reflect ADR-0008 and to split the originally-bundled append-only logs (locks/integrity/anchor/CT-log in 3.6; timeline/custody/legal-hold in 3.7).
+- **`/app/memory/PHASE3_BLUEPRINT.md` §7A–§7D, §8** — domain map additions, two new ports, 12 new event types, 4 new PDP actions, and the locked-decisions table.
+- **`/app/memory/PHASE3_6_IMPLEMENTATION_HANDOFF.md` (NEW)** — the next session's single starting point: pre-flight checklist, 21-step ordered implementation table, locked decisions reference, acceptance gate commands, strict non-goals, and operator escalation triggers.
+
+### Verified gates at checkpoint close
+- Contracts at **v1.2.0**; drift gate **green** (`Contract freeze OK — no drift.`).
+- `backend/contexts/evidence/` filesystem identical to Phase 3.4+3.5 end-state (25 `.py` files; zero Phase-3.6 modules created).
+- No supervisor restart; no behaviour change.
+
+### Sequencing (binding, per operator directive)
+1. **Next session**: Phase 3.6 full implementation as a single coherent deliverable (CT-log + OTS + saga + DLQ + replay + contract bump v1.3.0 + ~38 tests). Do NOT split across sessions unless absolutely necessary.
+2. Phase 3.7 — Timeline, Custody Chain, Legal Hold.
+3. Phase 3.8 — Events & Read Models.
+4. Phase 3.9 — SDK + React Evidence UI.
+5. Phase 3.10 — formal Phase 3 Acceptance Review.
+6. **Phase 4 (Workflows) begins ONLY after Phase 3.10 explicit approval**, with its own blueprint-first round (ADR-0019 through ADR-0022).
+
+_Previous Phase 3.6 blueprint entry (now superseded by the approval) and Phase 3.4 + 3.5 entry below._
+
+---
+
 ## ⏱ 2026-06-29 — Phase 3.6 BLUEPRINT ONLY (no implementation yet)
 
 Operator directive: complete Phase 3 before Phase 4. Phase 3.6 must
