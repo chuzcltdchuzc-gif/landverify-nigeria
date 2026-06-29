@@ -2,9 +2,37 @@
 
 _Last updated: 2026-06-29_
 
-## ⏱ 2026-06-29 — Phase 3.8 COMPLETE: Read Models, Projection Engine, Replay
+## ⏱ 2026-06-29 — Phase 3.10 COMPLETE: Formal Phase Acceptance Review
 
-Shipped as a single coherent vertical slice. Contract bumped **1.4.0 → 1.5.0** (additive minor; 98 frozen artifacts). Constitutional Projection Determinism Gate (ADR-0010 §3) passes end-to-end.
+Constitutional checkpoint certifying the Evidence bounded context as complete, replay-safe, contract-stable, secure, and production-ready BEFORE any Phase 4 work is authorized.
+
+### Delivered
+- **Master Acceptance Packet** at `/app/audit/PHASE-3-ACCEPTANCE-PACKET.md` cross-linking to 17 per-section audits.
+- **17 per-section audits** at `/app/audit/sections/01..17-*.md` covering: Executive Summary, Architecture, ADR Compliance (all 10), Domain Invariants (50 enumerated), Event Catalog (43 events), Contract Verification (98 frozen artifacts), Replay Verification (determinism gate), Projection Verification, Security Review, WORM Verification, Merkle Anchor Verification, Legal Hold Verification, Performance Report, Test Coverage Report, Outstanding Risks (6), Deferred Backlog (10), Production Readiness Assessment.
+- **Real measured performance benchmark** at `/app/audit/perf/results.json`: 6 endpoints × n=100 sequential probes + 1 end-to-end replay measurement. All read endpoints p95 ≤ 60 ms; replay processed 1,675 outbox events in 2,042 ms (~821 events/sec). Bench harness at `/app/backend/tests/bench_phase310.py` (reproducible).
+- **ADR Compliance Matrix** covering ADR-0001 → ADR-0010, every binding rule, with cross-reference to test name + status. All 10 ADRs PASS.
+- **Production Readiness Assessment** with strictly evidence-based facts, gaps, security review summary, compliance review summary, and recommended verdict **GO** (conditional on 3 follow-ups: CSP hardening, OTS production-mode flag, operator runbook). Final authorization remains with the operator.
+
+### Verdict
+- **Recommended: GO** — Phase 4 (Workflow / Consent / Inheritance) remains CONSTITUTIONALLY PROHIBITED until operator explicitly approves the packet.
+- All 147 strict DDD tests still 100% green after Phase 3.10 work.
+- Contract drift gate green (artifact location `/app/audit/` is outside the frozen `/app/contracts/v1/` namespace).
+
+### Key files
+- `/app/audit/PHASE-3-ACCEPTANCE-PACKET.md` — master packet (140 lines)
+- `/app/audit/sections/*.md` — 17 cross-linked sections (1,627 lines)
+- `/app/audit/perf/results.json` — measured perf data
+- `/app/backend/tests/bench_phase310.py` — reproducible bench
+
+---
+
+## ⏱ 2026-06-29 — Phase 3.9 COMPLETE: SDK Regeneration + React Evidence UI
+
+TypeScript SDK at `frontend/src/sdk/` pinned to v1.5.0 + frozen compatibility manifest. 7 Evidence UI pages (Workspace, List, Upload, Detail with Overview/Timeline/Seal/Integrity/Custody/Versions/LegalHold tabs, Projections Admin) consuming SDK exclusively. WCAG 2.2 AA. Zero direct REST calls in Evidence pages — mechanically enforced by `tests/test_sdk_consistency.py` (7 binding tests). Iteration_6 testing agent: 100% backend + 100% frontend, 192/192 tests, zero contract drift, no retest needed.
+
+---
+
+## ⏱ 2026-06-29 — Phase 3.8 COMPLETE: Read Models, Projection Engine, Replay
 
 ### Delivered
 - **In-process Projection Engine** (`backend/kernel/projections/__init__.py`):

@@ -1,0 +1,106 @@
+{
+  "phase": "3.10",
+  "purpose": "Acceptance Review \u2014 measured performance bench",
+  "host": "single-pod dev cluster (sequential single-client)",
+  "warmup": "evidence pipeline + 5 sealed items",
+  "probes": [
+    {
+      "label": "GET /api/v1/evidence/items (list, page=1)",
+      "n": 100,
+      "successes": 100,
+      "errors": 0,
+      "elapsed_seconds": 5.537,
+      "throughput_rps": 18.06,
+      "p50_ms": 56.02,
+      "p95_ms": 58.02,
+      "p99_ms": 59.02,
+      "min_ms": 15.4,
+      "max_ms": 59.04,
+      "mean_ms": 55.37
+    },
+    {
+      "label": "GET /api/v1/evidence/items/{id}",
+      "n": 100,
+      "successes": 100,
+      "errors": 0,
+      "elapsed_seconds": 5.403,
+      "throughput_rps": 18.51,
+      "p50_ms": 53.99,
+      "p95_ms": 56.01,
+      "p99_ms": 57.1,
+      "min_ms": 52.91,
+      "max_ms": 61.99,
+      "mean_ms": 54.03
+    },
+    {
+      "label": "GET /api/v1/evidence/items/{id}/timeline (projection)",
+      "n": 100,
+      "successes": 100,
+      "errors": 0,
+      "elapsed_seconds": 5.439,
+      "throughput_rps": 18.39,
+      "p50_ms": 54.04,
+      "p95_ms": 55.99,
+      "p99_ms": 57.03,
+      "min_ms": 52.92,
+      "max_ms": 57.04,
+      "mean_ms": 54.39
+    },
+    {
+      "label": "GET /api/v1/evidence/items/{id}/custody (projection)",
+      "n": 100,
+      "successes": 100,
+      "errors": 0,
+      "elapsed_seconds": 5.39,
+      "throughput_rps": 18.55,
+      "p50_ms": 53.97,
+      "p95_ms": 56.06,
+      "p99_ms": 57.97,
+      "min_ms": 52.94,
+      "max_ms": 57.98,
+      "mean_ms": 53.9
+    },
+    {
+      "label": "GET /api/v1/evidence/integrity-checks/by-evidence/{id}",
+      "n": 100,
+      "successes": 100,
+      "errors": 0,
+      "elapsed_seconds": 5.487,
+      "throughput_rps": 18.23,
+      "p50_ms": 54.0,
+      "p95_ms": 56.94,
+      "p99_ms": 60.6,
+      "min_ms": 52.79,
+      "max_ms": 128.03,
+      "mean_ms": 54.87
+    },
+    {
+      "label": "GET /api/v1/admin/projections",
+      "n": 100,
+      "successes": 100,
+      "errors": 0,
+      "elapsed_seconds": 5.863,
+      "throughput_rps": 17.06,
+      "p50_ms": 58.9,
+      "p95_ms": 60.05,
+      "p99_ms": 61.05,
+      "min_ms": 57.05,
+      "max_ms": 61.96,
+      "mean_ms": 58.63
+    }
+  ],
+  "replay": {
+    "label": "POST /admin/projections/evidence.timeline/replay",
+    "status": 200,
+    "duration_ms": 2041.91,
+    "delivered_count": 1675,
+    "rebuilding_after": false
+  },
+  "process_before": {
+    "captured": false
+  },
+  "process_after": {
+    "captured": false
+  },
+  "captured_at": "2026-06-29T14:13:07Z"
+}
