@@ -2,6 +2,88 @@
 
 _Last updated: 2026-06-29_
 
+## ⏱ 2026-06-29 — Phase 3.3 COMPLETE: Media Remediation
+
+Shipped step 3 of Phase 3 strictly in the binding sequence. **No
+implementation creep beyond 3.3** — the Evidence aggregate (and the
+v1.2.0 contract bump that lands with it) is the next step and remains
+blueprint-only.
+
+### Delivered
+- `backend/contexts/evidence/application/media_remediation.py`:
+  - `MediaRemediationSaga` — resumable saga implementing the operator's
+    binding sequence: **Verify (source readable + hashable) → Copy
+    (StoragePort multipart with running SHA-256) → Verify (independent
+    read-back + re-hash; MUST match) → Cutover (record provenance + null
+    inline source)**. Source bytes are NEVER deleted before reverify
+    succeeds.
+  - State machine: `requested → src_verified → copying → copied →
+    reverified → cutover_committed` (terminal). Failure paths:
+    `source_unreadable → orphaned`, `reverification_failed → orphaned`.
+    Every transition persisted to `evidence_media_remediation_sagas`
+    with timestamp + actor.
+  - Idempotent: a unique index on `(legacy_collection, legacy_doc_id,
+    legacy_field)` in `evidence_remediated_media` prevents double-
+    import; re-running on already-cut-over docs returns
+    `state=already_done` with the original provenance.
+  - **Cutover NEVER deletes** the legacy doc. The inline field is
+    REPLACED with `{remediated: true, storage_key, server_hash,
+    remediated_at}` so legacy readers can still resolve the bytes
+    while the canonical record lives in WORM storage.
+  - Orphan queue: failed migrations land in
+    `evidence_remediation_orphans` with `state` + `reason`; the source
+    inline binary remains intact.
+  - `scan_collection(...)` — convenience API for batch sweeps across a
+    legacy Mongo collection.
+  - `resume_pending()` — replays any saga not in a terminal state on
+    boot (no in-memory state required for correctness).
+- `MediaSource` value object: `legacy_collection`, `legacy_doc_id`,
+  `legacy_field`, `tenant_id`, `country`, `media_type`, optional
+  `registry_id` so Phase 3.4 can link `EvidenceItem` aggregates back
+  to their migrated rows.
+- `_extract_inline_bytes` supports four legacy shapes: raw `bytes`,
+  `data:<mime>;base64,...` URLs, bare base64 strings (≥32 chars),
+  `{base64: "..."}` dicts.
+
+### Acceptance gate (Phase 3.3) — ALL GREEN
+| Test (tests/test_evidence_media_remediation.py)               | Cases | Status |
+| ------------------------------------------------------------- | ----- | ------ |
+| Happy path: Verify → Copy → Verify → Cutover                  | 1     | ✅      |
+| Idempotency: re-running is a no-op                            | 1     | ✅      |
+| Dry-run leaves source intact, no provenance, no orphan rows   | 1     | ✅      |
+| Missing inline field → orphan queue, source untouched         | 1     | ✅      |
+| Reverify mismatch (injected fault) → orphan, source intact    | 1     | ✅      |
+| Saga history is append-only with timestamp + actor per step   | 1     | ✅      |
+| `scan_collection` processes every doc with the field          | 1     | ✅      |
+| **Total**                                                     | **7** | **green** |
+
+Full regression: **137 tests pass** across Phase 1 / 1A / 1C / 2A /
+3.1 / 3.2 / 3.3. No mocks introduced. Lint clean.
+
+### Outstanding (Phase 3.4-3.10)
+- 🟡 **3.4 Evidence aggregate** — `evidence_id`, `registry_id`,
+  `object_ref`, `hash_fingerprint`, `custody_chain` + new
+  `/api/v1/evidence/*` API. **Contract bump to v1.2.0 lands here**
+  (additive minor; OpenAPI/JSON Schemas/Event Catalog regenerated;
+  drift gate refreshed).
+- 🟡 **3.5 Sealing** — `Seal` aggregate + WORM lockdown.
+- 🟡 **3.6 Locking, integrity & anchoring** — Merkle saga (CT-log
+  first, OTS second, behind `AnchorPort` + `CheckpointPublisherPort`);
+  DLQ + replay; resumable.
+- 🟡 **3.7 Timeline & versioning** — append-only chain of custody +
+  supersession lock chain.
+- 🟡 **3.8 Events & projections** — 17 Evidence event types;
+  rebuildable read models.
+- 🟡 **3.9 SDK & React UI** — TS SDK regenerated from frozen v1.2.0;
+  React pages for upload/list/detail/timeline/seal/integrity/version/
+  custody.
+- 🟡 **3.10 Phase Acceptance Review packet** — Phase 4 awaits
+  explicit operator approval.
+
+_Previous Phase 3.2 entry below._
+
+---
+
 ## ⏱ 2026-06-29 — Phase 3.2 COMPLETE: PII Encryption
 
 Shipped step 2 of Phase 3 per the binding sequence. **No
