@@ -2,6 +2,43 @@
 
 _Last updated: 2026-06-29_
 
+## ⏱ 2026-06-29 — Phase 3.8 COMPLETE: Read Models, Projection Engine, Replay
+
+Shipped as a single coherent vertical slice. Contract bumped **1.4.0 → 1.5.0** (additive minor; 98 frozen artifacts). Constitutional Projection Determinism Gate (ADR-0010 §3) passes end-to-end.
+
+### Delivered
+- **In-process Projection Engine** (`backend/kernel/projections/__init__.py`):
+  `Projection` protocol, `ProjectionEngine` (cursor tracking on `kernel_projection_cursors`, lag metric vs outbox, snapshot timestamp, deterministic replay walking outbox by `occurred_at`), `ProjectionStatus` DTO, module-level `configure_engine`/`current_engine` lifecycle.
+- **Projection Purity Invariant** (ADR-0010 §1) — `assert_projection_purity()` rejects any projection whose class source contains forbidden mutator tokens (`await publish(`, `kernel.events.outbox.publish`, `.save_seal(`, `.save_item(`, `.archive(`). Enforced inside `ProjectionEngine.register()`.
+- **Disposable Replay Engine** — `ProjectionEngine.replay(name)` resets the projection's own rows + cursor counters, walks the outbox over `event_glob`, status=DELIVERED, sorted by `occurred_at`, re-delivers via the projection's `on_event`, and restores cursor metadata. End-to-end test proves the rebuilt `evidence_timeline` + `evidence_custody` rows are byte-identical to the pre-replay state.
+- **Deterministic projection constructors** — `TimelineEntry.from_event` and `CustodyEntry.from_event` derive `{timeline_id,custody_id}` from `sha256(event_id:evidence_id:seq)` and `occurred_at` from the source envelope. The legacy `.create()` constructors remain for write-side flows (`CustodyService.record_transfer`).
+- **4 new admin HTTP endpoints** under `/api/v1/admin/projections/*` (super_admin only): list, get, replay, snapshot. New authorization action `kernel.projections.admin` registered in policy library.
+- **TimelineProjector** is now a formal Projection (`name='evidence.timeline'`, `version=1`, `event_glob='evidence.*'`, `reset()` deletes both `evidence_timeline` + `evidence_custody`). It's subscribed via `engine.register(timeline_projector)` so cursor + lag tracking happens automatically on every delivery.
+- **ADR-0010** committed (`contracts/v1/adr/ADR-0010-projections-and-read-models.md`); CHANGELOG and VERSION bumped; contract generator updated (98 artifacts at 1.5.0).
+
+### Acceptance gate — all green
+| Test suite                                          | Cases | Status |
+| --------------------------------------------------- | ----- | ------ |
+| `test_phase38_projections.py` (engine + purity + determinism gate + admin auth) | 17 | ✅ |
+| Phase 3.7 (timeline/custody/legal hold/supersession) regression | 18 | ✅ |
+| Phase 3.6 (anchoring + integrity + ctlog + locks) regression | 40 | ✅ |
+| Phase 3.4 + 3.5 (aggregate + sealing) regression | 45 | ✅ |
+| Storage / PII / Remediation                         | 37   | ✅      |
+| Phase 1 identity + Phase 2 registry                 | full | ✅      |
+| Contract drift gate (v1.5.0, 98 artifacts)          | 8/8  | ✅      |
+| **Full constitutional DDD suite**                   | **140/140** | ✅ |
+| Live HTTP backend testing agent (iteration_5)       | 100% | ✅      |
+
+### Constitutional invariants verified
+- Projection Purity (zero business logic, zero aggregate mutation, zero command publishing) — rejected at `register()` AND tested with three positive/negative cases.
+- Projection Determinism Gate — byte-identical rebuild proven end-to-end through a real Phase 3.4–3.6 evidence pipeline.
+- Cursor + lag metric correctness (N events inserted DELIVERED, M delivered through wrapper → lag = N−M).
+- 401 / 403 / 200 enforcement on every admin endpoint (super_admin only).
+- All 4 admin paths present in live `/openapi.json`.
+- `kernel.projections.admin` is the only new action; SDK regen for Phase 3.9 will pick it up automatically.
+
+---
+
 ## ⏱ 2026-06-29 — Phase 3.7 COMPLETE: Timeline + Custody + Legal Hold + Supersession
 
 Shipped as a single coherent vertical slice. Contract bumped **1.3.0 → 1.4.0** (additive minor; 96 frozen artifacts). All acceptance-gate items green.
