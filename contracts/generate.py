@@ -1200,6 +1200,25 @@ def write_all() -> list[Artifact]:
     return artifacts
 
 
+def _normalize_for_compare(relpath: str, content: str) -> str:
+    """Strip fields that legitimately rotate between commits.
+
+    The release manifest carries `git_commit` and `build_timestamp` —
+    both are metadata, not contract. We want the drift gate to catch
+    contract changes (paths, schemas, events, security), NOT commit
+    rotation noise. Everything else is byte-exact.
+    """
+    if relpath != "release-manifest.json":
+        return content
+    try:
+        doc = json.loads(content)
+    except Exception:
+        return content
+    doc["git_commit"] = "<volatile>"
+    doc["build_timestamp"] = "<volatile>"
+    return _dumps(doc)
+
+
 def diff_against_disk() -> tuple[list[Artifact], list[tuple[Artifact, str]]]:
     """Return (artifacts, mismatches). `mismatches` is a list of (artifact, on_disk_content)."""
     artifacts = build_full_package()
@@ -1209,7 +1228,8 @@ def diff_against_disk() -> tuple[list[Artifact], list[tuple[Artifact, str]]]:
             mismatches.append((a, "<MISSING>"))
             continue
         on_disk = a.absolute.read_text()
-        if on_disk != a.content:
+        if (_normalize_for_compare(a.relpath, on_disk)
+                != _normalize_for_compare(a.relpath, a.content)):
             mismatches.append((a, on_disk))
     return artifacts, mismatches
 

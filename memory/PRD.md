@@ -1,6 +1,93 @@
 # Aquasavannah LandVault — Product Requirements Document (Living)
 
-_Last updated: 2026-06-28_
+_Last updated: 2026-06-29_
+
+## ⏱ 2026-06-29 — Phase 3.1 COMPLETE: Evidence Storage Foundation
+
+First step of Phase 3 ("Files & Evidence") shipped per the binding
+build sequence (Storage → PII encryption → Media remediation →
+Aggregate → Sealing → Locking/Integrity/Anchoring → Timeline →
+Events/Projections → SDK/UI → Acceptance Review). **No
+implementation creep beyond 3.1** — aggregate, sealing, anchoring,
+hashing, encryption, and the API surface remain blueprint-only until
+their respective step gates.
+
+### Delivered
+- `backend/contexts/evidence/{ports,adapters}/` — bounded-context
+  skeleton + the two storage ports:
+  - `StoragePort` Protocol — multipart streaming upload, read-back
+    streaming hash (foundation for ADR-0004), WORM Object-Lock
+    (apply/extend/status), remediation-only `move(verify_callback)`
+    that NEVER deletes the source, canonical `StorageObjectKey` with
+    strict 2-tier (`public`/`private`) layout.
+  - `SignedUrlPort` Protocol — issues short-lived URLs (default 5min,
+    hard cap 1h) with per-role tier clamps; binding contract that the
+    audit row lands in `evidence_signed_url_audit` BEFORE the URL is
+    returned. Per-issuance nonce makes every URL byte-unique.
+- `LocalFsWormStorage` adapter (dev): chmod-immutable + sidecar
+  `<obj>.lock.json` retention metadata; refuses to overwrite or
+  re-initiate multipart on a locked key; governance-mode locks are
+  rejected at the adapter (compliance mode is the only legal mode);
+  forward-only retention extensions.
+- `R2StorageAdapter` skeleton (production): port-clean, every method
+  raises `NotImplementedError` with an explicit operator setup
+  message (`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, …). Concrete sigv4
+  implementation lands when operator credentials are configured;
+  callers do not change.
+- `SignedUrlMotorAdapter` (reference implementation of
+  `SignedUrlPort`) — HMAC-SHA-256 signed paths,
+  `evidence_signed_url_audit` collection with `url_sha256` unique
+  index, indexed by `evidence_id`, `principal_id`,
+  `(tenant_id, issued_at desc)`.
+- `main.py` wiring: composition root constructs storage + signed-URL
+  ports at startup; ensure-indexes called; `app.state` exposes the
+  ports for downstream Phase 3.4+ wiring.
+
+### Acceptance gate (Phase 3.1) — ALL GREEN
+| Test (tests/test_evidence_storage_foundation.py) | Cases | Status |
+| ------------------------------------------------ | ----- | ------ |
+| Tier strict-2-valued + key layout invariants     | 3     | ✅      |
+| Multipart streaming + canonical streamed SHA-256 | 3     | ✅      |
+| Independent read-back stream matches plaintext   | 1     | ✅      |
+| WORM contract (overwrite-blocked, mode-rejected, forward-only) | 4 | ✅      |
+| Remediation `move` preserves source bytes        | 1     | ✅      |
+| R2 adapter port-clean (NotImplementedError msg)  | 1     | ✅      |
+| Signed-URL TTL clamps + audit-before-return + invalid-TTL reject | 3 | ✅      |
+| **Total**                                        | **16**| **green** |
+
+Full regression: 24 pass (16 new + 8 contract-freeze). Contract drift
+gate refreshed (release-manifest `git_commit` + `build_timestamp` now
+normalized in the comparator to suppress commit-rotation noise while
+preserving full contract drift detection).
+
+### Phase 3 governance state
+- ADRs **0003, 0004, 0005, 0006** are committed to
+  `contracts/v1/adr/` and govern the rest of Phase 3 implementation.
+- `/app/memory/PHASE3_SPEC.md` is the authoritative spec (annotated
+  with operator-approved decisions on residency, anchor cadence,
+  reservation sizes, CheckpointPublisherPort abstraction).
+- Contract bump deferred until the Phase 3 API surface lands at
+  Phase 3.4 — until then 3.1 is purely infrastructural (no new
+  endpoints, no schema changes).
+
+### Outstanding (Phase 3.2+)
+- 🟡 **Phase 3.2 — PII encryption**: `EncryptionPort` + Software KMS
+  with per-tenant DEK / per-country master + Break-Glass cross-
+  country unwrap (super_admin + reason + `SecurityIncident` event +
+  dual-auth design).
+- 🟡 **Phase 3.3 — Media remediation**: idempotent migration of
+  base64/binary from legacy Mongo docs into private storage via
+  verify-then-cutover; orphan worker.
+- 🟡 **Phase 3.4 — Evidence aggregate**: `evidence_id`,
+  `registry_id`, `evidence_type`, `object_ref`, `hash_fingerprint`,
+  `custody_chain` + API surface (contract bump to 1.2.0).
+- 🟡 **Phase 3.5 — Sealing**, **3.6 — Locking/integrity/anchoring**,
+  **3.7 — Timeline/versioning**, **3.8 — Events/projections**,
+  **3.9 — SDK/UI**, **3.10 — Acceptance Review packet**.
+
+_Previous Phase 2A entry below._
+
+---
 
 ## ⏱ 2026-06-28 — Phase 2A COMPLETE: Canonical LandVault Registry
 

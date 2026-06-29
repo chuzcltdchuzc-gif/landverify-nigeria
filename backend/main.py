@@ -45,6 +45,10 @@ from contexts.registry.adapters.mongo_repository import MongoLandVaultRepository
 from contexts.registry.api import router as registry_router
 from contexts.registry.application import RegistryCommandService, RegistryQueryService
 from contexts.registry.authorization import register_registry_policies
+# Phase 3.1 — Evidence storage foundation (ports + adapters only at 3.1; the
+# Evidence aggregate + API land at 3.4 per the binding step sequence).
+from contexts.evidence.adapters.fs_worm_storage import LocalFsWormStorage
+from contexts.evidence.adapters.signed_url_motor import SignedUrlMotorAdapter
 from kernel.audit import configure_audit_store
 from kernel.authorization.pep import configure_pep
 from kernel.authorization.policies import register_default_policies
@@ -166,8 +170,32 @@ async def _startup() -> None:
     from contexts.registry.legacy_adapter import configure_legacy_adapter
     configure_legacy_adapter(registry_command)
 
+    # --- Phase 3.1 Evidence storage foundation --------------------------
+    # Storage adapter: LocalFs WORM (dev). Production swaps to R2 via the
+    # same StoragePort contract.
+    import os as _os
+    evidence_root = _os.environ.get("EVIDENCE_FS_ROOT", "/tmp/aqua-evidence")
+    evidence_storage = LocalFsWormStorage(root_dir=evidence_root)
+    # Signed-URL adapter writes the audit row BEFORE returning the URL
+    # (ADR-0003 §3.7). The base URL is derived from CORS_ORIGINS at runtime.
+    signing_secret = SignedUrlMotorAdapter.load_or_create_secret()
+    signed_url_base = (
+        _os.environ.get("EVIDENCE_SIGNED_URL_BASE")
+        or (CORS_ORIGINS[0] if CORS_ORIGINS else "http://localhost:8001")
+    )
+    evidence_signed_urls = SignedUrlMotorAdapter(
+        db=db, secret=signing_secret, base_url=signed_url_base,
+    )
+    await evidence_signed_urls.ensure_indexes()
+    # Expose for downstream Phase 3.4+ wiring (composition-root pattern).
+    app.state.evidence_storage = evidence_storage
+    app.state.evidence_signed_urls = evidence_signed_urls
+
     logger.info("Phase 1A constitutional kernel + Identity admin surface ready")
     logger.info("Phase 2A Registry bounded context ready at /api/v1/registry/*")
+    logger.info("Phase 3.1 Evidence storage foundation ready "
+                "(provider=%s, fs_root=%s)",
+                evidence_storage.provider_id, evidence_root)
 
 
 @app.on_event("shutdown")
