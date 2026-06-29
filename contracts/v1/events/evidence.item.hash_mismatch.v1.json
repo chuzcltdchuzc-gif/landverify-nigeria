@@ -170,7 +170,7 @@
   "type": "object",
   "x-aggregate": "EvidenceItem",
   "x-bounded-context": "evidence",
-  "x-contract-version": "1.3.0",
+  "x-contract-version": "1.4.0",
   "x-event-name": "evidence.item.hash_mismatch",
   "x-event-version": 1,
   "x-idempotency": "Dedup by `event_id`.",

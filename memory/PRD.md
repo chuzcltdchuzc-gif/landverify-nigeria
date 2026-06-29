@@ -2,6 +2,51 @@
 
 _Last updated: 2026-06-29_
 
+## ⏱ 2026-06-29 — Phase 3.7 COMPLETE: Timeline + Custody + Legal Hold + Supersession
+
+Shipped as a single coherent vertical slice. Contract bumped **1.3.0 → 1.4.0** (additive minor; 96 frozen artifacts). All acceptance-gate items green.
+
+### Delivered
+- **3 new append-only chained aggregates** (`backend/contexts/evidence/domain/timeline.py`):
+  - `TimelineEntry` — auto-projected chronology per evidence; 13-value `TimelineEventKind` enum; tamper-evident `prev_hash`/`entry_hash` chain (same primitive as Phase 3.6 integrity).
+  - `CustodyEntry` — full chain-of-custody with `actor`, `role`, `action`, `previous_custody_id`, `justification`, optional `signature` + `signature_kid`.
+  - `LegalHold` — independent aggregate with FSM `active → released` (one-way); both transitions emit immutable events.
+- **Supersession graph** — read API over `EvidenceItem.replaced_by` chain (no schema changes; the chain was already persisted by Phase 3.3 remediation).
+- **`TimelineProjector`** — outbox subscriber that maps every Phase 3.4/3.5/3.6 evidence event to a timeline kind + appends one chain link per affected evidence_id (seal events fan out to all `evidence_ids` in payload). Signed-URL issuance additionally appends an `accessed` custody entry.
+- **Mongo adapters** (`adapters/mongo_timeline_repository.py`): insert-only `evidence_timeline`, `evidence_custody`, and `evidence_legal_holds` collections. Indexes on `(evidence_id, seq)` enforce chain monotonicity.
+- **8 new HTTP endpoints** under `/api/v1/evidence/{items/{id}/{timeline,custody,supersession-chain,legal-holds},legal-holds/{id}/release}` wired through central PEP/PDP with **6 new authorization actions** (hold apply/release restricted to `super_admin` + `compliance_officer`).
+- **5 new domain events** in the outbox registry + event catalog: `evidence.timeline.appended`, `evidence.custody.appended`, `evidence.legal_hold.applied`, `evidence.legal_hold.released`, `evidence.supersession.recorded`.
+- **ADR-0009** committed (`contracts/v1/adr/ADR-0009-timeline-custody-legalhold-supersession.md`).
+
+### Acceptance gate — all green
+| Test suite                                  | Cases | Status |
+| ------------------------------------------- | ----- | ------ |
+| `test_phase37_timeline.py` (invariants+E2E) | 18    | ✅      |
+| Phase 3.6 regression                        | 40    | ✅      |
+| Phase 3.4 + 3.5 regression                  | 45    | ✅      |
+| Storage / PII / Remediation                 | 37    | ✅      |
+| **Full evidence-context test suite**        | **140** | ✅    |
+| Contract drift gate (v1.4.0)                | green | ✅      |
+
+Acceptance criteria from the directive:
+- ✅ timeline reconstruction verified (`test_timeline_is_auto_projected_from_event_stream` + chain-link determinism property test)
+- ✅ custody reconstruction verified (`test_record_custody_endpoint_appends_link` + signed-URL auto-custody)
+- ✅ supersession traversal verified (`test_supersession_chain_endpoint`)
+- ✅ retention override (LegalHold) verified (apply + release + role gating)
+- ✅ replay succeeds (`TimelineProjector.on_event` is idempotent via adapter-level unique `(evidence_id, seq)` index)
+- ✅ invariant tests pass (one-way release; append-only chains; PII non-leakage)
+- ✅ contract drift gate green
+
+### Strict non-goals (deferred — Phase 3.8+)
+- Read-model projection rebuild engine + replay command + snapshots → Phase 3.8.
+- TypeScript SDK regeneration + React UI → Phase 3.9.
+- Formal Phase Acceptance Review Packet → Phase 3.10.
+- **Phase 4 (Workflows) — gated on Phase 3.10 explicit operator approval.**
+
+_Previous Phase 3.6 completion entry below._
+
+---
+
 ## ⏱ 2026-06-29 — Phase 3.6 COMPLETE: Anchoring, Integrity & Locking
 
 Shipped as a single coherent vertical slice per operator authorization.

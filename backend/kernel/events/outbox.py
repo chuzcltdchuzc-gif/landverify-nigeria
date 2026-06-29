@@ -67,6 +67,12 @@ EVENT_TYPES = (
     "evidence.anchor.failed",
     "evidence.anchor.replayed",
     "evidence.ctlog.checkpoint_published",
+    # Phase 3.7 — Timeline + Custody + Legal Hold
+    "evidence.timeline.appended",
+    "evidence.custody.appended",
+    "evidence.legal_hold.applied",
+    "evidence.legal_hold.released",
+    "evidence.supersession.recorded",
 )
 
 # In-process subscriber registry — handler(envelope) -> awaitable

@@ -178,6 +178,38 @@
     {
       "action": "evidence.ctlog.checkpoint.read",
       "description": "Read the latest published CT-log tree head."
+    },
+    {
+      "action": "evidence.timeline.read",
+      "description": "Read the append-only Evidence Timeline chain."
+    },
+    {
+      "action": "evidence.custody.read",
+      "description": "Read the append-only chain-of-custody for an evidence item."
+    },
+    {
+      "action": "evidence.custody.record",
+      "description": "Append a custody-transfer entry (signed by the actor)."
+    },
+    {
+      "action": "evidence.legal_hold.read",
+      "description": "Read Legal Hold + status."
+    },
+    {
+      "action": "evidence.legal_hold.apply",
+      "description": "Apply an independent Legal Hold that overrides retention.",
+      "required_roles": [
+        "super_admin",
+        "compliance_officer"
+      ]
+    },
+    {
+      "action": "evidence.legal_hold.release",
+      "description": "Release a Legal Hold. Release is itself immutable.",
+      "required_roles": [
+        "super_admin",
+        "compliance_officer"
+      ]
     }
   ],
   "identity_actions": [
@@ -380,5 +412,5 @@
       ]
     }
   ],
-  "x-contract-version": "1.3.0"
+  "x-contract-version": "1.4.0"
 }

@@ -203,8 +203,40 @@ def _evidence_integrity(ctx: ExecutionContext, action: str, resource: dict,
     return None
 
 
+def _evidence_timeline(ctx: ExecutionContext, action: str, resource: dict,
+                         env: dict) -> Optional[Decision]:
+    if action not in {"evidence.timeline.read", "evidence.custody.read",
+                      "evidence.custody.record",
+                      "evidence.legal_hold.read",
+                      "evidence.legal_hold.apply",
+                      "evidence.legal_hold.release"}:
+        return None
+    if not ctx.is_authenticated:
+        return Decision.deny(reason="authentication required",
+                              policy_id=f"{action}.anonymous")
+    if action in {"evidence.timeline.read", "evidence.custody.read",
+                   "evidence.legal_hold.read"}:
+        if (set(ctx.roles) & READ_PRIVILEGED_ROLES) or (set(ctx.roles) & UPLOAD_ROLES):
+            return Decision.permit(reason="role permitted",
+                                    policy_id=f"{action}.role")
+        return Decision.deny(reason="missing role",
+                              policy_id=f"{action}.role_required")
+    if action == "evidence.custody.record":
+        if set(ctx.roles) & UPLOAD_ROLES or set(ctx.roles) & READ_PRIVILEGED_ROLES:
+            return Decision.permit(reason="role permitted",
+                                    policy_id=f"{action}.role")
+        return Decision.deny(reason="missing role",
+                              policy_id=f"{action}.role_required")
+    # Legal hold apply / release: super_admin + compliance_officer only.
+    if set(ctx.roles) & {"super_admin", "compliance_officer"}:
+        return Decision.permit(reason="hold actor",
+                                policy_id=f"{action}.role")
+    return Decision.deny(reason="super_admin or compliance_officer required",
+                          policy_id=f"{action}.role_required")
+
+
 def register_evidence_policies() -> None:
-    """Idempotent registration of Phase 3.4 + 3.5 + 3.6 policies."""
+    """Idempotent registration of Phase 3.4 + 3.5 + 3.6 + 3.7 policies."""
     global _EVIDENCE_REGISTERED
     if _EVIDENCE_REGISTERED:
         return
@@ -229,4 +261,7 @@ def register_evidence_policies() -> None:
     register_policy("evidence.integrity", 270,
                     "Integrity check trigger + read + CT-log checkpoint read",
                     _evidence_integrity)
+    register_policy("evidence.timeline", 280,
+                    "Phase 3.7 timeline + custody + legal hold policies",
+                    _evidence_timeline)
     _EVIDENCE_REGISTERED = True

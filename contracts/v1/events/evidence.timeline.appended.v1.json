@@ -1,0 +1,194 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/events/evidence.timeline.appended.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Domain event emitted by the `evidence` bounded context for aggregate `TimelineEntry`. Schema validates the full envelope; `payload` carries the aggregate-specific fields documented under `x-payload-fields`.",
+  "properties": {
+    "actor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "aggregate_id": {
+      "type": "string"
+    },
+    "aggregate_type": {
+      "const": "TimelineEntry",
+      "type": "string"
+    },
+    "aggregate_version": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "causation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "correlation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "country": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "event_id": {
+      "pattern": "^evt_[a-f0-9]{32}$",
+      "type": "string"
+    },
+    "event_type": {
+      "const": "evidence.timeline.appended",
+      "type": "string"
+    },
+    "event_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "organization_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "payload": {
+      "additionalProperties": true,
+      "properties": {
+        "actor": {
+          "description": "string",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "evidence_id": {
+          "description": "string",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "kind": {
+          "description": "string — TimelineEventKind",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "occurred_at": {
+          "description": "string ISO8601",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "seq": {
+          "description": "integer",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "summary": {
+          "description": "string",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "timeline_id": {
+          "description": "string",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "producer": {
+      "const": "evidence",
+      "type": "string"
+    },
+    "tenant_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "aggregate_type",
+    "aggregate_id",
+    "aggregate_version",
+    "occurred_at",
+    "producer",
+    "payload"
+  ],
+  "title": "evidence.timeline.appended",
+  "type": "object",
+  "x-aggregate": "TimelineEntry",
+  "x-bounded-context": "evidence",
+  "x-contract-version": "1.4.0",
+  "x-event-name": "evidence.timeline.appended",
+  "x-event-version": 1,
+  "x-idempotency": "Dedup by `event_id`. Timeline insertion is also dedup'd by `(evidence_id, seq)` at the adapter.",
+  "x-known-consumers": [
+    "audit-log",
+    "verification",
+    "ui-projection"
+  ],
+  "x-ordering": "Strict per-evidence ordering by `seq`. Insert-only.",
+  "x-payload-fields": {
+    "actor": "string",
+    "evidence_id": "string",
+    "kind": "string — TimelineEventKind",
+    "occurred_at": "string ISO8601",
+    "seq": "integer",
+    "summary": "string",
+    "timeline_id": "string"
+  },
+  "x-producer": "evidence",
+  "x-replay": "Idempotent. Timeline is itself a projection of the upstream event stream."
+}

@@ -581,7 +581,85 @@
       "producer": "evidence",
       "replay_support": "Idempotent. Each checkpoint is signed.",
       "version": 1
+    },
+    {
+      "aggregate": "TimelineEntry",
+      "bounded_context": "evidence",
+      "event_name": "evidence.timeline.appended",
+      "idempotency_requirements": "Dedup by `event_id`. Timeline insertion is also dedup'd by `(evidence_id, seq)` at the adapter.",
+      "known_consumers": [
+        "audit-log",
+        "verification",
+        "ui-projection"
+      ],
+      "ordering_guarantees": "Strict per-evidence ordering by `seq`. Insert-only.",
+      "payload_schema": "v1/events/evidence.timeline.appended.v1.json",
+      "producer": "evidence",
+      "replay_support": "Idempotent. Timeline is itself a projection of the upstream event stream.",
+      "version": 1
+    },
+    {
+      "aggregate": "CustodyEntry",
+      "bounded_context": "evidence",
+      "event_name": "evidence.custody.appended",
+      "idempotency_requirements": "Dedup by `event_id`. Adapter-level dedup on `(evidence_id, seq)`.",
+      "known_consumers": [
+        "audit-log",
+        "court-export",
+        "ui-projection"
+      ],
+      "ordering_guarantees": "Strict per-evidence ordering by `seq`.",
+      "payload_schema": "v1/events/evidence.custody.appended.v1.json",
+      "producer": "evidence",
+      "replay_support": "Idempotent. Each link references the previous via `previous_custody_id` + `prev_hash`.",
+      "version": 1
+    },
+    {
+      "aggregate": "LegalHold",
+      "bounded_context": "evidence",
+      "event_name": "evidence.legal_hold.applied",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "retention-sweeper",
+        "ui-projection"
+      ],
+      "ordering_guarantees": "Per-LegalHold ordering by `aggregate_version`.",
+      "payload_schema": "v1/events/evidence.legal_hold.applied.v1.json",
+      "producer": "evidence",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "LegalHold",
+      "bounded_context": "evidence",
+      "event_name": "evidence.legal_hold.released",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "retention-sweeper"
+      ],
+      "ordering_guarantees": "Per-LegalHold ordering. Terminal.",
+      "payload_schema": "v1/events/evidence.legal_hold.released.v1.json",
+      "producer": "evidence",
+      "replay_support": "Idempotent. Release is one-way.",
+      "version": 1
+    },
+    {
+      "aggregate": "EvidenceItem",
+      "bounded_context": "evidence",
+      "event_name": "evidence.supersession.recorded",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "ui-projection"
+      ],
+      "ordering_guarantees": "Per-EvidenceItem ordering.",
+      "payload_schema": "v1/events/evidence.supersession.recorded.v1.json",
+      "producer": "evidence",
+      "replay_support": "Idempotent.",
+      "version": 1
     }
   ],
-  "x-contract-version": "1.3.0"
+  "x-contract-version": "1.4.0"
 }

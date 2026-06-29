@@ -159,7 +159,7 @@
   "type": "object",
   "x-aggregate": "EvidenceItem",
   "x-bounded-context": "evidence",
-  "x-contract-version": "1.3.0",
+  "x-contract-version": "1.4.0",
   "x-event-name": "evidence.signed_url.issued",
   "x-event-version": 1,
   "x-idempotency": "Dedup by `event_id`. The signed-URL audit row is the durable source of truth; this event is a fan-out signal for downstream consumers.",

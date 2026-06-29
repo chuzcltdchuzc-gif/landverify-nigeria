@@ -159,7 +159,7 @@
   "type": "object",
   "x-aggregate": "LandVault",
   "x-bounded-context": "registry",
-  "x-contract-version": "1.3.0",
+  "x-contract-version": "1.4.0",
   "x-event-name": "registry.ownership.recorded",
   "x-event-version": 1,
   "x-idempotency": "Dedup by `event_id`. Producers emit ONLY on legal ownership changes — ordinary contact edits (phone/email) MUST NOT emit this event.",

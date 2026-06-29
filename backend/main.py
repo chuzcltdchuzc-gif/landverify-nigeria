@@ -57,6 +57,11 @@ from contexts.evidence.adapters.mongo_anchor_repository import (
     MongoEvidenceLockRepository,
     MongoIntegrityCheckRepository,
 )
+from contexts.evidence.adapters.mongo_timeline_repository import (
+    MongoCustodyRepository,
+    MongoLegalHoldRepository,
+    MongoTimelineRepository,
+)
 from contexts.evidence.adapters.ctlog_internal import CtlogInternalAdapter
 from contexts.evidence.adapters.ots_v1 import OtsV1Adapter
 from contexts.evidence.adapters.checkpoint_publishers import (
@@ -66,6 +71,7 @@ from contexts.evidence.adapters.signed_url_motor import SignedUrlMotorAdapter
 from contexts.evidence.adapters.software_kms import SoftwareKmsAdapter
 from contexts.evidence.api import router as evidence_router
 from contexts.evidence.api import anchor_router as evidence_anchor_router
+from contexts.evidence.api import timeline_router as evidence_timeline_router
 from contexts.evidence.application.anchor_saga import (
     AnchorSagaService,
     CtlogCheckpointer,
@@ -129,6 +135,7 @@ api.include_router(registry_router.router)
 # Phase 3.4 / 3.5 — Evidence bounded context endpoints under /api/v1/evidence/*
 api.include_router(evidence_router.router)
 api.include_router(evidence_anchor_router.router)
+api.include_router(evidence_timeline_router.router)
 
 app.include_router(api)
 
@@ -287,6 +294,32 @@ async def _startup() -> None:
     if _os.environ.get("EVIDENCE_ANCHOR_SAGA_ENABLED", "1") != "0":
         await start_anchor_saga(anchor_saga, integrity_scheduler,
                                   ctlog_checkpointer)
+
+    # --- Phase 3.7 Timeline + Custody + Legal Hold ----------------------
+    timeline_repo = MongoTimelineRepository(db)
+    custody_repo = MongoCustodyRepository(db)
+    holds_repo = MongoLegalHoldRepository(db)
+    await timeline_repo.ensure_indexes()
+    await custody_repo.ensure_indexes()
+    await holds_repo.ensure_indexes()
+    from contexts.evidence.application.timeline_service import (
+        CustodyService, LegalHoldService, SupersessionService,
+        TimelineProjector,
+    )
+    timeline_projector = TimelineProjector(db, timeline_repo, custody_repo)
+    custody_svc = CustodyService(db, custody_repo)
+    holds_svc = LegalHoldService(db, holds_repo)
+    supersession_svc = SupersessionService(db, items_repo)
+    evidence_timeline_router.configure_router(
+        timeline_repo=timeline_repo, custody_repo=custody_repo,
+        holds_repo=holds_repo, custody_svc=custody_svc,
+        holds_svc=holds_svc, supersession_svc=supersession_svc)
+    # Subscribe the timeline projector to the outbox.
+    subscribe("evidence.*", timeline_projector.on_event)
+    app.state.timeline_repo = timeline_repo
+    app.state.custody_repo = custody_repo
+    app.state.legal_holds_repo = holds_repo
+    app.state.timeline_projector = timeline_projector
 
     logger.info("Phase 1A constitutional kernel + Identity admin surface ready")
     logger.info("Phase 2A Registry bounded context ready at /api/v1/registry/*")

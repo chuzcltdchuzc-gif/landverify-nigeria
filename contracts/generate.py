@@ -724,6 +724,76 @@ EVENT_DEFINITIONS: tuple[dict, ...] = (
             "locator": "string|null — publisher-specific reference",
         },
     },
+    # ---- Phase 3.7 — Timeline + Custody + Legal Hold + Supersession ----
+    {
+        "event_name": "evidence.timeline.appended", "version": 1,
+        "aggregate": "TimelineEntry", "bounded_context": "evidence",
+        "producer": "evidence",
+        "known_consumers": ["audit-log", "verification", "ui-projection"],
+        "idempotency_requirements": "Dedup by `event_id`. Timeline insertion is also dedup'd by `(evidence_id, seq)` at the adapter.",
+        "ordering_guarantees": "Strict per-evidence ordering by `seq`. Insert-only.",
+        "replay_support": "Idempotent. Timeline is itself a projection of the upstream event stream.",
+        "payload_fields": {
+            "timeline_id": "string", "evidence_id": "string",
+            "kind": "string — TimelineEventKind", "actor": "string",
+            "seq": "integer", "occurred_at": "string ISO8601",
+            "summary": "string",
+        },
+    },
+    {
+        "event_name": "evidence.custody.appended", "version": 1,
+        "aggregate": "CustodyEntry", "bounded_context": "evidence",
+        "producer": "evidence",
+        "known_consumers": ["audit-log", "court-export", "ui-projection"],
+        "idempotency_requirements": "Dedup by `event_id`. Adapter-level dedup on `(evidence_id, seq)`.",
+        "ordering_guarantees": "Strict per-evidence ordering by `seq`.",
+        "replay_support": "Idempotent. Each link references the previous via `previous_custody_id` + `prev_hash`.",
+        "payload_fields": {
+            "custody_id": "string", "evidence_id": "string",
+            "action": "string — CustodyAction", "role": "string",
+        },
+    },
+    {
+        "event_name": "evidence.legal_hold.applied", "version": 1,
+        "aggregate": "LegalHold", "bounded_context": "evidence",
+        "producer": "evidence",
+        "known_consumers": ["audit-log", "retention-sweeper", "ui-projection"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-LegalHold ordering by `aggregate_version`.",
+        "replay_support": "Idempotent.",
+        "payload_fields": {
+            "hold_id": "string", "evidence_id": "string",
+            "case_reference": "string", "issued_by": "string",
+            "reason": "string",
+        },
+    },
+    {
+        "event_name": "evidence.legal_hold.released", "version": 1,
+        "aggregate": "LegalHold", "bounded_context": "evidence",
+        "producer": "evidence",
+        "known_consumers": ["audit-log", "retention-sweeper"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-LegalHold ordering. Terminal.",
+        "replay_support": "Idempotent. Release is one-way.",
+        "payload_fields": {
+            "hold_id": "string", "evidence_id": "string",
+            "released_by": "string", "release_reason": "string",
+        },
+    },
+    {
+        "event_name": "evidence.supersession.recorded", "version": 1,
+        "aggregate": "EvidenceItem", "bounded_context": "evidence",
+        "producer": "evidence",
+        "known_consumers": ["audit-log", "ui-projection"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-EvidenceItem ordering.",
+        "replay_support": "Idempotent.",
+        "payload_fields": {
+            "evidence_id": "string — superseded item id",
+            "replaced_by": "string — successor evidence_id",
+            "superseded_reason": "string",
+        },
+    },
 )
 
 # Canonical RFC7807 error contracts (Phase 1C, §5). Every error a v1
@@ -1342,6 +1412,21 @@ def _build_security_contracts() -> dict[str, dict]:
              "description": "Read EvidenceIntegrityCheck chain (role-projected)."},
             {"action": "evidence.ctlog.checkpoint.read",
              "description": "Read the latest published CT-log tree head."},
+            # Phase 3.7
+            {"action": "evidence.timeline.read",
+             "description": "Read the append-only Evidence Timeline chain."},
+            {"action": "evidence.custody.read",
+             "description": "Read the append-only chain-of-custody for an evidence item."},
+            {"action": "evidence.custody.record",
+             "description": "Append a custody-transfer entry (signed by the actor)."},
+            {"action": "evidence.legal_hold.read",
+             "description": "Read Legal Hold + status."},
+            {"action": "evidence.legal_hold.apply",
+             "required_roles": ["super_admin", "compliance_officer"],
+             "description": "Apply an independent Legal Hold that overrides retention."},
+            {"action": "evidence.legal_hold.release",
+             "required_roles": ["super_admin", "compliance_officer"],
+             "description": "Release a Legal Hold. Release is itself immutable."},
         ],
     }
 
@@ -1695,6 +1780,7 @@ def _build_release_manifest(all_artifacts: list[Artifact]) -> Artifact:
             "ADR-0006 — Legal hold + remediation supersession",
             "ADR-0007 — Canonical Evidence Aggregate + Sealing",
             "ADR-0008 — Evidence Anchoring & Integrity Saga",
+            "ADR-0009 — Timeline, Custody Chain, Legal Hold, Supersession (Phase 3.7)",
         ],
         "checksums": {
             "openapi_sha256": openapi_sha,

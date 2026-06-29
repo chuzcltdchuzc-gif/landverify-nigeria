@@ -11,6 +11,37 @@ Every entry below MUST reference its ADR.
 
 ---
 
+## [1.4.0] — 2026-06-29 — Phase 3.7: Timeline + Custody + Legal Hold + Supersession
+
+* **ADR-0009 — Timeline, Custody, Legal Hold, Supersession**:
+  introduces three append-only chained aggregates
+  (`TimelineEntry`, `CustodyEntry`, `LegalHold`) and the supersession
+  graph navigation API over the existing `EvidenceItem.replaced_by`
+  chain. Timeline is auto-projected from the outbox event stream; the
+  `TimelineProjector` subscriber is registered against `evidence.*`.
+* **Additive (`/api/v1/*`)** — 8 new endpoints under `/api/v1/evidence`:
+  * `GET /items/{id}/timeline`
+  * `GET /items/{id}/custody` + `POST /items/{id}/custody`
+  * `GET /items/{id}/supersession-chain`
+  * `GET /items/{id}/legal-holds` + `POST /items/{id}/legal-holds`
+  * `GET /legal-holds/{id}` + `POST /legal-holds/{id}/release`
+* **Additive (events)** — 5 new domain events:
+  `evidence.timeline.appended`, `evidence.custody.appended`,
+  `evidence.legal_hold.applied`, `evidence.legal_hold.released`,
+  `evidence.supersession.recorded` (all v1).
+* **Additive (security)** — 6 new actions in `evidence_actions`
+  (`evidence.timeline.read`, `evidence.custody.read`,
+  `evidence.custody.record`, `evidence.legal_hold.read`,
+  `evidence.legal_hold.apply`, `evidence.legal_hold.release`).
+  Hold apply/release restricted to `super_admin` + `compliance_officer`.
+* **Invariants**: timeline + custody chains are append-only (adapter
+  refuses update/delete); LegalHold `active → released` is a one-way
+  transition (release-twice → 409); supersession graph is forever
+  navigable; chain-link verification primitive shared with Phase 3.6
+  integrity (offline verifier can replay independently).
+* **Drift gate** updated — 96 frozen artifacts at 1.4.0 (up from 91).
+  Backward-compatible with 1.3.0 / 1.2.0 / 1.1.0 / 1.0.0 consumers.
+
 ## [1.3.0] — 2026-06-29 — Phase 3.6: Anchoring, Integrity & Locking
 
 * **ADR-0008 — Evidence Anchoring & Integrity Saga**: introduces three

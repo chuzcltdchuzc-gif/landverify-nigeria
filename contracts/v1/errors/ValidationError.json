@@ -76,7 +76,7 @@
   ],
   "title": "ValidationError",
   "type": "object",
-  "x-contract-version": "1.3.0",
+  "x-contract-version": "1.4.0",
   "x-error-code": "common.validation_error",
   "x-http-status": 422,
   "x-rfc": "RFC 7807"

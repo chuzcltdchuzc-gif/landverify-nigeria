@@ -126,7 +126,7 @@
   "type": "object",
   "x-aggregate": "User",
   "x-bounded-context": "identity",
-  "x-contract-version": "1.3.0",
+  "x-contract-version": "1.4.0",
   "x-event-name": "identity.account.suspended",
   "x-event-version": 1,
   "x-idempotency": "Dedup by `event_id`.",
