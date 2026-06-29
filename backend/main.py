@@ -49,6 +49,7 @@ from contexts.registry.authorization import register_registry_policies
 # Evidence aggregate + API land at 3.4 per the binding step sequence).
 from contexts.evidence.adapters.fs_worm_storage import LocalFsWormStorage
 from contexts.evidence.adapters.signed_url_motor import SignedUrlMotorAdapter
+from contexts.evidence.adapters.software_kms import SoftwareKmsAdapter
 from kernel.audit import configure_audit_store
 from kernel.authorization.pep import configure_pep
 from kernel.authorization.policies import register_default_policies
@@ -191,11 +192,21 @@ async def _startup() -> None:
     app.state.evidence_storage = evidence_storage
     app.state.evidence_signed_urls = evidence_signed_urls
 
+    # --- Phase 3.2 Evidence PII encryption ------------------------------
+    # Domain depends only on EncryptionPort; SoftwareKmsAdapter is the
+    # first concrete adapter. Production swaps to AWS KMS / Vault / HSM
+    # without touching domain code.
+    evidence_kms = SoftwareKmsAdapter(db=db)
+    await evidence_kms.ensure_indexes()
+    app.state.evidence_kms = evidence_kms
+
     logger.info("Phase 1A constitutional kernel + Identity admin surface ready")
     logger.info("Phase 2A Registry bounded context ready at /api/v1/registry/*")
     logger.info("Phase 3.1 Evidence storage foundation ready "
                 "(provider=%s, fs_root=%s)",
                 evidence_storage.provider_id, evidence_root)
+    logger.info("Phase 3.2 Evidence PII encryption ready (kms=%s)",
+                evidence_kms.kms_id)
 
 
 @app.on_event("shutdown")

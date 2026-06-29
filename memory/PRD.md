@@ -2,6 +2,99 @@
 
 _Last updated: 2026-06-29_
 
+## ⏱ 2026-06-29 — Phase 3.2 COMPLETE: PII Encryption
+
+Shipped step 2 of Phase 3 per the binding sequence. **No
+implementation creep beyond 3.2** — aggregate, sealing, anchoring,
+remediation, timeline, and API surface remain blueprint-only until
+their respective steps. Honors operator constraint §9 ("architectural
+correctness over implementation convenience").
+
+### Delivered
+- `backend/contexts/evidence/ports/encryption.py`:
+  - `EncryptionPort` Protocol — the **sole** cryptographic
+    abstraction. Domain never sees `nacl` (enforced by an automated
+    import-scan test).
+  - `EncryptionEnvelope` value object — `kms_id`, `tenant_dek_id`,
+    `country_master_kid`, `wrap_alg`, `nonce_b64`, `schema`. Stored
+    verbatim next to every encrypted artifact; round-trip via
+    `to_dict`/`from_dict`.
+  - `BreakGlassChallenge` value object — `requesting_principal_id`,
+    `requesting_role`, `request_country`, `target_country`,
+    `reason_code`, `reason_detail`, `correlation_id`, and dual-auth
+    fields (`second_approver_principal_id`,
+    `second_approver_signature`). `is_dual_authorized()` returns true
+    iff both are present.
+  - `ResidencyViolation` / `BreakGlassRejected` exceptions.
+- `backend/contexts/evidence/adapters/software_kms.py`:
+  - First concrete adapter — XSalsa20-Poly1305 via `nacl.SecretBox`.
+  - Per-country master in `evidence_country_masters` (one document
+    per country, upserted via `$setOnInsert` so concurrent boots
+    never replace an existing master).
+  - Per-tenant DEK in `evidence_tenant_deks` (unique on
+    `(tenant_id, country)`), DEK plaintext **never persisted** —
+    Mongo holds only nonce + ciphertext + wrap_alg.
+  - `evidence_security_incidents` collection — Break-Glass attempts
+    and successes recorded BEFORE the unwrap returns (durable audit
+    even if the subsequent crypto fails).
+  - Operator-defined allow-list of reason codes:
+    `LITIGATION_PRESERVATION_ORDER`, `REGULATOR_AUDIT`,
+    `CRIMINAL_INVESTIGATION`, `DATA_SUBJECT_LEGAL_REQUEST`,
+    `INTERNAL_FRAUD_REVIEW`. Anything outside is rejected at the
+    port boundary.
+  - Streaming encrypt/decrypt (XOR-counter per-chunk nonce derivation
+    over the envelope's single stream nonce) for future Phase 3.5
+    sealing of binaries.
+- `main.py` composition root: `evidence_kms` constructed at startup
+  with `await ensure_indexes()`; exposed via `app.state.evidence_kms`
+  for Phase 3.4+ wiring.
+
+### Acceptance gate (Phase 3.2) — ALL GREEN
+| Test (tests/test_evidence_pii_encryption.py)                  | Cases | Status |
+| ------------------------------------------------------------- | ----- | ------ |
+| Domain/application code never imports `nacl` (file scan)      | 1     | ✅      |
+| `ensure_country_master` idempotent + single-row per country   | 1     | ✅      |
+| `get_or_create_tenant_dek` idempotent per (tenant, country)   | 1     | ✅      |
+| Tenant DEK plaintext NEVER persisted                          | 1     | ✅      |
+| Encrypt/decrypt bytes round-trip                              | 1     | ✅      |
+| Encrypt/decrypt stream round-trip (multi-chunk, irregular)    | 1     | ✅      |
+| Cross-country unwrap without break-glass denied               | 1     | ✅      |
+| Break-Glass requires `super_admin`                            | 1     | ✅      |
+| Break-Glass reason must be in allow-list                      | 1     | ✅      |
+| Break-Glass records `SecurityIncident` BEFORE returning       | 1     | ✅      |
+| Dual-auth fields carried through to the incident record       | 1     | ✅      |
+| Tampered ciphertext fails to decrypt (Poly1305 MAC)           | 1     | ✅      |
+| Envelope round-trips through dict                             | 1     | ✅      |
+| `residency_country_of_async` returns DEK country              | 1     | ✅      |
+| **Total**                                                     | **14**| **green** |
+
+### Outstanding (Phase 3.3-3.10)
+- 🟡 **3.3 Media remediation** — idempotent migration of legacy
+  base64/binary fields → private storage via verify-then-cutover
+  saga; orphan worker.
+- 🟡 **3.4 Evidence aggregate** — `evidence_id`, `registry_id`,
+  `object_ref`, `hash_fingerprint`, `custody_chain`. **Contract bump
+  to v1.2.0 lands here** (additive minor: new endpoints, schemas,
+  events; OpenAPI/JSON Schemas/event catalog regenerated; drift gate
+  refreshed).
+- 🟡 **3.5 Sealing** — `Seal` manifest aggregate + WORM lockdown.
+- 🟡 **3.6 Locking, integrity & anchoring** — Merkle saga (CT-log
+  first, OTS second, behind `AnchorPort` + `CheckpointPublisherPort`);
+  DLQ + replay.
+- 🟡 **3.7 Timeline & versioning** — append-only chain of custody +
+  evidence supersession via lock chain.
+- 🟡 **3.8 Events & projections** — fan-out read models + 17
+  Evidence event types in the catalog.
+- 🟡 **3.9 SDK & React Evidence UI** — TypeScript SDK regenerated
+  from frozen contracts; React pages for upload/list/seal/timeline.
+- 🟡 **3.10 Phase Acceptance Review** — one-page architectural
+  packet (ADR refs + invariant inventory + acceptance test results +
+  outstanding risks). Phase 4 does NOT auto-start.
+
+_Previous Phase 3.1 entry below._
+
+---
+
 ## ⏱ 2026-06-29 — Phase 3.1 COMPLETE: Evidence Storage Foundation
 
 First step of Phase 3 ("Files & Evidence") shipped per the binding
