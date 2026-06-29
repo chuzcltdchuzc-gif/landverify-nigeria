@@ -1,0 +1,52 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/EvidenceLockResponse.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "applied_at": {
+      "title": "Applied At",
+      "type": "string"
+    },
+    "applied_by": {
+      "title": "Applied By",
+      "type": "string"
+    },
+    "evidence_id": {
+      "title": "Evidence Id",
+      "type": "string"
+    },
+    "lock_id": {
+      "title": "Lock Id",
+      "type": "string"
+    },
+    "mode": {
+      "title": "Mode",
+      "type": "string"
+    },
+    "retention_until": {
+      "title": "Retention Until",
+      "type": "string"
+    },
+    "seal_id": {
+      "title": "Seal Id",
+      "type": "string"
+    },
+    "storage_provider": {
+      "title": "Storage Provider",
+      "type": "string"
+    }
+  },
+  "required": [
+    "lock_id",
+    "evidence_id",
+    "seal_id",
+    "storage_provider",
+    "mode",
+    "retention_until",
+    "applied_at",
+    "applied_by"
+  ],
+  "title": "EvidenceLockResponse",
+  "type": "object",
+  "x-contract-version": "1.3.0"
+}

@@ -1,0 +1,35 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/TriggerIntegrityCheckRequest.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "evidence_id": {
+      "maxLength": 64,
+      "minLength": 4,
+      "title": "Evidence Id",
+      "type": "string"
+    },
+    "trigger": {
+      "enum": [
+        "scheduled",
+        "on_demand",
+        "pre_seal",
+        "pre_certificate",
+        "pre_public_verification",
+        "pre_ownership_transfer",
+        "pre_subdivision",
+        "post_storage_migration",
+        "post_remediation",
+        "security_incident"
+      ],
+      "title": "IntegrityTrigger",
+      "type": "string"
+    }
+  },
+  "required": [
+    "evidence_id"
+  ],
+  "title": "TriggerIntegrityCheckRequest",
+  "type": "object",
+  "x-contract-version": "1.3.0"
+}

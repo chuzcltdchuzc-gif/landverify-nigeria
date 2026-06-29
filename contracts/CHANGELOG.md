@@ -11,6 +11,78 @@ Every entry below MUST reference its ADR.
 
 ---
 
+## [1.3.0] — 2026-06-29 — Phase 3.6: Anchoring, Integrity & Locking
+
+* **ADR-0008 — Evidence Anchoring & Integrity Saga**: introduces three
+  new aggregates under `backend/contexts/evidence/`:
+  * `EvidenceLock` — first-class WORM lock aggregate, forward-only
+    retention extensions, append-only `extensions[]` history.
+  * `EvidenceIntegrityCheck` — immutable, chained (`prev_hash` /
+    `entry_hash`) hash re-verification log. Ten-value `triggered_by`
+    enum per §15 Decision 4: scheduled (30d baseline) + 7 mandatory
+    triggers (pre_certificate, pre_public_verification,
+    pre_ownership_transfer, pre_subdivision, post_storage_migration,
+    on_demand, security_incident) + pre_seal + post_remediation.
+  * `AnchorBatch` — saga aggregate with the eight-state FSM from
+    ADR-0008 §6: `pending_batch → sealed → submitted → confirming →
+    confirmed | failed → dead_letter → replay`. Replay produces a NEW
+    batch row; the original DLQ row stays frozen forever.
+* **Two new ports**: `AnchorPort` (`ctlog_internal` primary +
+  `ots_v1` secondary, sharing zero domain code) and
+  `CheckpointPublisherPort` (local-FS dev default; R2/IPFS/both via
+  fan-out in production, operator-configured via
+  `EVIDENCE_CHECKPOINT_PUBLISHERS`).
+* **Anchoring saga**: batcher (60s, auto-split at 256 seals),
+  confirmer (CAS-claim, exponential backoff
+  `[10s, 60s, 5min, 1h, 6h, 24h]`, max 12 attempts → DLQ),
+  super_admin replay endpoint, idempotent over `(batch_id,
+  merkle_root)`, resumable across worker restarts.
+* **CT-log internal adapter**: append-only `evidence_ctlog_tree` of
+  leaves with monotonic `leaf_seq`, daily signed-tree-head publisher
+  to `evidence_ctlog_checkpoints` + the external
+  `CheckpointPublisherPort`. Inclusion proofs computed deterministically
+  via bitcoin-style audit paths.
+* **OpenTimestamps adapter**: configurable calendar list, **2-of-N
+  quorum**, single-calendar failure does NOT fail the saga. Stub
+  fetcher for dev; real network calls land under `OTS_NETWORK_TESTS=1`.
+* **Additive (`/api/v1/*`)** — 10 new endpoints under
+  `/api/v1/evidence`:
+  * `GET /anchor-batches/{batch_id}`
+  * `GET /anchor-batches/by-seal/{seal_id}`
+  * `GET /anchor-batches?state=…`
+  * `POST /anchor-batches/{batch_id}/replay` (super_admin only)
+  * `GET /locks/{lock_id}`
+  * `GET /locks/by-evidence/{evidence_id}`
+  * `POST /locks/{lock_id}/extend` (super_admin + compliance_officer)
+  * `POST /integrity-checks` (on-demand or mandatory-trigger)
+  * `GET /integrity-checks/{check_id}`
+  * `GET /integrity-checks/by-evidence/{evidence_id}`
+  * `GET /ctlog/checkpoints/latest`
+* **Additive (events)** — 12 new domain events: `evidence.lock.applied`,
+  `evidence.lock.extended`, `evidence.integrity.check_started`,
+  `evidence.integrity.passed`, `evidence.integrity.failed`,
+  `evidence.integrity.check_errored`, `evidence.anchor.batched`,
+  `evidence.anchor.submitted`, `evidence.anchor.confirmed`,
+  `evidence.anchor.failed`, `evidence.anchor.replayed`,
+  `evidence.ctlog.checkpoint_published` (all v1).
+* **Additive (schemas)** — 3 new request DTOs + 7 new response DTOs
+  frozen as independent JSON Schemas.
+* **Additive (security)** — 7 new actions in the `evidence_actions`
+  block of `v1/security/permissions.json` and 3 new aggregate
+  projections (`evidence.lock`, `evidence.integrity_check`,
+  `evidence.anchor_batch`) in `v1/security/field_projection.json`.
+* **Constitutional invariants** (ADR-0008 §15): twelve binding rules
+  with named tests. Evidence remains immutable after sealing;
+  Registry is never mutated by Evidence; cross-context communication
+  via events only; anchor records append-only; Merkle roots
+  deterministic; CT-log primary; OTS secondary independent;
+  replay idempotent; DLQ resumable; complete audit coverage; no
+  binaries in MongoDB; no PII in checkpoints/anchor metadata.
+* **Drift gate** updated — contract package fingerprints refreshed
+  for 1.3.0. Existing Phase 1/2/3.4/3.5 artifacts remain backward
+  compatible; consumers on 1.0.0/1.1.0/1.2.0 continue to work
+  unchanged.
+
 ## [1.2.0] — 2026-06-29 — Phase 3.4 + 3.5: Canonical Evidence Aggregate + Sealing
 
 * **ADR-0007 — Canonical Evidence Aggregate + Sealing**: introduces the

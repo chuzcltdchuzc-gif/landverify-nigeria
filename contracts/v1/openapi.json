@@ -1,6 +1,35 @@
 {
   "components": {
     "schemas": {
+      "AnchorBatchResponse": {
+        "additionalProperties": true,
+        "properties": {
+          "batch_id": {
+            "title": "Batch Id",
+            "type": "string"
+          },
+          "merkle_root": {
+            "title": "Merkle Root",
+            "type": "string"
+          },
+          "provider_id": {
+            "title": "Provider Id",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "batch_id",
+          "provider_id",
+          "state",
+          "merkle_root"
+        ],
+        "title": "AnchorBatchResponse",
+        "type": "object"
+      },
       "ApplySealWormRequest": {
         "additionalProperties": false,
         "properties": {},
@@ -451,6 +480,40 @@
         "title": "CreateServiceAccountRequest",
         "type": "object"
       },
+      "CtlogCheckpointResponse": {
+        "additionalProperties": true,
+        "properties": {
+          "head_seq": {
+            "title": "Head Seq",
+            "type": "integer"
+          },
+          "published_at": {
+            "title": "Published At",
+            "type": "string"
+          },
+          "root_hash": {
+            "title": "Root Hash",
+            "type": "string"
+          },
+          "signature_kid": {
+            "title": "Signature Kid",
+            "type": "string"
+          },
+          "tree_size": {
+            "title": "Tree Size",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "head_seq",
+          "tree_size",
+          "root_hash",
+          "published_at",
+          "signature_kid"
+        ],
+        "title": "CtlogCheckpointResponse",
+        "type": "object"
+      },
       "DelegationRequest": {
         "additionalProperties": false,
         "properties": {
@@ -615,6 +678,96 @@
         "title": "EvidenceKind",
         "type": "string"
       },
+      "EvidenceLockListResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "locks": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Locks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "locks"
+        ],
+        "title": "EvidenceLockListResponse",
+        "type": "object"
+      },
+      "EvidenceLockResponse": {
+        "additionalProperties": true,
+        "properties": {
+          "applied_at": {
+            "title": "Applied At",
+            "type": "string"
+          },
+          "applied_by": {
+            "title": "Applied By",
+            "type": "string"
+          },
+          "evidence_id": {
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "lock_id": {
+            "title": "Lock Id",
+            "type": "string"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "retention_until": {
+            "title": "Retention Until",
+            "type": "string"
+          },
+          "seal_id": {
+            "title": "Seal Id",
+            "type": "string"
+          },
+          "storage_provider": {
+            "title": "Storage Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "lock_id",
+          "evidence_id",
+          "seal_id",
+          "storage_provider",
+          "mode",
+          "retention_until",
+          "applied_at",
+          "applied_by"
+        ],
+        "title": "EvidenceLockResponse",
+        "type": "object"
+      },
+      "ExtendLockRetentionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "new_until": {
+            "maxLength": 64,
+            "minLength": 8,
+            "title": "New Until",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "new_until",
+          "reason"
+        ],
+        "title": "ExtendLockRetentionRequest",
+        "type": "object"
+      },
       "GeometryIn": {
         "additionalProperties": false,
         "description": "Minimal GeoJSON Polygon — full validation happens in the domain.",
@@ -751,6 +904,74 @@
         ],
         "title": "InitiateEvidenceUploadResponse",
         "type": "object"
+      },
+      "IntegrityChainResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "chain": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Chain",
+            "type": "array"
+          },
+          "evidence_id": {
+            "title": "Evidence Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "evidence_id",
+          "chain"
+        ],
+        "title": "IntegrityChainResponse",
+        "type": "object"
+      },
+      "IntegrityCheckResponse": {
+        "additionalProperties": true,
+        "properties": {
+          "check_id": {
+            "title": "Check Id",
+            "type": "string"
+          },
+          "evidence_id": {
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "outcome": {
+            "title": "Outcome",
+            "type": "string"
+          },
+          "triggered_by": {
+            "title": "Triggered By",
+            "type": "string"
+          }
+        },
+        "required": [
+          "check_id",
+          "evidence_id",
+          "outcome",
+          "triggered_by"
+        ],
+        "title": "IntegrityCheckResponse",
+        "type": "object"
+      },
+      "IntegrityTrigger": {
+        "enum": [
+          "scheduled",
+          "on_demand",
+          "pre_seal",
+          "pre_certificate",
+          "pre_public_verification",
+          "pre_ownership_transfer",
+          "pre_subdivision",
+          "post_storage_migration",
+          "post_remediation",
+          "security_incident"
+        ],
+        "title": "IntegrityTrigger",
+        "type": "string"
       },
       "IssueSignedUrlRequest": {
         "additionalProperties": false,
@@ -1183,6 +1404,22 @@
         "title": "RegisterRequest",
         "type": "object"
       },
+      "ReplayAnchorBatchRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "ReplayAnchorBatchRequest",
+        "type": "object"
+      },
       "RevokeRequest": {
         "additionalProperties": false,
         "properties": {
@@ -1311,6 +1548,26 @@
           "user"
         ],
         "title": "TokenResponse",
+        "type": "object"
+      },
+      "TriggerIntegrityCheckRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence_id": {
+            "maxLength": 64,
+            "minLength": 4,
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/IntegrityTrigger",
+            "default": "on_demand"
+          }
+        },
+        "required": [
+          "evidence_id"
+        ],
+        "title": "TriggerIntegrityCheckRequest",
         "type": "object"
       },
       "UpdateCommunityDataRequest": {
@@ -1764,9 +2021,9 @@
   "info": {
     "description": "Canonical, governed API surface for AquaSavannah LandVault. Endpoints under `/api/v1/*` are the supported platform contract. Endpoints under `/api/*` (without `/v1/`) are LEGACY and deprecated — see `contracts/deprecation-policy.md`.",
     "title": "Aquasavannah LandVault — Platform Contract",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "x-contract-package": "aquasavannah-landvault",
-    "x-contract-version": "1.2.0"
+    "x-contract-version": "1.3.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -7132,6 +7389,646 @@
         "x-canonical": true
       }
     },
+    "/api/v1/evidence/anchor-batches": {
+      "get": {
+        "operationId": "list_batches_api_v1_evidence_anchor_batches_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "skip",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Skip",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lv_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lv Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AnchorBatchResponse"
+                  },
+                  "title": "Response List Batches Api V1 Evidence Anchor Batches Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Batches",
+        "tags": [
+          "evidence-anchoring"
+        ],
+        "x-canonical": true
+      }
+    },
+    "/api/v1/evidence/anchor-batches/by-seal/{seal_id}": {
+      "get": {
+        "operationId": "get_batches_by_seal_api_v1_evidence_anchor_batches_by_seal__seal_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "seal_id",
+            "required": true,
+            "schema": {
+              "title": "Seal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lv_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lv Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AnchorBatchResponse"
+                  },
+                  "title": "Response Get Batches By Seal Api V1 Evidence Anchor Batches By Seal  Seal Id  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Batches By Seal",
+        "tags": [
+          "evidence-anchoring"
+        ],
+        "x-canonical": true
+      }
+    },
+    "/api/v1/evidence/anchor-batches/{batch_id}": {
+      "get": {
+        "operationId": "get_batch_api_v1_evidence_anchor_batches__batch_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "batch_id",
+            "required": true,
+            "schema": {
+              "title": "Batch Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lv_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lv Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnchorBatchResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Batch",
+        "tags": [
+          "evidence-anchoring"
+        ],
+        "x-canonical": true
+      }
+    },
+    "/api/v1/evidence/anchor-batches/{batch_id}/replay": {
+      "post": {
+        "operationId": "replay_batch_api_v1_evidence_anchor_batches__batch_id__replay_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "batch_id",
+            "required": true,
+            "schema": {
+              "title": "Batch Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lv_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lv Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplayAnchorBatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnchorBatchResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Replay Batch",
+        "tags": [
+          "evidence-anchoring"
+        ],
+        "x-canonical": true
+      }
+    },
+    "/api/v1/evidence/ctlog/checkpoints/latest": {
+      "get": {
+        "operationId": "latest_checkpoint_api_v1_evidence_ctlog_checkpoints_latest_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lv_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lv Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CtlogCheckpointResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Latest Checkpoint",
+        "tags": [
+          "evidence-anchoring"
+        ],
+        "x-canonical": true
+      }
+    },
+    "/api/v1/evidence/integrity-checks": {
+      "post": {
+        "operationId": "trigger_integrity_check_api_v1_evidence_integrity_checks_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lv_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lv Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TriggerIntegrityCheckRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrityCheckResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Trigger Integrity Check",
+        "tags": [
+          "evidence-anchoring"
+        ],
+        "x-canonical": true
+      }
+    },
+    "/api/v1/evidence/integrity-checks/by-evidence/{evidence_id}": {
+      "get": {
+        "operationId": "get_integrity_chain_api_v1_evidence_integrity_checks_by_evidence__evidence_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "evidence_id",
+            "required": true,
+            "schema": {
+              "title": "Evidence Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lv_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lv Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrityChainResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Integrity Chain",
+        "tags": [
+          "evidence-anchoring"
+        ],
+        "x-canonical": true
+      }
+    },
+    "/api/v1/evidence/integrity-checks/{check_id}": {
+      "get": {
+        "operationId": "get_integrity_check_api_v1_evidence_integrity_checks__check_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "check_id",
+            "required": true,
+            "schema": {
+              "title": "Check Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lv_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lv Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrityCheckResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Integrity Check",
+        "tags": [
+          "evidence-anchoring"
+        ],
+        "x-canonical": true
+      }
+    },
     "/api/v1/evidence/items": {
       "get": {
         "operationId": "list_evidence_api_v1_evidence_items_get",
@@ -7727,6 +8624,241 @@
         "summary": "Verify Evidence",
         "tags": [
           "evidence"
+        ],
+        "x-canonical": true
+      }
+    },
+    "/api/v1/evidence/locks/by-evidence/{evidence_id}": {
+      "get": {
+        "operationId": "list_locks_for_evidence_api_v1_evidence_locks_by_evidence__evidence_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "evidence_id",
+            "required": true,
+            "schema": {
+              "title": "Evidence Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lv_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lv Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceLockListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Locks For Evidence",
+        "tags": [
+          "evidence-anchoring"
+        ],
+        "x-canonical": true
+      }
+    },
+    "/api/v1/evidence/locks/{lock_id}": {
+      "get": {
+        "operationId": "get_lock_api_v1_evidence_locks__lock_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lock_id",
+            "required": true,
+            "schema": {
+              "title": "Lock Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lv_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lv Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceLockResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Lock",
+        "tags": [
+          "evidence-anchoring"
+        ],
+        "x-canonical": true
+      }
+    },
+    "/api/v1/evidence/locks/{lock_id}/extend": {
+      "post": {
+        "operationId": "extend_lock_api_v1_evidence_locks__lock_id__extend_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lock_id",
+            "required": true,
+            "schema": {
+              "title": "Lock Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lv_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lv Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtendLockRetentionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceLockResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Extend Lock",
+        "tags": [
+          "evidence-anchoring"
         ],
         "x-canonical": true
       }

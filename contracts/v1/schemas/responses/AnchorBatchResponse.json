@@ -1,0 +1,32 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/AnchorBatchResponse.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "batch_id": {
+      "title": "Batch Id",
+      "type": "string"
+    },
+    "merkle_root": {
+      "title": "Merkle Root",
+      "type": "string"
+    },
+    "provider_id": {
+      "title": "Provider Id",
+      "type": "string"
+    },
+    "state": {
+      "title": "State",
+      "type": "string"
+    }
+  },
+  "required": [
+    "batch_id",
+    "provider_id",
+    "state",
+    "merkle_root"
+  ],
+  "title": "AnchorBatchResponse",
+  "type": "object",
+  "x-contract-version": "1.3.0"
+}

@@ -52,9 +52,27 @@ from contexts.evidence.adapters.mongo_evidence_repository import (
     MongoEvidenceItemRepository,
     MongoSealRepository,
 )
+from contexts.evidence.adapters.mongo_anchor_repository import (
+    MongoAnchorBatchRepository,
+    MongoEvidenceLockRepository,
+    MongoIntegrityCheckRepository,
+)
+from contexts.evidence.adapters.ctlog_internal import CtlogInternalAdapter
+from contexts.evidence.adapters.ots_v1 import OtsV1Adapter
+from contexts.evidence.adapters.checkpoint_publishers import (
+    build_publisher_from_env,
+)
 from contexts.evidence.adapters.signed_url_motor import SignedUrlMotorAdapter
 from contexts.evidence.adapters.software_kms import SoftwareKmsAdapter
 from contexts.evidence.api import router as evidence_router
+from contexts.evidence.api import anchor_router as evidence_anchor_router
+from contexts.evidence.application.anchor_saga import (
+    AnchorSagaService,
+    CtlogCheckpointer,
+    IntegrityScheduler,
+    start_anchor_saga,
+    stop_anchor_saga,
+)
 from contexts.evidence.application.evidence_service import (
     EvidenceCommandService,
     EvidenceQueryService,
@@ -110,6 +128,7 @@ api.include_router(registry_router.router)
 
 # Phase 3.4 / 3.5 — Evidence bounded context endpoints under /api/v1/evidence/*
 api.include_router(evidence_router.router)
+api.include_router(evidence_anchor_router.router)
 
 app.include_router(api)
 
@@ -230,6 +249,45 @@ async def _startup() -> None:
     app.state.evidence_items_repo = items_repo
     app.state.evidence_seals_repo = seals_repo
 
+    # --- Phase 3.6 Anchoring + Integrity + Locking ----------------------
+    locks_repo = MongoEvidenceLockRepository(db)
+    integrity_repo = MongoIntegrityCheckRepository(db)
+    anchor_repo = MongoAnchorBatchRepository(db)
+    ctlog_adapter = CtlogInternalAdapter(db)
+    ots_adapter = OtsV1Adapter(db)
+    checkpoint_publisher = build_publisher_from_env()
+    await locks_repo.ensure_indexes()
+    await integrity_repo.ensure_indexes()
+    await anchor_repo.ensure_indexes()
+    await ctlog_adapter.ensure_indexes()
+    await ots_adapter.ensure_indexes()
+    anchor_adapters = {ctlog_adapter.provider_id: ctlog_adapter,
+                        ots_adapter.provider_id: ots_adapter}
+    anchor_saga = AnchorSagaService(
+        client=client, db=db, batches=anchor_repo, locks=locks_repo,
+        integrity=integrity_repo, adapters=anchor_adapters,
+        publisher=checkpoint_publisher)
+    integrity_scheduler = IntegrityScheduler(
+        db=db, integrity=integrity_repo, storage=evidence_storage)
+    ctlog_checkpointer = CtlogCheckpointer(
+        ctlog=ctlog_adapter, publisher=checkpoint_publisher,
+        signing_secret=_os.environ.get(
+            "EVIDENCE_CTLOG_SIGNING_SECRET", "dev-signing-secret").encode())
+    evidence_anchor_router.configure_router(
+        saga=anchor_saga, locks=locks_repo, integrity=integrity_repo,
+        anchor=anchor_repo, integrity_scheduler=integrity_scheduler,
+        ctlog=ctlog_adapter)
+    app.state.evidence_locks_repo = locks_repo
+    app.state.evidence_integrity_repo = integrity_repo
+    app.state.evidence_anchor_repo = anchor_repo
+    app.state.anchor_saga = anchor_saga
+    app.state.integrity_scheduler = integrity_scheduler
+    app.state.ctlog_checkpointer = ctlog_checkpointer
+    # Launch background loops (batcher + confirmer + integrity + checkpointer).
+    if _os.environ.get("EVIDENCE_ANCHOR_SAGA_ENABLED", "1") != "0":
+        await start_anchor_saga(anchor_saga, integrity_scheduler,
+                                  ctlog_checkpointer)
+
     logger.info("Phase 1A constitutional kernel + Identity admin surface ready")
     logger.info("Phase 2A Registry bounded context ready at /api/v1/registry/*")
     logger.info("Phase 3.1 Evidence storage foundation ready "
@@ -238,10 +296,12 @@ async def _startup() -> None:
     logger.info("Phase 3.2 Evidence PII encryption ready (kms=%s)",
                 evidence_kms.kms_id)
     logger.info("Phase 3.4 + 3.5 Evidence aggregate + Sealing ready at /api/v1/evidence/*")
+    logger.info("Phase 3.6 Anchoring + Integrity + Locking ready at /api/v1/evidence/anchor-batches/* + /locks/* + /integrity-checks/* + /ctlog/*")
 
 
 @app.on_event("shutdown")
 async def _shutdown() -> None:
+    await stop_anchor_saga()
     await stop_outbox_publisher()
     await stop_worker()
     client.close()

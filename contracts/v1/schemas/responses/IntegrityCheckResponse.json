@@ -1,0 +1,32 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/IntegrityCheckResponse.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "check_id": {
+      "title": "Check Id",
+      "type": "string"
+    },
+    "evidence_id": {
+      "title": "Evidence Id",
+      "type": "string"
+    },
+    "outcome": {
+      "title": "Outcome",
+      "type": "string"
+    },
+    "triggered_by": {
+      "title": "Triggered By",
+      "type": "string"
+    }
+  },
+  "required": [
+    "check_id",
+    "evidence_id",
+    "outcome",
+    "triggered_by"
+  ],
+  "title": "IntegrityCheckResponse",
+  "type": "object",
+  "x-contract-version": "1.3.0"
+}

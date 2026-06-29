@@ -1,0 +1,37 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/CtlogCheckpointResponse.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "head_seq": {
+      "title": "Head Seq",
+      "type": "integer"
+    },
+    "published_at": {
+      "title": "Published At",
+      "type": "string"
+    },
+    "root_hash": {
+      "title": "Root Hash",
+      "type": "string"
+    },
+    "signature_kid": {
+      "title": "Signature Kid",
+      "type": "string"
+    },
+    "tree_size": {
+      "title": "Tree Size",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "head_seq",
+    "tree_size",
+    "root_hash",
+    "published_at",
+    "signature_kid"
+  ],
+  "title": "CtlogCheckpointResponse",
+  "type": "object",
+  "x-contract-version": "1.3.0"
+}

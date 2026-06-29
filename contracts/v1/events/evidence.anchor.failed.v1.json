@@ -1,0 +1,194 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/events/evidence.anchor.failed.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Domain event emitted by the `evidence` bounded context for aggregate `AnchorBatch`. Schema validates the full envelope; `payload` carries the aggregate-specific fields documented under `x-payload-fields`.",
+  "properties": {
+    "actor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "aggregate_id": {
+      "type": "string"
+    },
+    "aggregate_type": {
+      "const": "AnchorBatch",
+      "type": "string"
+    },
+    "aggregate_version": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "causation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "correlation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "country": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "event_id": {
+      "pattern": "^evt_[a-f0-9]{32}$",
+      "type": "string"
+    },
+    "event_type": {
+      "const": "evidence.anchor.failed",
+      "type": "string"
+    },
+    "event_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "organization_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "payload": {
+      "additionalProperties": true,
+      "properties": {
+        "attempts": {
+          "description": "integer",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "batch_id": {
+          "description": "string",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "next_attempt_at": {
+          "description": "string ISO8601 (optional)",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "provider_id": {
+          "description": "string",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "reason": {
+          "description": "string",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "terminal": {
+          "description": "boolean (optional)",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "transient": {
+          "description": "boolean",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "producer": {
+      "const": "evidence",
+      "type": "string"
+    },
+    "tenant_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "aggregate_type",
+    "aggregate_id",
+    "aggregate_version",
+    "occurred_at",
+    "producer",
+    "payload"
+  ],
+  "title": "evidence.anchor.failed",
+  "type": "object",
+  "x-aggregate": "AnchorBatch",
+  "x-bounded-context": "evidence",
+  "x-contract-version": "1.3.0",
+  "x-event-name": "evidence.anchor.failed",
+  "x-event-version": 1,
+  "x-idempotency": "Dedup by `event_id`.",
+  "x-known-consumers": [
+    "audit-log",
+    "metrics",
+    "ops-alerting"
+  ],
+  "x-ordering": "Per-AnchorBatch ordering. Recoverable via replay when terminal.",
+  "x-payload-fields": {
+    "attempts": "integer",
+    "batch_id": "string",
+    "next_attempt_at": "string ISO8601 (optional)",
+    "provider_id": "string",
+    "reason": "string",
+    "terminal": "boolean (optional)",
+    "transient": "boolean"
+  },
+  "x-producer": "evidence",
+  "x-replay": "Idempotent."
+}

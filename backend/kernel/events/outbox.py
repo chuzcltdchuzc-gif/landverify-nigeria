@@ -54,6 +54,19 @@ EVENT_TYPES = (
     "evidence.seal.worm_applied",
     "evidence.seal.archived",
     "evidence.signed_url.issued",
+    # Phase 3.6 — Anchoring + Integrity + Locking
+    "evidence.lock.applied",
+    "evidence.lock.extended",
+    "evidence.integrity.check_started",
+    "evidence.integrity.passed",
+    "evidence.integrity.failed",
+    "evidence.integrity.check_errored",
+    "evidence.anchor.batched",
+    "evidence.anchor.submitted",
+    "evidence.anchor.confirmed",
+    "evidence.anchor.failed",
+    "evidence.anchor.replayed",
+    "evidence.ctlog.checkpoint_published",
 )
 
 # In-process subscriber registry — handler(envelope) -> awaitable

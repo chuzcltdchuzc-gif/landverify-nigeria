@@ -1,0 +1,170 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/events/evidence.ctlog.checkpoint_published.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Domain event emitted by the `evidence` bounded context for aggregate `CtlogTree`. Schema validates the full envelope; `payload` carries the aggregate-specific fields documented under `x-payload-fields`.",
+  "properties": {
+    "actor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "aggregate_id": {
+      "type": "string"
+    },
+    "aggregate_type": {
+      "const": "CtlogTree",
+      "type": "string"
+    },
+    "aggregate_version": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "causation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "correlation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "country": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "event_id": {
+      "pattern": "^evt_[a-f0-9]{32}$",
+      "type": "string"
+    },
+    "event_type": {
+      "const": "evidence.ctlog.checkpoint_published",
+      "type": "string"
+    },
+    "event_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "organization_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "payload": {
+      "additionalProperties": true,
+      "properties": {
+        "head_seq": {
+          "description": "integer",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "locator": {
+          "description": "string|null — publisher-specific reference",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "root_hash": {
+          "description": "string SHA-256",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "signature_kid": {
+          "description": "string",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "tree_size": {
+          "description": "integer",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "producer": {
+      "const": "evidence",
+      "type": "string"
+    },
+    "tenant_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "aggregate_type",
+    "aggregate_id",
+    "aggregate_version",
+    "occurred_at",
+    "producer",
+    "payload"
+  ],
+  "title": "evidence.ctlog.checkpoint_published",
+  "type": "object",
+  "x-aggregate": "CtlogTree",
+  "x-bounded-context": "evidence",
+  "x-contract-version": "1.3.0",
+  "x-event-name": "evidence.ctlog.checkpoint_published",
+  "x-event-version": 1,
+  "x-idempotency": "Dedup by `event_id`. Tree head sequence is monotonic.",
+  "x-known-consumers": [
+    "audit-log",
+    "verification",
+    "public-mirror"
+  ],
+  "x-ordering": "Strict monotonic order by `head_seq`.",
+  "x-payload-fields": {
+    "head_seq": "integer",
+    "locator": "string|null — publisher-specific reference",
+    "root_hash": "string SHA-256",
+    "signature_kid": "string",
+    "tree_size": "integer"
+  },
+  "x-producer": "evidence",
+  "x-replay": "Idempotent. Each checkpoint is signed."
+}

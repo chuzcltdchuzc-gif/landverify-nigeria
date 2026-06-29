@@ -491,6 +491,12 @@ class EvidenceCommandService:
                 else datetime.now(timezone.utc) + timedelta(days=DEFAULT_SEAL_RETENTION_DAYS)
             )
             lock_results: list[dict] = []
+            # Phase 3.6: also persist EvidenceLock aggregates per item.
+            from contexts.evidence.adapters.mongo_anchor_repository import (
+                MongoEvidenceLockRepository,
+            )
+            from contexts.evidence.domain.evidence_lock import EvidenceLock
+            lock_repo = MongoEvidenceLockRepository(self._client[self._items_repo._db.name])
             for it in items:
                 if not it.storage_locator:
                     raise conflict(
@@ -516,6 +522,28 @@ class EvidenceCommandService:
                     "retention_until": (status.retention_until.isoformat()
                                          if status.retention_until else None),
                 })
+                # Persist EvidenceLock aggregate (Phase 3.6).
+                try:
+                    lock_agg = EvidenceLock.create(
+                        evidence_id=it.evidence_id, seal_id=seal.seal_id,
+                        tenant_id=it.tenant_id, country_code=it.country_code,
+                        storage_provider=it.storage_provider or self._storage.provider_id,
+                        storage_locator=it.storage_locator,
+                        retention_until=(status.retention_until.isoformat()
+                                            if status.retention_until
+                                            else retention_until.isoformat()),
+                        applied_by=ctx.principal_id)
+                    await lock_repo.add(lock_agg, session=session)
+                    for evt in lock_agg.pull_events():
+                        env = evt.to_envelope(tenant_id=it.tenant_id,
+                                                country=it.country_code,
+                                                actor=ctx.principal_id)
+                        await publish(env, session=session)
+                except Exception:  # noqa: BLE001
+                    import logging
+                    logging.getLogger("evidence").exception(
+                        "Phase 3.6 EvidenceLock persistence failed for %s",
+                        it.evidence_id)
             prev_version = seal.version
             try:
                 seal.apply_worm(actor=ctx.principal_id,

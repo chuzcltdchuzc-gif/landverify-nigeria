@@ -1,0 +1,26 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/IntegrityChainResponse.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "chain": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Chain",
+      "type": "array"
+    },
+    "evidence_id": {
+      "title": "Evidence Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "evidence_id",
+    "chain"
+  ],
+  "title": "IntegrityChainResponse",
+  "type": "object",
+  "x-contract-version": "1.3.0"
+}

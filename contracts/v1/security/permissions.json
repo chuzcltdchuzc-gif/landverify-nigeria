@@ -138,6 +138,46 @@
     {
       "action": "evidence.seal.read",
       "description": "Read Seal manifest + status (role-projected)."
+    },
+    {
+      "action": "evidence.anchor.batch.read",
+      "description": "Read anchor batch state + inclusion proofs (role-projected)."
+    },
+    {
+      "action": "evidence.anchor.batch.replay_dlq",
+      "description": "Replay a DLQ batch as a NEW batch row. Original DLQ row stays frozen.",
+      "required_roles": [
+        "super_admin"
+      ]
+    },
+    {
+      "action": "evidence.lock.read",
+      "description": "Read EvidenceLock + extension history."
+    },
+    {
+      "action": "evidence.lock.extend",
+      "description": "Forward-only retention extension on an EvidenceLock.",
+      "required_roles": [
+        "super_admin",
+        "compliance_officer"
+      ]
+    },
+    {
+      "action": "evidence.integrity.trigger",
+      "description": "Trigger an on-demand or mandatory-trigger integrity check.",
+      "required_roles": [
+        "super_admin",
+        "compliance_officer",
+        "government_observer"
+      ]
+    },
+    {
+      "action": "evidence.integrity.read",
+      "description": "Read EvidenceIntegrityCheck chain (role-projected)."
+    },
+    {
+      "action": "evidence.ctlog.checkpoint.read",
+      "description": "Read the latest published CT-log tree head."
     }
   ],
   "identity_actions": [
@@ -340,5 +380,5 @@
       ]
     }
   ],
-  "x-contract-version": "1.2.0"
+  "x-contract-version": "1.3.0"
 }

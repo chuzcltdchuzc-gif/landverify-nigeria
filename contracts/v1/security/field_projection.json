@@ -3,6 +3,112 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "Per-resource field projection rules. Backend AND frontend MUST derive PII/visibility behaviour from this table — never by copying logic across layers. The `owner` projection is applied as an obligation by the PEP; the `public` projection is what un-elevated callers see; the `privileged` projection is what governance roles see.",
   "projections": {
+    "evidence.anchor_batch": {
+      "owner": [
+        "batch_id",
+        "provider_id",
+        "state",
+        "merkle_root",
+        "seal_ids",
+        "attempts",
+        "last_attempt_at",
+        "next_attempt_at",
+        "provider_request_id",
+        "inclusion_proofs",
+        "dlq_reason",
+        "replayed_from",
+        "created_at",
+        "confirmed_at",
+        "version"
+      ],
+      "pii_fields": [],
+      "privileged": [
+        "batch_id",
+        "provider_id",
+        "state",
+        "merkle_root",
+        "seal_ids",
+        "seal_leaves",
+        "attempts",
+        "last_attempt_at",
+        "next_attempt_at",
+        "provider_request_id",
+        "provider_response",
+        "inclusion_proofs",
+        "dlq_reason",
+        "replayed_from",
+        "tenant_id",
+        "country_code",
+        "schema_version",
+        "created_at",
+        "confirmed_at",
+        "version"
+      ],
+      "public": [
+        "batch_id",
+        "provider_id",
+        "state",
+        "merkle_root",
+        "created_at",
+        "confirmed_at"
+      ],
+      "redacted_for_public": [
+        "tenant_id",
+        "seal_leaves",
+        "provider_response",
+        "seal_ids"
+      ]
+    },
+    "evidence.integrity_check": {
+      "owner": [
+        "check_id",
+        "evidence_id",
+        "triggered_by",
+        "triggered_by_principal",
+        "expected_hash",
+        "observed_hash",
+        "outcome",
+        "started_at",
+        "completed_at",
+        "error_summary",
+        "seq"
+      ],
+      "pii_fields": [],
+      "privileged": [
+        "check_id",
+        "evidence_id",
+        "tenant_id",
+        "country_code",
+        "triggered_by",
+        "triggered_by_principal",
+        "expected_hash",
+        "observed_hash",
+        "lock_status_observed",
+        "outcome",
+        "started_at",
+        "completed_at",
+        "error_summary",
+        "seq",
+        "prev_hash",
+        "entry_hash",
+        "schema_version",
+        "version"
+      ],
+      "public": [
+        "check_id",
+        "evidence_id",
+        "outcome",
+        "triggered_by",
+        "started_at"
+      ],
+      "redacted_for_public": [
+        "tenant_id",
+        "observed_hash",
+        "lock_status_observed",
+        "prev_hash",
+        "entry_hash"
+      ]
+    },
     "evidence.item": {
       "owner": [
         "evidence_id",
@@ -76,6 +182,49 @@
         "client_hash_claim",
         "media_type",
         "size_bytes"
+      ]
+    },
+    "evidence.lock": {
+      "owner": [
+        "lock_id",
+        "evidence_id",
+        "seal_id",
+        "storage_provider",
+        "mode",
+        "retention_until",
+        "applied_at",
+        "applied_by",
+        "extensions",
+        "last_status_check"
+      ],
+      "pii_fields": [],
+      "privileged": [
+        "lock_id",
+        "evidence_id",
+        "seal_id",
+        "tenant_id",
+        "country_code",
+        "storage_provider",
+        "storage_locator",
+        "mode",
+        "retention_until",
+        "extensions",
+        "applied_at",
+        "applied_by",
+        "last_status_check",
+        "schema_version",
+        "version"
+      ],
+      "public": [
+        "lock_id",
+        "evidence_id",
+        "seal_id",
+        "mode",
+        "applied_at"
+      ],
+      "redacted_for_public": [
+        "tenant_id",
+        "storage_locator"
       ]
     },
     "evidence.seal": {
@@ -388,5 +537,5 @@
       ]
     }
   },
-  "x-contract-version": "1.2.0"
+  "x-contract-version": "1.3.0"
 }

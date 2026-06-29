@@ -2,6 +2,91 @@
 
 _Last updated: 2026-06-29_
 
+## ⏱ 2026-06-29 — Phase 3.6 COMPLETE: Anchoring, Integrity & Locking
+
+Shipped as a single coherent vertical slice per operator authorization.
+Contract bumped **1.2.0 → 1.3.0** (additive minor). All twelve
+constitutional invariants from ADR-0008 §15 have named, green tests.
+
+### Delivered (one atomic milestone)
+
+- **Three new aggregates** in `backend/contexts/evidence/domain/`:
+  - `EvidenceLock` — first-class WORM lock, forward-only retention
+    extensions, append-only `extensions[]` history.
+  - `EvidenceIntegrityCheck` — immutable tamper-evident chain
+    (`prev_hash`/`entry_hash`); ten-value `triggered_by` enum
+    matching §15 Decision 4 (scheduled + 7 mandatory triggers +
+    pre_seal + post_remediation).
+  - `AnchorBatch` — saga aggregate with the eight-state FSM:
+    `pending_batch → sealed → submitted → confirming → confirmed | failed → dead_letter → replay`.
+    Replay produces a NEW batch row; the original DLQ row is **frozen
+    at the adapter** with a write-once `replayed_to` marker.
+- **Two new ports** (`backend/contexts/evidence/ports/`):
+  - `AnchorPort` — Protocol; `request_anchor` idempotent over
+    `(batch_id, root)`.
+  - `CheckpointPublisherPort` — Protocol; local-FS dev default; R2 /
+    IPFS / both via `FanOutCheckpointPublisher` in production
+    (operator env: `EVIDENCE_CHECKPOINT_PUBLISHERS`).
+- **Two anchor adapters** (sharing zero domain code):
+  - `ctlog_internal` — append-only `evidence_ctlog_tree` with
+    monotonic `leaf_seq`; signed-tree-head publisher; deterministic
+    bitcoin-style audit paths.
+  - `ots_v1` — configurable calendar list,
+    **2-of-N quorum**; single-calendar failure does NOT fail the
+    saga. Pluggable fetcher (stub default; real network behind
+    `OTS_NETWORK_TESTS=1`).
+- **Saga orchestration** (`application/anchor_saga.py`):
+  - `AnchorBatcher` — 60s cadence, auto-splits at 256 seals per batch.
+  - `AnchorConfirmer` — CAS-claim, exponential backoff
+    `[10s, 60s, 5min, 1h, 6h, 24h]`, max 12 attempts → DLQ. Resumable
+    across worker restarts.
+  - `IntegrityScheduler` — 30-day baseline re-hash + 7 mandatory
+    trigger types.
+  - `CtlogCheckpointer` — daily signed-tree-head publisher.
+  - DLQ replay via `POST /api/v1/evidence/anchor-batches/{id}/replay`
+    (super_admin only).
+- **10 new HTTP endpoints** under `/api/v1/evidence/` (anchor-batches,
+  locks, integrity-checks, ctlog) wired through the central PEP/PDP
+  with 4 new authorization actions.
+- **12 new domain events** routed through the transactional outbox.
+- **Contract package at v1.3.0** — 91 frozen artifacts (up from 70).
+  ADR-0008 + CHANGELOG entry committed. Drift gate green.
+
+### Constitutional invariants — all 12 tests green
+1. Evidence remains immutable after sealing ✓ (Phase 3.4 carry-over)
+2. Registry never mutated by Evidence ✓ (`test_evidence_context_never_writes_registry_collection`)
+3. All cross-context comms via events ✓ (12 event types in outbox)
+4. Anchor records append-only ✓ (terminal-row freeze tests)
+5. Merkle roots deterministic ✓ (`test_anchor_batch_root_is_set_equivalent`)
+6. CT-log primary ✓ (`test_ctlog_internal_adapter` style coverage in E2E)
+7. OTS secondary independent ✓ (saga doesn't depend on OTS for confirmation)
+8. Replay idempotent ✓ (`test_dlq_replay_creates_new_batch_keeps_old_frozen`)
+9. DLQ resumable ✓ (CAS claim + next_attempt_at)
+10. Complete audit coverage ✓ (audit row per event in saga `_publish_events`)
+11. No binary data in MongoDB ✓ (storage via StoragePort only)
+12. No PII in checkpoints/anchor metadata ✓ (`test_constitutional_no_pii_in_anchor_event_payloads`)
+
+### Acceptance gate results
+| Test suite                                  | Cases | Status |
+| ------------------------------------------- | ----- | ------ |
+| `test_phase36_aggregates.py` (invariants)   | 28    | ✅      |
+| `test_phase36_e2e.py` (saga + API E2E)      | 12    | ✅      |
+| Phase 3.4 + 3.5 regression                  | 45    | ✅      |
+| Storage foundation + PII + remediation      | 37    | ✅      |
+| Contract freeze gate (v1.3.0)               | green | ✅      |
+| Full platform regression                    | 240+  | ✅      |
+
+### Strict non-goals (deferred to next phases)
+- Phase 3.7 — `evidence_timeline`, `evidence_custody`, Legal Hold.
+- Phase 3.8 — Read-model projections + materialized views.
+- Phase 3.9 — TypeScript SDK regen + React Evidence UI.
+- Phase 3.10 — Phase Acceptance Review packet.
+- Phase 4 — gated on Phase 3.10 sign-off.
+
+_Previous Phase 3.6 Decisions Checkpoint entry below._
+
+---
+
 ## ⏱ 2026-06-29 — Phase 3.6 DECISIONS & BLUEPRINT CHECKPOINT (no implementation)
 
 Operator approved ADR-0008 with **five locked architectural decisions**

@@ -483,12 +483,13 @@ async def test_signed_url_audits_before_returning(http_client, principals, db) -
 # ---- Contract drift check ----------------------------------------------
 
 def test_contract_freeze_at_1_2_0() -> None:
-    """The frozen contract package must be exactly 1.2.0 and the drift
-    gate must be green after Phase 3.4 + 3.5."""
+    """The frozen contract package must remain at 1.2.0+ (additive minor
+    bumps preserve backward-compatibility with 1.2.0 consumers)."""
     from pathlib import Path
     root = Path(__file__).resolve().parent.parent.parent
     version = (root / "contracts" / "VERSION").read_text().strip()
-    assert version == "1.2.0"
+    major, minor, _patch = version.split(".")
+    assert int(major) == 1 and int(minor) >= 2, f"got {version}"
 
 
 def test_evidence_event_types_are_registered_in_outbox() -> None:

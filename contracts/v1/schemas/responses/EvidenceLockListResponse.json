@@ -1,0 +1,21 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/EvidenceLockListResponse.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "locks": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Locks",
+      "type": "array"
+    }
+  },
+  "required": [
+    "locks"
+  ],
+  "title": "EvidenceLockListResponse",
+  "type": "object",
+  "x-contract-version": "1.3.0"
+}
