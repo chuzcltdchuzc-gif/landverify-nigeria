@@ -259,21 +259,104 @@ Total target: ~125 new tests on top of the existing 130+.
 
 ## 7. Implementation order (after sign-off)
 
-3.1 → 3.2 (LocalFs only, R2 deferred) → 3.3 → 3.4 → 3.5 → 3.6 → 3.7 →
-3.8 (CT-log only first, OTS second) → 3.9 → 3.10 → 3.5* (export +
-offline verifier).
+3.1 ✅ → 3.2 ✅ (LocalFs only, R2 deferred) → 3.3 ✅ → 3.4 ✅ → 3.5 ✅ → **3.6
+[BLUEPRINT APPROVED — see ADR-0008]** → 3.7 → 3.8 → 3.9 → 3.10 → 3.5*
+(export + offline verifier).
 
-R2 storage adapter and OTS anchor adapter ship as additive
-implementations of the same ports — no new domain code, no contract
-bump.
+R2 storage adapter and additional anchor adapters (e.g. external CT log,
+Sigsum, blockchain) ship as additive implementations of the existing
+`StoragePort` / `AnchorPort` — no new domain code, no contract bump.
 
-## 8. Open questions for sign-off
+## 7A. Phase 3.6 — additions to the domain map (ADR-0008)
 
-* **Encryption "residency" enforcement** — current draft refuses
-  cross-country DEK unwrap with super_admin bypass logged. Acceptable?
-* **CT-log checkpoint publishing target** — for production, do we
-  publish daily heads to R2 public, IPFS, or both?
-* **Saga schedule cadence** — default polling: anchor batcher 60s,
-  confirmer backoff `[10s, 60s, 5min, 1h, 6h, 24h]`. Tunable?
-* **Offline-first reservation batch size** — default 50 ids per
-  reservation. Acceptable?
+```text
+backend/contexts/evidence/
+├── domain/
+│   ├── evidence_lock.py        # NEW: EvidenceLock aggregate (ADR-0008 §3.1)
+│   ├── integrity_check.py      # NEW: EvidenceIntegrityCheck aggregate (ADR-0008 §3.2)
+│   ├── anchor_batch.py         # NEW: AnchorBatch saga aggregate (ADR-0008 §3.3)
+│   └── chain.py                # canonical append-only chain helpers (sha256 prev||entry)
+├── ports/
+│   ├── anchor.py               # AnchorPort (ADR-0008 §5.1)
+│   └── checkpoint_publisher.py # CheckpointPublisherPort (ADR-0008 §5.2)
+├── adapters/
+│   ├── ctlog_internal.py       # PRIMARY AnchorPort adapter
+│   ├── ots_v1.py               # SECONDARY AnchorPort adapter
+│   ├── r2_public_checkpoint.py # CheckpointPublisherPort dev stub
+│   ├── mongo_lock_repository.py
+│   ├── mongo_integrity_repository.py
+│   └── mongo_anchor_repository.py
+├── application/
+│   ├── anchor_saga.py          # AnchorBatcher + AnchorConfirmer
+│   ├── integrity_scheduler.py  # Periodic re-hash trigger
+│   └── ctlog_checkpointer.py   # Daily signed-tree-head publisher
+└── api/
+    └── anchor_router.py        # /api/v1/evidence/anchor-batches, /locks, /integrity-checks, /ctlog
+```
+
+## 7B. Phase 3.6 port additions
+
+### `AnchorPort` (ADR-0008 §5.1)
+Provider abstraction. `request_anchor` is idempotent over `(batch_id,
+root)`. `poll_confirmation` returns one of {pending, confirmed,
+failed_transient, failed_permanent}. `fetch_inclusion_proof` returns
+provider-specific bytes (CT-log SCT + audit path, or `.ots` upgraded
+proof).
+
+### `CheckpointPublisherPort` (ADR-0008 §5.2)
+Publishes signed tree heads to a durable, append-only public target.
+First adapter: `r2_public_checkpoint` (stub that writes locally in dev,
+swaps to R2 in production without saga changes).
+
+## 7C. Phase 3.6 events (12 new — ADR-0008 §12)
+
+```text
+evidence.lock.applied.v1
+evidence.lock.extended.v1
+evidence.integrity.check_started.v1
+evidence.integrity.passed.v1
+evidence.integrity.failed.v1
+evidence.integrity.check_errored.v1
+evidence.anchor.batched.v1
+evidence.anchor.submitted.v1
+evidence.anchor.confirmed.v1
+evidence.anchor.failed.v1
+evidence.anchor.replayed.v1
+evidence.ctlog.checkpoint_published.v1
+```
+
+All carry `registry_id` so downstream consumers can fan out per
+LandVault. Versions all start at 1. New event types added in later
+minor bumps; breaking changes mint new event_type strings per the
+envelope policy.
+
+## 7D. Phase 3.6 PDP policy additions (3 new actions)
+
+```text
+evidence.anchor.batch.read              priority 250
+evidence.anchor.batch.replay_dlq        priority 251   (super_admin only)
+evidence.lock.extend                    priority 260   (super_admin + compliance_officer)
+evidence.integrity.trigger              priority 270   (super_admin + compliance_officer + government_observer)
+evidence.ctlog.checkpoint.read          priority 280   (authenticated + governance — public verifier consumes via Phase 5)
+```
+
+## 8. Open questions for Phase 3.6 sign-off
+
+Following the operator's confirmed decisions in Phase 3.0, the Phase
+3.6 blueprint (ADR-0008) takes the following defaults — explicit
+confirmation requested before implementation:
+
+* **CT-log checkpoint publishing target** — Phase 3.6 ships an R2-public
+  stub (`r2_public_checkpoint` writes a local file in dev; swaps to R2
+  Public in production via env). Operator confirms: R2 Public only for
+  v1, IPFS pin deferred to Phase 5?
+* **OTS calendar list** — `alice.btc.calendar.opentimestamps.org`,
+  `bob.btc.calendar.opentimestamps.org`,
+  `finney.calendar.eternitywall.com`. Operator confirms list +
+  confirmation quorum (N=2 of 3 calendars upgrade).
+* **Saga schedule cadence** — anchor batcher 60s, confirmer backoff
+  `[10s, 60s, 5min, 1h, 6h, 24h]`, max attempts 12. Operator confirms
+  or adjusts.
+* **Integrity check cadence** — default scheduled re-hash every 30 days
+  per sealed evidence item. Operator confirms.
+* **Max batch size** — 256 seals per `AnchorBatch`. Operator confirms.

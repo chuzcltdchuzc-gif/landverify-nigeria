@@ -2,6 +2,64 @@
 
 _Last updated: 2026-06-29_
 
+## ⏱ 2026-06-29 — Phase 3.6 BLUEPRINT ONLY (no implementation yet)
+
+Operator directive: complete Phase 3 before Phase 4. Phase 3.6 must
+land **blueprint-first** under the same constitutional discipline that
+governed Phase 3.0.
+
+### Delivered (blueprint only — NO code yet)
+
+- **`/app/contracts/v1/adr/ADR-0008-evidence-anchoring-and-integrity-saga.md`**
+  — full Phase 3.6 architecture. Two new aggregates
+  (`EvidenceLock`, `EvidenceIntegrityCheck`), the `AnchorBatch` saga
+  aggregate with the eight-state FSM
+  (`pending_batch → sealed → submitted → confirming → confirmed | failed → dead_letter → replay`),
+  two new ports (`AnchorPort`, `CheckpointPublisherPort`), two
+  adapters (`ctlog_internal` primary, `ots_v1` secondary, sharing zero
+  domain code), six binding security invariants (append-only, deterministic
+  Merkle, immutable anchors, no registry mutation, no evidence mutation
+  after sealing, 100% audit coverage), 10 API endpoints, contract bump
+  target 1.3.0, ~38 acceptance tests mapped 1:1 to the invariants.
+- **`/app/memory/PHASE3_SPEC.md §3.6` updated** — supersedes the earlier
+  saga sketch. The four originally-bundled append-only logs are split:
+  Phase 3.6 ships `evidence_locks`, `evidence_integrity_checks`,
+  `evidence_anchor_batches`, `evidence_anchor_attempts`,
+  `evidence_ctlog_tree`, `evidence_ctlog_checkpoints`; `evidence_timeline`
+  + `evidence_custody` move to Phase 3.7.
+- **`/app/memory/PHASE3_BLUEPRINT.md §7A/7B/7C/7D` updated** — domain
+  map additions, port additions, 12 new event types, 4 new PDP actions,
+  refreshed open-questions list (R2 vs IPFS, OTS calendar quorum, saga
+  cadences, integrity check cadence, max batch size).
+
+### Sign-off pending
+
+The blueprint is **NOT YET APPROVED**. No code lands in
+`backend/contexts/evidence/{domain,ports,adapters,application,api}` for
+Phase 3.6 until the operator signs §15 of ADR-0008.
+
+After approval the implementation will produce:
+- CT-log primary + OTS secondary anchor adapters
+- Saga orchestration (`AnchorBatcher`, `AnchorConfirmer`,
+  `IntegrityScheduler`, `CtlogCheckpointer` background jobs)
+- DLQ + super_admin replay HTTP endpoint
+- Contract bump 1.2.0 → 1.3.0 with full OpenAPI, JSON Schema, and
+  Event Catalog regeneration
+- ~38 acceptance and invariant tests
+- Updated ADR catalogue + CHANGELOG entry
+
+### Decision constraint (binding)
+
+Per operator directive: Phase 4 (Workflows) does NOT begin until Phase
+3 passes its Acceptance Review (Phase 3.10). The Phase 4 spec
+(`Phase 4 updated.pdf`) is parked in the project artifacts and will
+land as `/app/memory/PHASE4_SPEC.md` only after Phase 3.10 sign-off,
+following the same blueprint-first discipline (ADR-0019 through ADR-0022).
+
+_Previous Phase 3.4 + 3.5 entry below._
+
+---
+
 ## ⏱ 2026-06-29 — Phase 3.4 + 3.5 COMPLETE: Canonical Evidence Aggregate + Sealing
 
 Shipped steps 4 + 5 of Phase 3 as a single atomic milestone with the

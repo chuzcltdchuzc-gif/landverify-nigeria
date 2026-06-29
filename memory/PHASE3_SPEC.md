@@ -212,16 +212,56 @@ The `Seal` is its own aggregate root (the "immutable manifest" the directive rec
 
 ### 3.6 — Append-only logs
 
-Four insert-only collections, all carrying `tenant_id`, `country_code`, `evidence_id`/`seal_id`, monotonic per-aggregate `seq`, and `prev_hash`/`entry_hash` for tamper-evident chaining:
+**Updated 2026-06-29 by ADR-0008**: the four append-only logs originally
+scoped here are split across this phase (3.6) and Phase 3.7. Phase 3.6
+ships the **integrity** + **lock** logs (which underpin the anchoring
+saga) and the saga's append-only attempt chain. Phase 3.7 ships the
+operator-visible **timeline** + **custody** logs.
 
-| Collection            | Records                                                                                          |
-| --------------------- | ------------------------------------------------------------------------------------------------ |
-| `evidence_timeline`   | Every state transition + every operator-visible event (upload, verify, seal, hold, anchor, etc.) |
-| `evidence_locks`      | WORM lock events (apply, extend, status query)                                                   |
-| `evidence_integrity`  | Hash claim/computation/mismatch events; read-back re-hash results                                |
-| `evidence_custody`    | Chain-of-custody — who signed/uploaded/downloaded, when, from where, signed-URL audit linkage    |
+Phase 3.6 collections (insert-only, tamper-evident chained where noted):
 
-Adapters refuse `update` / `delete` operations on these collections at the database-port level (defense in depth).
+| Collection                   | Records                                                                                          | Chain? |
+| ---------------------------- | ------------------------------------------------------------------------------------------------ | ------ |
+| `evidence_locks`             | First-class `EvidenceLock` aggregate + append-only `extensions[]` (ADR-0008 §3.1)                | no     |
+| `evidence_integrity_checks`  | Per-evidence hash re-verification log; tamper-evident `prev_hash`/`entry_hash` chain (ADR-0008 §3.2) | yes    |
+| `evidence_anchor_batches`    | `AnchorBatch` saga aggregate (ADR-0008 §3.3)                                                     | no     |
+| `evidence_anchor_attempts`   | Append-only per-attempt record with `prev_hash`/`entry_hash` chain (ADR-0008 §3.3)               | yes    |
+| `evidence_ctlog_tree`        | Append-only CT-log leaves (one row per anchored batch root)                                      | implicit by `leaf_seq` |
+| `evidence_ctlog_checkpoints` | Signed tree heads (publishable; consumed by Phase 3.10 offline verifier)                         | implicit by `head_seq` |
+
+Phase 3.7 collections (deferred):
+
+| Collection                   | Records                                                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------------------------ |
+| `evidence_timeline`          | Operator-visible events (upload, verify, seal, hold, anchor, etc.)                               |
+| `evidence_custody`           | Chain-of-custody — uploads, downloads, signed-URL audit linkage                                  |
+
+Adapters refuse `update` / `delete` operations on every collection in
+this table at the database-port level (defense in depth — see ADR-0008
+§9.1).
+
+### 3.6.1 — Anchoring saga (ADR-0008 supersedes the earlier sketch)
+
+The Phase 3.6 anchoring layer is defined in full by ADR-0008. Summary of
+binding decisions for the spec record:
+
+* **Eight-state saga FSM**: `pending_batch → sealed → submitted → confirming → confirmed | failed → dead_letter → replay`. `replay` is a transient marker that produces a NEW `AnchorBatch` row; the original DLQ row is **never mutated**.
+* **Two new aggregates** beyond the saga itself: `EvidenceLock` (elevates the Phase 3.5 storage lock to a first-class auditable artifact with forward-only retention) and `EvidenceIntegrityCheck` (immutable, chained re-hash verification log).
+* **Two ports**: `AnchorPort` (provider abstraction; `ctlog_internal` + `ots_v1`) and `CheckpointPublisherPort` (publishes signed tree heads).
+* **CT-log first, OTS second**, both behind `AnchorPort`. Adapters share zero domain code; adding a third provider is purely additive.
+* **Reliability**: idempotency over `(batch_id, root)`, exponential backoff `[10s, 60s, 5min, 1h, 6h, 24h]`, default `MAX_ATTEMPTS=12`, DLQ + super_admin replay endpoint, resumable workers via CAS claim on `state`.
+* **Six binding security invariants** (ADR-0008 §9): append-only behaviour, deterministic Merkle roots, immutable anchor records, no registry mutation, no evidence mutation after sealing, 100% audit coverage.
+* **API surface**: 10 new endpoints under `/api/v1/evidence/{anchor-batches,locks,integrity-checks,ctlog}/*`. See ADR-0008 §10.
+* **Contract bump target**: 1.2.0 → **1.3.0** (additive minor). 12 new domain events, 8 new request DTOs, 10 new response DTOs.
+* **Implementation gated on operator approval of ADR-0008.**
+
+### 3.7 — Append-only timeline + custody (DEFERRED to Phase 3.7)
+
+The original §3.6 in the pre-ADR-0008 spec also called for
+`evidence_timeline` and `evidence_custody`. Those move to Phase 3.7
+because they are operator-facing (timeline UI, custody chain UI) and
+their primary consumer is the React Evidence UI in Phase 3.9. They do
+NOT block the anchoring saga.
 
 ### 3.7 — Signed-URL adapter + audit
 
