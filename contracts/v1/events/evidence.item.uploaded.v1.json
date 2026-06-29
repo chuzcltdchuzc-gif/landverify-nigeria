@@ -1,0 +1,182 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/events/evidence.item.uploaded.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Domain event emitted by the `evidence` bounded context for aggregate `EvidenceItem`. Schema validates the full envelope; `payload` carries the aggregate-specific fields documented under `x-payload-fields`.",
+  "properties": {
+    "actor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "aggregate_id": {
+      "type": "string"
+    },
+    "aggregate_type": {
+      "const": "EvidenceItem",
+      "type": "string"
+    },
+    "aggregate_version": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "causation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "correlation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "country": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "event_id": {
+      "pattern": "^evt_[a-f0-9]{32}$",
+      "type": "string"
+    },
+    "event_type": {
+      "const": "evidence.item.uploaded",
+      "type": "string"
+    },
+    "event_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "organization_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "payload": {
+      "additionalProperties": true,
+      "properties": {
+        "evidence_id": {
+          "description": "string — immutable internal id",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "kind": {
+          "description": "string — EvidenceKind value",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "media_type": {
+          "description": "string — RFC 2045 media type",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "registry_id": {
+          "description": "string — owning LandVault id",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "size_bytes": {
+          "description": "integer — total stored size",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "storage_provider": {
+          "description": "string — 'local_fs_worm' | 'r2'",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "producer": {
+      "const": "evidence",
+      "type": "string"
+    },
+    "tenant_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "aggregate_type",
+    "aggregate_id",
+    "aggregate_version",
+    "occurred_at",
+    "producer",
+    "payload"
+  ],
+  "title": "evidence.item.uploaded",
+  "type": "object",
+  "x-aggregate": "EvidenceItem",
+  "x-bounded-context": "evidence",
+  "x-contract-version": "1.2.0",
+  "x-event-name": "evidence.item.uploaded",
+  "x-event-version": 1,
+  "x-idempotency": "Dedup by `event_id`. Producer emits inside the same Mongo tx as the aggregate write (transactional outbox).",
+  "x-known-consumers": [
+    "audit-log",
+    "metrics",
+    "verification"
+  ],
+  "x-ordering": "Per-EvidenceItem ordering by `aggregate_version`.",
+  "x-payload-fields": {
+    "evidence_id": "string — immutable internal id",
+    "kind": "string — EvidenceKind value",
+    "media_type": "string — RFC 2045 media type",
+    "registry_id": "string — owning LandVault id",
+    "size_bytes": "integer — total stored size",
+    "storage_provider": "string — 'local_fs_worm' | 'r2'"
+  },
+  "x-producer": "evidence",
+  "x-replay": "Idempotent."
+}

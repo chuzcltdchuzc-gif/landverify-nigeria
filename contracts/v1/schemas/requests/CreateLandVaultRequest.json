@@ -55,7 +55,33 @@
     "geometry": {
       "anyOf": [
         {
-          "$ref": "#/components/schemas/GeometryIn"
+          "additionalProperties": false,
+          "description": "Minimal GeoJSON Polygon — full validation happens in the domain.",
+          "properties": {
+            "coordinates": {
+              "items": {
+                "items": {
+                  "items": {
+                    "type": "number"
+                  },
+                  "type": "array"
+                },
+                "type": "array"
+              },
+              "title": "Coordinates",
+              "type": "array"
+            },
+            "type": {
+              "default": "Polygon",
+              "title": "Type",
+              "type": "string"
+            }
+          },
+          "required": [
+            "coordinates"
+          ],
+          "title": "GeometryIn",
+          "type": "object"
         },
         {
           "type": "null"
@@ -107,10 +133,33 @@
       "title": "Owner Phone"
     },
     "ownership_type": {
-      "$ref": "#/components/schemas/OwnershipType"
+      "enum": [
+        "individual",
+        "family",
+        "joint",
+        "community",
+        "trust",
+        "corporate",
+        "government",
+        "institutional"
+      ],
+      "title": "OwnershipType",
+      "type": "string"
     },
     "property_type": {
-      "$ref": "#/components/schemas/PropertyType"
+      "enum": [
+        "RES",
+        "COM",
+        "FRM",
+        "MKT",
+        "SHP",
+        "STL",
+        "KSK",
+        "GOV",
+        "INS"
+      ],
+      "title": "PropertyType",
+      "type": "string"
     },
     "state": {
       "maxLength": 64,
@@ -147,5 +196,5 @@
   ],
   "title": "CreateLandVaultRequest",
   "type": "object",
-  "x-contract-version": "1.1.0"
+  "x-contract-version": "1.2.0"
 }

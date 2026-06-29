@@ -22,7 +22,7 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 # Make /app/backend importable so we can build the FastAPI app object.
 ROOT = Path(__file__).resolve().parent.parent
@@ -59,12 +59,24 @@ REQUEST_DTOS = (
     "UpdateSurveyRequest",
     "UpdateCommunityDataRequest",
     "ArchiveLandVaultRequest",
+    # Phase 3.4 + 3.5 — Evidence
+    "InitiateEvidenceUploadRequest",
+    "CompleteEvidenceUploadRequest",
+    "IssueSignedUrlRequest",
+    "CreateSealRequest",
+    "ApplySealWormRequest",
 )
 RESPONSE_DTOS = (
     "TokenResponse",
     # Phase 2 — Registry
     "LandVaultResponse",
     "LandVaultListResponse",
+    # Phase 3.4 + 3.5 — Evidence
+    "InitiateEvidenceUploadResponse",
+    "EvidenceItemResponse",
+    "EvidenceItemListResponse",
+    "SignedUrlResponse",
+    "SealResponse",
 )
 
 # Domain events — names mirror `kernel.events.outbox.EVENT_TYPES` and the
@@ -381,6 +393,155 @@ EVENT_DEFINITIONS: tuple[dict, ...] = (
             "archived_at": "string — ISO8601 timestamp",
         },
     },
+    # ---- Phase 3.4 + 3.5 — Evidence bounded context ---------------------
+    {
+        "event_name": "evidence.item.uploaded",
+        "version": 1,
+        "aggregate": "EvidenceItem",
+        "bounded_context": "evidence",
+        "producer": "evidence",
+        "known_consumers": ["audit-log", "metrics", "verification"],
+        "idempotency_requirements": "Dedup by `event_id`. Producer emits inside the same Mongo tx as the aggregate write (transactional outbox).",
+        "ordering_guarantees": "Per-EvidenceItem ordering by `aggregate_version`.",
+        "replay_support": "Idempotent.",
+        "payload_fields": {
+            "evidence_id": "string — immutable internal id",
+            "registry_id": "string — owning LandVault id",
+            "kind": "string — EvidenceKind value",
+            "size_bytes": "integer — total stored size",
+            "media_type": "string — RFC 2045 media type",
+            "storage_provider": "string — 'local_fs_worm' | 'r2'",
+        },
+    },
+    {
+        "event_name": "evidence.item.hash_verified",
+        "version": 1,
+        "aggregate": "EvidenceItem",
+        "bounded_context": "evidence",
+        "producer": "evidence",
+        "known_consumers": ["audit-log", "metrics", "verification"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-EvidenceItem ordering by `aggregate_version`.",
+        "replay_support": "Idempotent.",
+        "payload_fields": {
+            "evidence_id": "string",
+            "registry_id": "string",
+            "server_hash": "string — SHA-256 hex digest (server-authoritative)",
+            "hash_algorithm": "string — always 'SHA-256' for v1",
+        },
+    },
+    {
+        "event_name": "evidence.item.hash_mismatch",
+        "version": 1,
+        "aggregate": "EvidenceItem",
+        "bounded_context": "evidence",
+        "producer": "evidence",
+        "known_consumers": ["audit-log", "security-incident", "metrics"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-EvidenceItem ordering by `aggregate_version`.",
+        "replay_support": "Idempotent.",
+        "payload_fields": {
+            "evidence_id": "string",
+            "registry_id": "string",
+            "reason": "string — 'readback_streamed_mismatch' | 'client_claim_mismatch'",
+            "server_hash_streamed": "string|null",
+            "server_hash": "string|null",
+            "client_hash_claim": "string|null",
+            "readback_sha256": "string|null",
+        },
+    },
+    {
+        "event_name": "evidence.item.archived_replaced",
+        "version": 1,
+        "aggregate": "EvidenceItem",
+        "bounded_context": "evidence",
+        "producer": "evidence",
+        "known_consumers": ["audit-log", "search-index", "verification"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-EvidenceItem ordering. Terminal for the old aggregate.",
+        "replay_support": "Idempotent. Archive is one-way.",
+        "payload_fields": {
+            "evidence_id": "string",
+            "registry_id": "string",
+            "replaced_by": "string — new EvidenceItem id produced by the remediation cutover",
+            "reason": "string",
+        },
+    },
+    {
+        "event_name": "evidence.seal.created",
+        "version": 1,
+        "aggregate": "Seal",
+        "bounded_context": "evidence",
+        "producer": "evidence",
+        "known_consumers": ["audit-log", "metrics", "verification", "certificate"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-Seal ordering by `aggregate_version`.",
+        "replay_support": "Idempotent.",
+        "payload_fields": {
+            "seal_id": "string — immutable seal id",
+            "registry_id": "string",
+            "evidence_ids": "string[] — items included in the seal manifest",
+            "merkle_root": "string — SHA-256 hex digest of the canonical merkle tree",
+            "manifest_hash": "string — SHA-256 hex of canonical_json(manifest)",
+            "item_count": "integer",
+            "created_by": "string — principal id",
+        },
+    },
+    {
+        "event_name": "evidence.seal.worm_applied",
+        "version": 1,
+        "aggregate": "Seal",
+        "bounded_context": "evidence",
+        "producer": "evidence",
+        "known_consumers": ["audit-log", "metrics", "verification"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-Seal ordering. Strict successor of `evidence.seal.created`.",
+        "replay_support": "Idempotent. WORM is one-way.",
+        "payload_fields": {
+            "seal_id": "string",
+            "registry_id": "string",
+            "applied_by": "string — principal id",
+            "item_count": "integer",
+            "items": "object[] — per-item lock outcome { evidence_id, storage_locator, locked, retention_until }",
+            "retention_until": "string — ISO8601 retention floor",
+        },
+    },
+    {
+        "event_name": "evidence.seal.archived",
+        "version": 1,
+        "aggregate": "Seal",
+        "bounded_context": "evidence",
+        "producer": "evidence",
+        "known_consumers": ["audit-log", "metrics"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-Seal ordering. Terminal.",
+        "replay_support": "Idempotent.",
+        "payload_fields": {
+            "seal_id": "string",
+            "registry_id": "string",
+            "actor": "string — principal id",
+            "reason": "string",
+        },
+    },
+    {
+        "event_name": "evidence.signed_url.issued",
+        "version": 1,
+        "aggregate": "EvidenceItem",
+        "bounded_context": "evidence",
+        "producer": "evidence",
+        "known_consumers": ["audit-log", "security-incident"],
+        "idempotency_requirements": "Dedup by `event_id`. The signed-URL audit row is the durable source of truth; this event is a fan-out signal for downstream consumers.",
+        "ordering_guarantees": "No global ordering required.",
+        "replay_support": "Idempotent.",
+        "payload_fields": {
+            "evidence_id": "string",
+            "registry_id": "string",
+            "principal_id": "string",
+            "action": "string — 'read' | 'verify' | 'export'",
+            "ttl_seconds": "integer",
+            "url_sha256": "string — sha256 of the URL (the URL plaintext is never stored)",
+        },
+    },
 )
 
 # Canonical RFC7807 error contracts (Phase 1C, §5). Every error a v1
@@ -590,17 +751,39 @@ def _load_openapi() -> dict:
     return spec
 
 
+def _inline_refs(node: Any, schemas: dict, seen: Optional[set] = None) -> Any:
+    """Recursively inline component $refs so each frozen schema is
+    self-contained. Cycle-safe via a visited set."""
+    if seen is None:
+        seen = set()
+    if isinstance(node, dict):
+        if "$ref" in node and isinstance(node["$ref"], str):
+            ref = node["$ref"]
+            if ref.startswith("#/components/schemas/"):
+                target_name = ref.rsplit("/", 1)[-1]
+                if target_name in seen:
+                    return {"description": f"cyclic ref to {target_name}"}
+                if target_name not in schemas:
+                    return node
+                sub = copy.deepcopy(schemas[target_name])
+                return _inline_refs(sub, schemas, seen | {target_name})
+        # Walk every key recursively.
+        return {k: _inline_refs(v, schemas, seen) for k, v in node.items()}
+    if isinstance(node, list):
+        return [_inline_refs(item, schemas, seen) for item in node]
+    return node
+
+
 def _extract_dto_schema(openapi: dict, name: str) -> dict:
     schemas = openapi.get("components", {}).get("schemas", {})
     if name not in schemas:
         raise KeyError(f"DTO {name!r} not found in OpenAPI components.schemas")
     sch = copy.deepcopy(schemas[name])
+    sch = _inline_refs(sch, schemas, seen={name})
     sch["$schema"] = "https://json-schema.org/draft/2020-12/schema"
     sch["$id"] = f"https://aquasavannah.landvault/contracts/v1/schemas/{name}.json"
     sch["title"] = name
     sch["x-contract-version"] = CONTRACT_VERSION
-    # Inline any $ref to other component schemas so each DTO is independently usable.
-    # (For Phase 1C none of the listed DTOs ref another, but we keep the safety pass.)
     return sch
 
 
@@ -930,6 +1113,35 @@ def _build_security_contracts() -> dict[str, dict]:
              "required_roles": [Role.SUPER_ADMIN.value],
              "description": "Soft-delete. One-way. super_admin only."},
         ],
+        "evidence_actions": [
+            {"action": "evidence.item.upload.initiate",
+             "required_roles": ["super_admin", "field_agent", "surveyor",
+                                 "surveyor_general", "compliance_officer",
+                                 "licensed_surveyor", "surveyor_partner"],
+             "description": "Open a multipart upload session for a new EvidenceItem."},
+            {"action": "evidence.item.upload.complete",
+             "required_roles": ["super_admin", "field_agent", "surveyor",
+                                 "surveyor_general", "compliance_officer",
+                                 "licensed_surveyor", "surveyor_partner"],
+             "description": "Finalize multipart upload. Server records streamed SHA-256."},
+            {"action": "evidence.item.verify",
+             "description": "Independent server-side read-back + SHA-256 verification."},
+            {"action": "evidence.item.read",
+             "description": "Read EvidenceItem metadata (role-projected)."},
+            {"action": "evidence.item.list",
+             "description": "List EvidenceItems scoped to the caller's ExecutionContext."},
+            {"action": "evidence.item.read.signed_url",
+             "description": "Issue a short-lived signed URL (TTL clamped by role)."},
+            {"action": "evidence.seal.create",
+             "required_roles": ["super_admin", "surveyor_general",
+                                 "compliance_officer", "licensed_surveyor"],
+             "description": "Create an immutable Seal manifest over verified EvidenceItems."},
+            {"action": "evidence.seal.apply_worm",
+             "required_roles": ["super_admin", "compliance_officer"],
+             "description": "Flip the WORM gate. Activates StoragePort Object-Lock for every referenced item."},
+            {"action": "evidence.seal.read",
+             "description": "Read Seal manifest + status (role-projected)."},
+        ],
     }
 
     field_projection = {
@@ -1053,6 +1265,63 @@ def _build_security_contracts() -> dict[str, dict]:
                 "pii_fields": ["owner_name", "owner_email",
                                 "owner_phone", "owner_nin", "address"],
             },
+            "evidence.item": {
+                "public": [
+                    "evidence_id", "registry_id", "kind", "status",
+                    "hash_algorithm", "hash_verified", "seal_id",
+                    "created_at",
+                ],
+                "owner": [
+                    "evidence_id", "registry_id", "kind", "status", "version",
+                    "media_type", "size_bytes", "storage_provider",
+                    "server_hash", "hash_algorithm", "hash_verified",
+                    "client_hash_claim", "seal_id", "sealed_at",
+                    "retention_until", "replaced_by", "replaced_at",
+                    "created_at", "created_by", "updated_at",
+                ],
+                "privileged": [
+                    "evidence_id", "registry_id", "kind", "status", "version",
+                    "media_type", "size_bytes", "storage_provider",
+                    "server_hash", "server_hash_streamed",
+                    "hash_algorithm", "hash_verified",
+                    "client_hash_claim", "seal_id", "sealed_at",
+                    "retention_until", "replaced_by", "replaced_at",
+                    "tenant_id", "country_code", "storage_locator",
+                    "upload_id", "schema_version", "origin",
+                    "created_at", "created_by", "updated_at", "updated_by",
+                ],
+                "redacted_for_public": [
+                    "tenant_id", "storage_locator", "upload_id",
+                    "server_hash", "server_hash_streamed",
+                    "client_hash_claim", "media_type", "size_bytes",
+                ],
+                "pii_fields": [],
+            },
+            "evidence.seal": {
+                "public": [
+                    "seal_id", "registry_id", "status",
+                    "merkle_root", "manifest_hash", "created_at",
+                ],
+                "owner": [
+                    "seal_id", "registry_id", "status", "version",
+                    "evidence_ids", "merkle_root", "manifest_hash",
+                    "created_at", "created_by",
+                    "worm_applied_at", "retention_until", "anchor_batch_id",
+                ],
+                "privileged": [
+                    "seal_id", "registry_id", "status", "version",
+                    "evidence_ids", "merkle_root", "manifest_hash",
+                    "manifest", "leaf_hashes",
+                    "tenant_id", "country_code", "schema_version",
+                    "created_at", "created_by",
+                    "worm_applied_at", "retention_until",
+                    "anchor_batch_id", "archived_at",
+                ],
+                "redacted_for_public": [
+                    "tenant_id", "evidence_ids", "manifest", "leaf_hashes",
+                ],
+                "pii_fields": [],
+            },
         },
     }
 
@@ -1159,6 +1428,11 @@ def _build_release_manifest(all_artifacts: list[Artifact]) -> Artifact:
             "ADR-0001 — Platform Contract Freeze (v1/adr/ADR-0001-platform-contract-freeze.md)",
             "ADR-002 — Centralized Authorization Engine (default DENY)",
             "ADR-007 — Routers are composition only",
+            "ADR-0002 — Canonical LandVault Registry",
+            "ADR-0003 — Evidence bounded context",
+            "ADR-0004 — Server-side hashing discipline",
+            "ADR-0006 — Legal hold + remediation supersession",
+            "ADR-0007 — Canonical Evidence Aggregate + Sealing",
         ],
         "checksums": {
             "openapi_sha256": openapi_sha,

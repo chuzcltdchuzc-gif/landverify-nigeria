@@ -45,6 +45,15 @@ EVENT_TYPES = (
     "registry.parcel_reference.allocated",
     "registry.ownership.recorded",
     "registry.landvault.archived",
+    # Phase 3.4 + 3.5 — Evidence bounded context
+    "evidence.item.uploaded",
+    "evidence.item.hash_verified",
+    "evidence.item.hash_mismatch",
+    "evidence.item.archived_replaced",
+    "evidence.seal.created",
+    "evidence.seal.worm_applied",
+    "evidence.seal.archived",
+    "evidence.signed_url.issued",
 )
 
 # In-process subscriber registry — handler(envelope) -> awaitable

@@ -1,0 +1,181 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/events/evidence.signed_url.issued.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Domain event emitted by the `evidence` bounded context for aggregate `EvidenceItem`. Schema validates the full envelope; `payload` carries the aggregate-specific fields documented under `x-payload-fields`.",
+  "properties": {
+    "actor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "aggregate_id": {
+      "type": "string"
+    },
+    "aggregate_type": {
+      "const": "EvidenceItem",
+      "type": "string"
+    },
+    "aggregate_version": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "causation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "correlation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "country": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "event_id": {
+      "pattern": "^evt_[a-f0-9]{32}$",
+      "type": "string"
+    },
+    "event_type": {
+      "const": "evidence.signed_url.issued",
+      "type": "string"
+    },
+    "event_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "organization_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "payload": {
+      "additionalProperties": true,
+      "properties": {
+        "action": {
+          "description": "string — 'read' | 'verify' | 'export'",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "evidence_id": {
+          "description": "string",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "principal_id": {
+          "description": "string",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "registry_id": {
+          "description": "string",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "ttl_seconds": {
+          "description": "integer",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "url_sha256": {
+          "description": "string — sha256 of the URL (the URL plaintext is never stored)",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "producer": {
+      "const": "evidence",
+      "type": "string"
+    },
+    "tenant_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "aggregate_type",
+    "aggregate_id",
+    "aggregate_version",
+    "occurred_at",
+    "producer",
+    "payload"
+  ],
+  "title": "evidence.signed_url.issued",
+  "type": "object",
+  "x-aggregate": "EvidenceItem",
+  "x-bounded-context": "evidence",
+  "x-contract-version": "1.2.0",
+  "x-event-name": "evidence.signed_url.issued",
+  "x-event-version": 1,
+  "x-idempotency": "Dedup by `event_id`. The signed-URL audit row is the durable source of truth; this event is a fan-out signal for downstream consumers.",
+  "x-known-consumers": [
+    "audit-log",
+    "security-incident"
+  ],
+  "x-ordering": "No global ordering required.",
+  "x-payload-fields": {
+    "action": "string — 'read' | 'verify' | 'export'",
+    "evidence_id": "string",
+    "principal_id": "string",
+    "registry_id": "string",
+    "ttl_seconds": "integer",
+    "url_sha256": "string — sha256 of the URL (the URL plaintext is never stored)"
+  },
+  "x-producer": "evidence",
+  "x-replay": "Idempotent."
+}

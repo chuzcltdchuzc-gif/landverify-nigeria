@@ -1,0 +1,37 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/SignedUrlResponse.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "audit_id": {
+      "title": "Audit Id",
+      "type": "string"
+    },
+    "expires_at": {
+      "title": "Expires At",
+      "type": "string"
+    },
+    "ttl_seconds": {
+      "title": "Ttl Seconds",
+      "type": "integer"
+    },
+    "url": {
+      "title": "Url",
+      "type": "string"
+    },
+    "url_sha256": {
+      "title": "Url Sha256",
+      "type": "string"
+    }
+  },
+  "required": [
+    "url",
+    "expires_at",
+    "audit_id",
+    "url_sha256",
+    "ttl_seconds"
+  ],
+  "title": "SignedUrlResponse",
+  "type": "object",
+  "x-contract-version": "1.2.0"
+}

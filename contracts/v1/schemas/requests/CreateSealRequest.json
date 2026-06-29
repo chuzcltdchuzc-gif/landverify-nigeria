@@ -1,0 +1,29 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/CreateSealRequest.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "evidence_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 500,
+      "minItems": 1,
+      "title": "Evidence Ids",
+      "type": "array"
+    },
+    "registry_id": {
+      "maxLength": 64,
+      "minLength": 4,
+      "title": "Registry Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "registry_id",
+    "evidence_ids"
+  ],
+  "title": "CreateSealRequest",
+  "type": "object",
+  "x-contract-version": "1.2.0"
+}

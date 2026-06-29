@@ -1,0 +1,23 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/IssueSignedUrlRequest.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "default": "read",
+      "pattern": "^(read|verify|export)$",
+      "title": "Action",
+      "type": "string"
+    },
+    "ttl_seconds": {
+      "default": 300,
+      "maximum": 3600.0,
+      "minimum": 30.0,
+      "title": "Ttl Seconds",
+      "type": "integer"
+    }
+  },
+  "title": "IssueSignedUrlRequest",
+  "type": "object",
+  "x-contract-version": "1.2.0"
+}

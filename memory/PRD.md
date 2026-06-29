@@ -2,6 +2,96 @@
 
 _Last updated: 2026-06-29_
 
+## ⏱ 2026-06-29 — Phase 3.4 + 3.5 COMPLETE: Canonical Evidence Aggregate + Sealing
+
+Shipped steps 4 + 5 of Phase 3 as a single atomic milestone with the
+**contract bump 1.1.0 → 1.2.0** landing alongside the aggregates per ADR-0007.
+
+### Delivered
+- `backend/contexts/evidence/domain/`:
+  - `EvidenceItem` aggregate root — canonical, immutable evidentiary
+    record. Binaries NEVER in Mongo. Immutable: `evidence_id`,
+    `registry_id`, `tenant_id`, `country_code`, `created_at`,
+    `created_by`, `origin`, `kind`. Status FSM:
+    `pending_upload → pending_verification → verified → sealed → archived_replaced`.
+  - `Seal` aggregate root — immutable manifest. Manifest hash + Merkle
+    root frozen at construction; `status` advances `created → worm_applied → archived`;
+    `anchor_batch_id` is write-once.
+  - `value_objects.py` — `compute_merkle_root` (sorted canonical
+    merkle), `canonical_json_hash`, enums.
+  - `invariants.py` — `HashMismatchError`, `SealedItemError`,
+    `ImmutableFieldError`, `WormViolationError`, `TransitionError`,
+    `ConcurrencyConflict`.
+  - 8 immutable domain events.
+- `backend/contexts/evidence/ports/`:
+  - `repository.py` — `EvidenceItemRepository`, `SealRepository`.
+  - `specifications.py` — composable `EvidenceItemSpec`, `SealSpec`.
+- `backend/contexts/evidence/adapters/mongo_evidence_repository.py` —
+  Mongo adapters with full Specification support, tenant + country
+  scoping enforced regardless of role.
+- `backend/contexts/evidence/application/evidence_service.py` —
+  `EvidenceCommandService` orchestrates Mongo transaction + outbox
+  publish + audit + metrics; per-role projection (`public` / `owner` /
+  `privileged`). Hash discipline:
+  - Server hashes are authoritative (streamed-during-write +
+    independent read-back).
+  - Client `client_hash_claim` is a **claim only**; mismatch →
+    `409 evidence.hash_mismatch`, integrity event emitted, item rolled
+    back to `pending_upload`. The rollback is committed to disk before
+    the 409 surfaces (no transaction loss).
+- `backend/contexts/evidence/api/`:
+  - 10 new endpoints under `/api/v1/evidence/*` (see CHANGELOG).
+  - Per-role Pydantic DTOs with `extra=forbid`.
+- `backend/contexts/evidence/authorization.py` — 4 PDP policies
+  registered with the central engine covering 8 actions
+  (`evidence.item.upload.{initiate,complete}`, `evidence.item.verify`,
+  `evidence.item.read{,.signed_url}`, `evidence.item.list`,
+  `evidence.seal.{create,apply_worm,read}`).
+
+### Contract package at `1.2.0`
+- 70 governed artifacts (up from 52 at `1.1.0`).
+- 8 new domain events added to `v1/events/catalog.json` + per-event
+  schemas: `evidence.item.uploaded`, `evidence.item.hash_verified`,
+  `evidence.item.hash_mismatch`, `evidence.item.archived_replaced`,
+  `evidence.seal.created`, `evidence.seal.worm_applied`,
+  `evidence.seal.archived`, `evidence.signed_url.issued` (all v1).
+- 5 new request DTOs + 5 new response DTOs frozen as independent
+  JSON Schemas. The generator now inlines nested `$ref` components.
+- New `evidence_actions` block + `evidence.item` / `evidence.seal`
+  field projections in `v1/security/`.
+- ADR-0007 + CHANGELOG entry + new SHA256 fingerprints. Drift gate
+  green at 1.2.0.
+
+### Acceptance gate — ALL GREEN
+| Test suite                                                  | Cases | Status |
+| ----------------------------------------------------------- | ----- | ------ |
+| `tests/test_evidence_aggregate_invariants.py` (pure domain) | 25    | ✅      |
+| `tests/test_evidence_api_e2e.py` (E2E + WORM lockdown)      | 12    | ✅      |
+| `tests/test_evidence_storage_foundation.py` (Phase 3.1)     | 16    | ✅      |
+| `tests/test_evidence_pii_encryption.py` (Phase 3.2)         | 14    | ✅      |
+| `tests/test_evidence_media_remediation.py` (Phase 3.3)      | 7     | ✅      |
+| `tests/test_contract_freeze.py` (drift gate at 1.2.0)       | 8     | ✅      |
+| Full platform regression (kernel + registry + identity)     | 150   | ✅      |
+
+(6 pre-existing legacy tests under `/api/parcels` continue to fail
+identically with or without these changes — they use 1-char location
+tokens which the Phase 2A allocator rejects; documented Phase 2A
+regression, NOT introduced by 3.4/3.5.)
+
+### Strict non-goals (deferred to later phases)
+- 🟡 **3.6 Anchoring + locking + integrity** — CT-log + OTS saga
+  behind `AnchorPort`. `anchor_batch_id` on Seal is a placeholder field
+  that NO command in this milestone sets.
+- 🟡 **3.7 Timeline + versioning** — append-only chains.
+- 🟡 **3.8 Events + projections** — read-model fan-out.
+- 🟡 **3.9 SDK + React UI** — TypeScript SDK regen at 1.2.0 +
+  Evidence pages.
+- 🟡 **3.10 Phase 3 Acceptance Review packet**.
+
+_Previous Phase 3.3 entry below._
+
+---
+
 ## ⏱ 2026-06-29 — Phase 3.3 COMPLETE: Media Remediation
 
 Shipped step 3 of Phase 3 strictly in the binding sequence. **No

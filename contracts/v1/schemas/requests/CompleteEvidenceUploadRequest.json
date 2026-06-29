@@ -1,0 +1,47 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/CompleteEvidenceUploadRequest.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "parts": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "part_no": {
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Part No",
+            "type": "integer"
+          },
+          "size_bytes": {
+            "minimum": 0.0,
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "streamed_sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Streamed Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "part_no",
+          "size_bytes",
+          "streamed_sha256"
+        ],
+        "title": "CompletePartReceipt",
+        "type": "object"
+      },
+      "maxItems": 10000,
+      "minItems": 1,
+      "title": "Parts",
+      "type": "array"
+    }
+  },
+  "required": [
+    "parts"
+  ],
+  "title": "CompleteEvidenceUploadRequest",
+  "type": "object",
+  "x-contract-version": "1.2.0"
+}

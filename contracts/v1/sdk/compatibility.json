@@ -1,199 +1,271 @@
 {
   "$id": "https://aquasavannah.landvault/contracts/v1/sdk/compatibility.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "aggregate_sha256": "e8f8995ac2494d15af7d121cce6cca3a6602c462ed428a592b86b915b3f22ac3",
+  "aggregate_sha256": "004c2901b6c4fb740870bf5bbdaf3b3adeb18a40e1ec19b52b554cbd13b614bc",
   "artifacts": [
     {
       "path": "v1/errors/AuthorizationDenied.json",
-      "sha256": "f8f6a9efa4d614cb47a958d4e058d96bf0a914e4cf21626b5ae633f6d48de4e3"
+      "sha256": "51b52f56c8ae3ccee5def2f77f584a0e16c623731fb782288b419244a4803dca"
     },
     {
       "path": "v1/errors/BusinessRuleViolation.json",
-      "sha256": "129c79c4dbca997efd3526c9966df51d441696d71c1aa93dc018fa2656d1dfd9"
+      "sha256": "15cb4215d448fc8f6c904b8b70d7b481cefc216dd75055ecd2384138ccf3ecdb"
     },
     {
       "path": "v1/errors/ConcurrencyConflict.json",
-      "sha256": "9fbc767579301b454fd3b03e1f06aa4863b37c611caae6763510e7a637b41438"
+      "sha256": "e2c86d77d41cc500621d2ec62a21a71229eff92eb4822a4494775b727991ee13"
     },
     {
       "path": "v1/errors/NotFound.json",
-      "sha256": "6697244d88031f0c71731329fd6a1665c4cf2ff31676069ac2ddda85963b61a8"
+      "sha256": "bdd6fc041889e7cda67e1e444a26131a69b5fcf67acb9bc560a46580d59d66b9"
     },
     {
       "path": "v1/errors/RateLimitExceeded.json",
-      "sha256": "0df90a8d33611aa5972e9acddf116da13146b9b08e252f4d6f826f3a219ad9b3"
+      "sha256": "6cc4adba4085b644509299885b90fe649eb8077287a6fadb56b4eeebfb7c3e2e"
     },
     {
       "path": "v1/errors/SpatialValidationError.json",
-      "sha256": "574b9df4acd66c64a98c61421dfa87382051253ee442471d0b8d1f05a18bc9b0"
+      "sha256": "872f47e7898605fe39bc76712b2bd09a13940256619eea6f5cbb53e700b3f72d"
     },
     {
       "path": "v1/errors/ValidationError.json",
-      "sha256": "a2781e07af6e2637f1e9c291e80cd39a0d735b656e5dc8fc6fb2089f2fa34d8d"
+      "sha256": "8f8a4bc2707a60c1b80b0fdde07b36be21356d8a1f5893c57943161f0e0edb97"
     },
     {
       "path": "v1/events/catalog.json",
-      "sha256": "6a1b094d4df80b1b46bbdf6a767dc2225ead3e34ad8f31229718bdd791dc8cf9"
+      "sha256": "cd37029539d1bcb8c97799e109f55f6590bfbfcaf21824526daecfa35852bfd0"
+    },
+    {
+      "path": "v1/events/evidence.item.archived_replaced.v1.json",
+      "sha256": "886929aea3b5ed510c2f23ebdc9f8ccc0197f3c31da8b72a245d45be3d07ee15"
+    },
+    {
+      "path": "v1/events/evidence.item.hash_mismatch.v1.json",
+      "sha256": "1d819d4921945abb5022dabcfa19442f7c9e1b8c6c05640d5117f69d126f1178"
+    },
+    {
+      "path": "v1/events/evidence.item.hash_verified.v1.json",
+      "sha256": "fa52c07ee79b0291ec9898f00723e39f08ae264e78a26ca33ee11ce4aa744d29"
+    },
+    {
+      "path": "v1/events/evidence.item.uploaded.v1.json",
+      "sha256": "042aa3fc5273a9594470a2c1ff57e784df340a55d6445c863f04aa9a3e46e13b"
+    },
+    {
+      "path": "v1/events/evidence.seal.archived.v1.json",
+      "sha256": "17ce93a8138f36e81370f6963dc140fbb48b60166c52db583d242c48af4712e9"
+    },
+    {
+      "path": "v1/events/evidence.seal.created.v1.json",
+      "sha256": "61a9e73bbd74247da789a1281397419986c3992cd9f1caefa835f5d3cb1920d7"
+    },
+    {
+      "path": "v1/events/evidence.seal.worm_applied.v1.json",
+      "sha256": "61c2db8495f78ba8d00ed47f39cf14e1002b3c3074f09fe46b4282284a1881f4"
+    },
+    {
+      "path": "v1/events/evidence.signed_url.issued.v1.json",
+      "sha256": "3841519c1ec57c9d25273458e8e3a08e7716a00dd4b6895d328d81edd9df0839"
     },
     {
       "path": "v1/events/identity.account.activated.v1.json",
-      "sha256": "fcdb97dae1cdc9a4f8d5175ac7eed6f953cfeb15a4d0f62fcd09542540325036"
+      "sha256": "e2ffa648a5ee0f2de04e4bff2e43cdc7ba1db2579d8754d86f9f992a710e4168"
     },
     {
       "path": "v1/events/identity.account.suspended.v1.json",
-      "sha256": "5ce41bece7b6bdf6b2479f2de5018964d08233094adc92b58e62bddb05f8115e"
+      "sha256": "b4f889a9138749e89b031e085a8a9321e5a36f94c025930261fb3f8eb7daaf47"
     },
     {
       "path": "v1/events/identity.delegation.granted.v1.json",
-      "sha256": "931c0dc4634bba8d1c33e3d5e882b7e301227babea875a551e545e1a270964f4"
+      "sha256": "52544bc3c734e9b44c75999ef67e96e1f8022017ce180ffd5dbf481097f54520"
     },
     {
       "path": "v1/events/identity.delegation.revoked.v1.json",
-      "sha256": "a24e752e544e42798286d6a4c304988eff7778651a2f6676a0a6090e339b001d"
+      "sha256": "4f8f7dd57ef0281cd3b908ec3ee6e77a8decd45992da9dfac5d185bc27d836cf"
     },
     {
       "path": "v1/events/identity.login.failed.v1.json",
-      "sha256": "219c2ff567245fd49d6ecdcd7a871d74bdf2d93b1923d6d16e951916aa6167ee"
+      "sha256": "fb104aa536b39a14537be027ced6e06e2b81013ec9f30f64e16f3534a486529d"
     },
     {
       "path": "v1/events/identity.login.success.v1.json",
-      "sha256": "c4daaecfe098863f1bba5dba80e7a1df8980e4c3173cead6eca19ce177b32560"
+      "sha256": "fe208acca11813ab2da0b13724dcb39d54a6d9740437e9495787b53884c7d03d"
     },
     {
       "path": "v1/events/identity.password.changed.v1.json",
-      "sha256": "e18960a16c0695a7b6db728cdc6834232365e91ff0567115f59c7f22b466644e"
+      "sha256": "87894ffd6c44ef47314999918ac326eb44a5216a898115085d83d5980f0ac57b"
     },
     {
       "path": "v1/events/identity.role.assigned.v1.json",
-      "sha256": "2f6d38883760052bb83c900158ef3cfd7fb284d23e31b88149a90bff062ff01f"
+      "sha256": "79035bf58eb6c2c27bf6a858d302b2d1bb27764911599cce94127aa61ae833a5"
     },
     {
       "path": "v1/events/identity.service_account.created.v1.json",
-      "sha256": "1db4ff4511392c6973303fc20fb817595f108248eec7ee90cb9497ad9682a3e0"
+      "sha256": "96785fd4dc75b64526bdf55f46a7aba8fc312e7bb922cd77e1c3f625f23af9ab"
     },
     {
       "path": "v1/events/identity.service_account.revoked.v1.json",
-      "sha256": "de9da9ec36b6586068cd0a4c86d3e58eed02710b04b43ac239603f6eee537b66"
+      "sha256": "d7c8450cab20c54e399647f27ee7230c3ee363a0043e5c6301b11b28e35bdcec"
     },
     {
       "path": "v1/events/identity.session.revoked.v1.json",
-      "sha256": "7a69a58cf8ffc062eaa6e406e41d33e1e0719170f2b2360f119782fab91afbf7"
+      "sha256": "2e18bad2f9b2f2ca0b0f688af36bd09f7d49cebf8f01e1972029f7e92c72ce80"
     },
     {
       "path": "v1/events/identity.user.registered.v1.json",
-      "sha256": "b8cf2702825e6cfd0cdd3245740acb8692903b1c86b504730b944b1f784502e2"
+      "sha256": "e610b9954721d45e055b5c738450d4adf6e4aba2c2594f3b51c7f533d18efe62"
     },
     {
       "path": "v1/events/registry.landvault.archived.v1.json",
-      "sha256": "93b1b74c72b452d1174709d804d43b662f1675c280f2001a3643aa74227150ea"
+      "sha256": "5a5fba5babd2dc7cfa6e56dcbc3e98f8167e512be1de027cffba773a41a53de1"
     },
     {
       "path": "v1/events/registry.landvault.created.v1.json",
-      "sha256": "3992f6a2f3814867e54b8f4433d5a744bef40a5d424f88f69ed99da2c1484b71"
+      "sha256": "c6f7453351baffaa84c5d4b73c377c42ad6e16f36c97f8b15e94fc8378050e63"
     },
     {
       "path": "v1/events/registry.landvault.updated.v1.json",
-      "sha256": "37e4f78db7b957a3a97d88a87ea76c5ac343863610267d2becbecbc45dcf2619"
+      "sha256": "a2db4c89f7dd5c64b9b3a27780de284cfc54aa3137f06af87859921e155e8e99"
     },
     {
       "path": "v1/events/registry.ownership.recorded.v1.json",
-      "sha256": "d7927c53adf9d7e618d059aba2c9195b8fcd4a670ebf5576368f55bfa5f71d79"
+      "sha256": "cfb6316f09afbd6ae41fafda8c90124f31ccfb38f82a985e2cf96a1d61373d92"
     },
     {
       "path": "v1/events/registry.parcel_reference.allocated.v1.json",
-      "sha256": "7204370c7fcc89395f032bbd7bf03c5615f9f0fa1a8eaa5744e32241967569cf"
+      "sha256": "6359291bad16872ae0f5e23e903ba9d9dc1d727b7d7d201a4258119e7d6fa31e"
     },
     {
       "path": "v1/openapi.json",
-      "sha256": "d6ed18a58866ea981f9b18a6ce97fa6580812b3dce8924fec1eaa214b5f873ea"
+      "sha256": "06b6f729db0192e3afdcf4a1703779c9492471f1377c3a0beec1d9c6c84fa827"
+    },
+    {
+      "path": "v1/schemas/requests/ApplySealWormRequest.json",
+      "sha256": "e709dfcc6751e35f21036d36f81b1766cc2c4efdd40d4b4237f123eb5328067f"
     },
     {
       "path": "v1/schemas/requests/ArchiveLandVaultRequest.json",
-      "sha256": "8455eb7b86d44dc4cfea9973492f598f9f407bd65f92cf35e5d0d4d1cac53cf6"
+      "sha256": "4b0e6f0a920aa188292636a3b87a422bcbf4622c813111675a67d682a05e76f9"
     },
     {
       "path": "v1/schemas/requests/AssignRoleRequest.json",
-      "sha256": "5fb31eeffd2fd7266b31d1ee927228f5345f1661c9f283cec87ba944075e11e1"
+      "sha256": "c18d4fc8f50c0362467853556c0a06413f43f9fb1dacaa32736997d74207e4fa"
+    },
+    {
+      "path": "v1/schemas/requests/CompleteEvidenceUploadRequest.json",
+      "sha256": "d63ba4a54817b6bc4a43a2c45428c60a2b56a772036aba7b131b1654659c2202"
     },
     {
       "path": "v1/schemas/requests/CreateLandVaultRequest.json",
-      "sha256": "64fbefab848cec4f4c6ac50e7432bcea43604e5ef746d759290c1591c9513d58"
+      "sha256": "469fc2cedb2a5a8dceabcddaefaff8f524d81998ce27f29e7275d22fae1f8237"
+    },
+    {
+      "path": "v1/schemas/requests/CreateSealRequest.json",
+      "sha256": "5007ab94e1a52900740ae0827e2c47ebd100203f81df7bd8ae6cfd5a76513ae3"
     },
     {
       "path": "v1/schemas/requests/CreateServiceAccountRequest.json",
-      "sha256": "055255eb9d25e6176606e09ab64395cda8097519f35b05fd7116e8a753f5c902"
+      "sha256": "6bed5b2b305f88e9b3ee59b1d057ffca5df745737113ef55bbeeb92bc0d41ab2"
     },
     {
       "path": "v1/schemas/requests/DelegationRequest.json",
-      "sha256": "43a9ce04965213092d5354e68be18beed9f3a7b470a873271945bd0010e21cac"
+      "sha256": "9b8d55d144c1a67fbf1afe7858815c8faacda71af25b94155eaa51652e77fb76"
+    },
+    {
+      "path": "v1/schemas/requests/InitiateEvidenceUploadRequest.json",
+      "sha256": "e53f010a8a9524aa9ecb3d004a04a3664f48ecab5c918630213ba1cfb9dc561b"
+    },
+    {
+      "path": "v1/schemas/requests/IssueSignedUrlRequest.json",
+      "sha256": "966e0f0043709df135725bec41ca26b339ae44756651c7c8fcf49a016c089fb1"
     },
     {
       "path": "v1/schemas/requests/LoginGoogleRequest.json",
-      "sha256": "2f45cca6b1ff53f84a6983730558523c52d9453b726943f70bbfd041ea0991f5"
+      "sha256": "8e8d9aedcd516340365ed83b0a02dd4c73163379a0065e723b2ddf4dde3ad9ae"
     },
     {
       "path": "v1/schemas/requests/LoginLocalRequest.json",
-      "sha256": "664d68bb8cb3923a69aa35d1f5bbf728c83ba6aa3499b4713eed334ffb7084a8"
+      "sha256": "19ab98ecc648e8c7c8f3741c4eec5c47daed2b30d7a060e0193ff3ddf7987a7e"
     },
     {
       "path": "v1/schemas/requests/RecordOwnershipTransferRequest.json",
-      "sha256": "ff48527eaf3891ebe019a9c498b43659aab56d3fe25c2408430317eee424941a"
+      "sha256": "2958370ba766d470fa0733811de70dd6a14ed9ed9e3a961bbefa2d70432af36a"
     },
     {
       "path": "v1/schemas/requests/RegisterRequest.json",
-      "sha256": "f7cee11b66c1eff6e6deee6edf09c2a26bdd7ed5ddf458525bf6f61ef50c13b9"
+      "sha256": "952685fd274e3f851b097836a778641bcd7e3975af45efa768767aa779010a0b"
     },
     {
       "path": "v1/schemas/requests/RevokeRequest.json",
-      "sha256": "8acdf9631890165fd13b395e54fbcc956ed808b249f1349c0780483788341ccb"
+      "sha256": "61aa6709fc47db01a4b7fc1dde14346d703d41b982455b6758a1ac4fe7b4adf7"
     },
     {
       "path": "v1/schemas/requests/SuspendRequest.json",
-      "sha256": "d04521bd2d296f5a871e1e92e9f48476e0591443a89e3d886618e63d987bc87d"
+      "sha256": "2b6f57e6a075121d522051d8f4d14c5f8b7ea8e42a75a649c9a2152c2eb9d96e"
     },
     {
       "path": "v1/schemas/requests/UpdateCommunityDataRequest.json",
-      "sha256": "af231bc6b9cd54c7363558cd386e3f36d618ca31cfae2c4638c77ca4db8f6947"
+      "sha256": "d39a3b7066b04de429d02f52f7ba4c3e0ab2c6c406e2dc4fb56866cb1beaa5a7"
     },
     {
       "path": "v1/schemas/requests/UpdateGeometryRequest.json",
-      "sha256": "58a6692cc07e06857640fab94b9507bb8b303adc13a2eeea0e7a530a504afd08"
+      "sha256": "c77298a19896c2e3c184033b6b15f7db262702eebe731c38168407de824d88ef"
     },
     {
       "path": "v1/schemas/requests/UpdateLocationRequest.json",
-      "sha256": "64dfd05743e61cdff5270ff67e247862ade385500f4e4a295d04e733710a7e48"
+      "sha256": "c42a1d3d3152fa65afd174f2881320857cc45c7eaf638d763b50a99161fdb564"
     },
     {
       "path": "v1/schemas/requests/UpdateOwnershipContactRequest.json",
-      "sha256": "de2266efcc77b7cb5180bbf41803ddab6f17948dca162130db63a88b19efb4a7"
+      "sha256": "046b4189d3d5869a99452655c7a16772039a220c20fa716e4800627423e02b05"
     },
     {
       "path": "v1/schemas/requests/UpdateSurveyRequest.json",
-      "sha256": "323b32aede50ddc321a96777111f6d7930c41a7bfc437ec5cdfe58d25a6aee14"
+      "sha256": "df7b672fffaae5f9a174fe722f02213f605b778f2ae39fb5cf7abd1cf7b08d1d"
+    },
+    {
+      "path": "v1/schemas/responses/EvidenceItemListResponse.json",
+      "sha256": "c4f00badf0fb39650a436f6fb782e96a17baf802ab9d42c675ab39271322e7ac"
+    },
+    {
+      "path": "v1/schemas/responses/EvidenceItemResponse.json",
+      "sha256": "743e0399e7d41d3dcd9d54c016a2aadde9784041710e10e1cf751166a7109eb7"
+    },
+    {
+      "path": "v1/schemas/responses/InitiateEvidenceUploadResponse.json",
+      "sha256": "f029292bc2d593b157eddcf5806331b30e09113567f3f9178cfb293e41526bed"
     },
     {
       "path": "v1/schemas/responses/LandVaultListResponse.json",
-      "sha256": "0c42f49d73abea7a2484df193258d0885aa8334e72952eaee65db7d5fde73197"
+      "sha256": "2d7967e850e29b67f0da1153435816e06b18935ee9fec953a91f3bc8bd36e0a6"
     },
     {
       "path": "v1/schemas/responses/LandVaultResponse.json",
-      "sha256": "fb0074079e605cc8e3d4eee42e2f4ba375f2e84c82009a30a65e07a77cc594a2"
+      "sha256": "4d0fed158111678bbf2f061eda545fbd70bdafa05943b60adfca5251e42f4988"
+    },
+    {
+      "path": "v1/schemas/responses/SealResponse.json",
+      "sha256": "d4fc35851521a188dc1034e6a8e9c879b7ecbe4af72f00c64a904f079b1a9d05"
+    },
+    {
+      "path": "v1/schemas/responses/SignedUrlResponse.json",
+      "sha256": "4e7ce974e52255e51baaae713c7923e123e7223ef205ef603aeba49854eab60f"
     },
     {
       "path": "v1/schemas/responses/TokenResponse.json",
-      "sha256": "d0d6db3fd09a658a43e099de0ad0cf87f382415bb89787e4f385b813d95718ba"
+      "sha256": "8df5e7ac6d0afc4026561b2d41b132c594a90e3cc7c685d7eec7e9de6a6c4c00"
     },
     {
       "path": "v1/security/field_projection.json",
-      "sha256": "178578fedef770500b18d5469c30e2bce2defde5e9f1c7cfd7fd3316b76921aa"
+      "sha256": "3cc1125dfed034e7165ae9e50e3f26f3c8e22c99b8f9bf6cba52a1a1f21ba412"
     },
     {
       "path": "v1/security/permissions.json",
-      "sha256": "efacd5515e857265007af336be840a5ad8fcb00257e9aa60df981fa87c0f86ac"
+      "sha256": "eed06557f926e07b8aacdb3efaa2448fc3c0a243822aa8c0d2041642022906e4"
     },
     {
       "path": "v1/security/role_matrix.json",
-      "sha256": "f9db80ff8ebfdbd72470dee0c387e82145cf807f922cb5afc2c824b699334fe6"
+      "sha256": "6ae40b31e6da3e166a1d61e27b49ab0d02c39955dfa8ee735a350b6f8a0a88f1"
     }
   ],
   "breaks_on_major_bump": true,
@@ -201,10 +273,10 @@
     "typescript",
     "python"
   ],
-  "contract_version": "1.1.0",
+  "contract_version": "1.2.0",
   "drift_check_command": "bash contracts/ci_check_drift.sh",
   "max_supported_contract": "1.x.x",
   "min_supported_contract": "1.0.0",
   "regeneration_command": "python -m contracts.generate",
-  "sdk_version": "1.1.0+sdk.1"
+  "sdk_version": "1.2.0+sdk.1"
 }

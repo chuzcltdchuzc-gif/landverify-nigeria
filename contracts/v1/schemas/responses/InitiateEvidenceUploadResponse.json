@@ -1,0 +1,52 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/InitiateEvidenceUploadResponse.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "evidence_id": {
+      "title": "Evidence Id",
+      "type": "string"
+    },
+    "max_size": {
+      "title": "Max Size",
+      "type": "integer"
+    },
+    "registry_id": {
+      "title": "Registry Id",
+      "type": "string"
+    },
+    "status": {
+      "title": "Status",
+      "type": "string"
+    },
+    "storage_key": {
+      "title": "Storage Key",
+      "type": "string"
+    },
+    "storage_provider": {
+      "title": "Storage Provider",
+      "type": "string"
+    },
+    "upload_id": {
+      "title": "Upload Id",
+      "type": "string"
+    },
+    "version": {
+      "title": "Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "evidence_id",
+    "registry_id",
+    "upload_id",
+    "max_size",
+    "storage_key",
+    "storage_provider",
+    "status",
+    "version"
+  ],
+  "title": "InitiateEvidenceUploadResponse",
+  "type": "object",
+  "x-contract-version": "1.2.0"
+}

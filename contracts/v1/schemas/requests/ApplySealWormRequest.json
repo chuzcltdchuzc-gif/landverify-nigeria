@@ -1,0 +1,9 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/ApplySealWormRequest.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {},
+  "title": "ApplySealWormRequest",
+  "type": "object",
+  "x-contract-version": "1.2.0"
+}

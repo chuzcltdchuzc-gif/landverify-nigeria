@@ -1,0 +1,28 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/EvidenceItemResponse.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "description": "Per-role projected response — projection happens upstream.",
+  "properties": {
+    "evidence_id": {
+      "title": "Evidence Id",
+      "type": "string"
+    },
+    "registry_id": {
+      "title": "Registry Id",
+      "type": "string"
+    },
+    "status": {
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "evidence_id",
+    "registry_id",
+    "status"
+  ],
+  "title": "EvidenceItemResponse",
+  "type": "object",
+  "x-contract-version": "1.2.0"
+}

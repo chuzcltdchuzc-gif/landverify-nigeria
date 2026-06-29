@@ -267,7 +267,134 @@
       "producer": "registry",
       "replay_support": "Idempotent. Archive is one-way.",
       "version": 1
+    },
+    {
+      "aggregate": "EvidenceItem",
+      "bounded_context": "evidence",
+      "event_name": "evidence.item.uploaded",
+      "idempotency_requirements": "Dedup by `event_id`. Producer emits inside the same Mongo tx as the aggregate write (transactional outbox).",
+      "known_consumers": [
+        "audit-log",
+        "metrics",
+        "verification"
+      ],
+      "ordering_guarantees": "Per-EvidenceItem ordering by `aggregate_version`.",
+      "payload_schema": "v1/events/evidence.item.uploaded.v1.json",
+      "producer": "evidence",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "EvidenceItem",
+      "bounded_context": "evidence",
+      "event_name": "evidence.item.hash_verified",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "metrics",
+        "verification"
+      ],
+      "ordering_guarantees": "Per-EvidenceItem ordering by `aggregate_version`.",
+      "payload_schema": "v1/events/evidence.item.hash_verified.v1.json",
+      "producer": "evidence",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "EvidenceItem",
+      "bounded_context": "evidence",
+      "event_name": "evidence.item.hash_mismatch",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "security-incident",
+        "metrics"
+      ],
+      "ordering_guarantees": "Per-EvidenceItem ordering by `aggregate_version`.",
+      "payload_schema": "v1/events/evidence.item.hash_mismatch.v1.json",
+      "producer": "evidence",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "EvidenceItem",
+      "bounded_context": "evidence",
+      "event_name": "evidence.item.archived_replaced",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "search-index",
+        "verification"
+      ],
+      "ordering_guarantees": "Per-EvidenceItem ordering. Terminal for the old aggregate.",
+      "payload_schema": "v1/events/evidence.item.archived_replaced.v1.json",
+      "producer": "evidence",
+      "replay_support": "Idempotent. Archive is one-way.",
+      "version": 1
+    },
+    {
+      "aggregate": "Seal",
+      "bounded_context": "evidence",
+      "event_name": "evidence.seal.created",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "metrics",
+        "verification",
+        "certificate"
+      ],
+      "ordering_guarantees": "Per-Seal ordering by `aggregate_version`.",
+      "payload_schema": "v1/events/evidence.seal.created.v1.json",
+      "producer": "evidence",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "Seal",
+      "bounded_context": "evidence",
+      "event_name": "evidence.seal.worm_applied",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "metrics",
+        "verification"
+      ],
+      "ordering_guarantees": "Per-Seal ordering. Strict successor of `evidence.seal.created`.",
+      "payload_schema": "v1/events/evidence.seal.worm_applied.v1.json",
+      "producer": "evidence",
+      "replay_support": "Idempotent. WORM is one-way.",
+      "version": 1
+    },
+    {
+      "aggregate": "Seal",
+      "bounded_context": "evidence",
+      "event_name": "evidence.seal.archived",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "metrics"
+      ],
+      "ordering_guarantees": "Per-Seal ordering. Terminal.",
+      "payload_schema": "v1/events/evidence.seal.archived.v1.json",
+      "producer": "evidence",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "EvidenceItem",
+      "bounded_context": "evidence",
+      "event_name": "evidence.signed_url.issued",
+      "idempotency_requirements": "Dedup by `event_id`. The signed-URL audit row is the durable source of truth; this event is a fan-out signal for downstream consumers.",
+      "known_consumers": [
+        "audit-log",
+        "security-incident"
+      ],
+      "ordering_guarantees": "No global ordering required.",
+      "payload_schema": "v1/events/evidence.signed_url.issued.v1.json",
+      "producer": "evidence",
+      "replay_support": "Idempotent.",
+      "version": 1
     }
   ],
-  "x-contract-version": "1.1.0"
+  "x-contract-version": "1.2.0"
 }

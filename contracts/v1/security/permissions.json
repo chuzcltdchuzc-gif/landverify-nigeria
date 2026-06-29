@@ -74,6 +74,72 @@
   ],
   "default_decision": "DENY",
   "description": "ABAC permission patterns + concrete identity-bound permissions. The PDP evaluates these in priority order; default DENY (ADR-002, fail closed).",
+  "evidence_actions": [
+    {
+      "action": "evidence.item.upload.initiate",
+      "description": "Open a multipart upload session for a new EvidenceItem.",
+      "required_roles": [
+        "super_admin",
+        "field_agent",
+        "surveyor",
+        "surveyor_general",
+        "compliance_officer",
+        "licensed_surveyor",
+        "surveyor_partner"
+      ]
+    },
+    {
+      "action": "evidence.item.upload.complete",
+      "description": "Finalize multipart upload. Server records streamed SHA-256.",
+      "required_roles": [
+        "super_admin",
+        "field_agent",
+        "surveyor",
+        "surveyor_general",
+        "compliance_officer",
+        "licensed_surveyor",
+        "surveyor_partner"
+      ]
+    },
+    {
+      "action": "evidence.item.verify",
+      "description": "Independent server-side read-back + SHA-256 verification."
+    },
+    {
+      "action": "evidence.item.read",
+      "description": "Read EvidenceItem metadata (role-projected)."
+    },
+    {
+      "action": "evidence.item.list",
+      "description": "List EvidenceItems scoped to the caller's ExecutionContext."
+    },
+    {
+      "action": "evidence.item.read.signed_url",
+      "description": "Issue a short-lived signed URL (TTL clamped by role)."
+    },
+    {
+      "action": "evidence.seal.create",
+      "description": "Create an immutable Seal manifest over verified EvidenceItems.",
+      "required_roles": [
+        "super_admin",
+        "surveyor_general",
+        "compliance_officer",
+        "licensed_surveyor"
+      ]
+    },
+    {
+      "action": "evidence.seal.apply_worm",
+      "description": "Flip the WORM gate. Activates StoragePort Object-Lock for every referenced item.",
+      "required_roles": [
+        "super_admin",
+        "compliance_officer"
+      ]
+    },
+    {
+      "action": "evidence.seal.read",
+      "description": "Read Seal manifest + status (role-projected)."
+    }
+  ],
   "identity_actions": [
     {
       "action": "identity.register",
@@ -274,5 +340,5 @@
       ]
     }
   ],
-  "x-contract-version": "1.1.0"
+  "x-contract-version": "1.2.0"
 }

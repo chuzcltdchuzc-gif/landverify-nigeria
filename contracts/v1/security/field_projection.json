@@ -3,6 +3,132 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "Per-resource field projection rules. Backend AND frontend MUST derive PII/visibility behaviour from this table — never by copying logic across layers. The `owner` projection is applied as an obligation by the PEP; the `public` projection is what un-elevated callers see; the `privileged` projection is what governance roles see.",
   "projections": {
+    "evidence.item": {
+      "owner": [
+        "evidence_id",
+        "registry_id",
+        "kind",
+        "status",
+        "version",
+        "media_type",
+        "size_bytes",
+        "storage_provider",
+        "server_hash",
+        "hash_algorithm",
+        "hash_verified",
+        "client_hash_claim",
+        "seal_id",
+        "sealed_at",
+        "retention_until",
+        "replaced_by",
+        "replaced_at",
+        "created_at",
+        "created_by",
+        "updated_at"
+      ],
+      "pii_fields": [],
+      "privileged": [
+        "evidence_id",
+        "registry_id",
+        "kind",
+        "status",
+        "version",
+        "media_type",
+        "size_bytes",
+        "storage_provider",
+        "server_hash",
+        "server_hash_streamed",
+        "hash_algorithm",
+        "hash_verified",
+        "client_hash_claim",
+        "seal_id",
+        "sealed_at",
+        "retention_until",
+        "replaced_by",
+        "replaced_at",
+        "tenant_id",
+        "country_code",
+        "storage_locator",
+        "upload_id",
+        "schema_version",
+        "origin",
+        "created_at",
+        "created_by",
+        "updated_at",
+        "updated_by"
+      ],
+      "public": [
+        "evidence_id",
+        "registry_id",
+        "kind",
+        "status",
+        "hash_algorithm",
+        "hash_verified",
+        "seal_id",
+        "created_at"
+      ],
+      "redacted_for_public": [
+        "tenant_id",
+        "storage_locator",
+        "upload_id",
+        "server_hash",
+        "server_hash_streamed",
+        "client_hash_claim",
+        "media_type",
+        "size_bytes"
+      ]
+    },
+    "evidence.seal": {
+      "owner": [
+        "seal_id",
+        "registry_id",
+        "status",
+        "version",
+        "evidence_ids",
+        "merkle_root",
+        "manifest_hash",
+        "created_at",
+        "created_by",
+        "worm_applied_at",
+        "retention_until",
+        "anchor_batch_id"
+      ],
+      "pii_fields": [],
+      "privileged": [
+        "seal_id",
+        "registry_id",
+        "status",
+        "version",
+        "evidence_ids",
+        "merkle_root",
+        "manifest_hash",
+        "manifest",
+        "leaf_hashes",
+        "tenant_id",
+        "country_code",
+        "schema_version",
+        "created_at",
+        "created_by",
+        "worm_applied_at",
+        "retention_until",
+        "anchor_batch_id",
+        "archived_at"
+      ],
+      "public": [
+        "seal_id",
+        "registry_id",
+        "status",
+        "merkle_root",
+        "manifest_hash",
+        "created_at"
+      ],
+      "redacted_for_public": [
+        "tenant_id",
+        "evidence_ids",
+        "manifest",
+        "leaf_hashes"
+      ]
+    },
     "identity.delegation": {
       "owner": [
         "delegation_id",
@@ -262,5 +388,5 @@
       ]
     }
   },
-  "x-contract-version": "1.1.0"
+  "x-contract-version": "1.2.0"
 }

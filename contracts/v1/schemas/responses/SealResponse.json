@@ -1,0 +1,37 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/SealResponse.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "manifest_hash": {
+      "title": "Manifest Hash",
+      "type": "string"
+    },
+    "merkle_root": {
+      "title": "Merkle Root",
+      "type": "string"
+    },
+    "registry_id": {
+      "title": "Registry Id",
+      "type": "string"
+    },
+    "seal_id": {
+      "title": "Seal Id",
+      "type": "string"
+    },
+    "status": {
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "seal_id",
+    "registry_id",
+    "status",
+    "merkle_root",
+    "manifest_hash"
+  ],
+  "title": "SealResponse",
+  "type": "object",
+  "x-contract-version": "1.2.0"
+}

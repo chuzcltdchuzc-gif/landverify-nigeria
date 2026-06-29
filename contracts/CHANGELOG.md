@@ -11,6 +11,56 @@ Every entry below MUST reference its ADR.
 
 ---
 
+## [1.2.0] — 2026-06-29 — Phase 3.4 + 3.5: Canonical Evidence Aggregate + Sealing
+
+* **ADR-0007 — Canonical Evidence Aggregate + Sealing**: introduces the
+  `EvidenceItem` and `Seal` aggregate roots under
+  `backend/contexts/evidence/`. Binaries never live in MongoDB; the
+  aggregate references storage objects via `StoragePort` (`local_fs_worm`
+  in dev, `r2` in production). Server hashes are authoritative; client
+  hashes are recorded as **claims only**. Once a Seal applies WORM, the
+  StoragePort Object-Lock is active for every referenced item; the seal
+  can never be deleted.
+* **Additive (`/api/v1/*`)** — 10 new endpoints under
+  `/api/v1/evidence`:
+  * `POST /items` — initiate multipart upload (returns `evidence_id` +
+    `upload_id`).
+  * `PUT /items/{id}/parts/{part_no}` — stream a part (server computes
+    a running SHA-256).
+  * `POST /items/{id}/complete` — finalize multipart; status moves to
+    `pending_verification`.
+  * `POST /items/{id}/verify` — independent server-side read-back +
+    SHA-256 verification; status moves to `verified`.
+  * `GET /items/{id}` — read EvidenceItem metadata (role-projected).
+  * `GET /items` — list scoped by ExecutionContext.
+  * `POST /items/{id}/signed-url` — issue a short-lived signed URL;
+    audit row persists BEFORE the URL leaves the server.
+  * `POST /seals` — create immutable Seal manifest over verified items
+    (computes `merkle_root` + `manifest_hash`).
+  * `POST /seals/{id}/apply-worm` — flip the WORM gate; fans out
+    `apply_object_lock` to every referenced item.
+  * `GET /seals/{id}` — read Seal manifest (role-projected).
+* **Additive (events)** — 8 new domain events:
+  * `evidence.item.uploaded.v1`
+  * `evidence.item.hash_verified.v1`
+  * `evidence.item.hash_mismatch.v1`
+  * `evidence.item.archived_replaced.v1`
+  * `evidence.seal.created.v1`
+  * `evidence.seal.worm_applied.v1`
+  * `evidence.seal.archived.v1`
+  * `evidence.signed_url.issued.v1`
+* **Additive (schemas)** — 5 new request DTOs + 5 new response DTOs
+  frozen as independent JSON Schemas under `v1/schemas/`. The
+  generator now inlines nested `$ref` components so every DTO is
+  self-contained.
+* **Additive (security)** — new `evidence_actions` block in
+  `v1/security/permissions.json`; new `evidence.item` and
+  `evidence.seal` projections in `v1/security/field_projection.json`.
+* **Drift gate** updated — 70 artifacts pinned by SHA256 (up from 52
+  at 1.1.0). Existing Phase 1 + Phase 2A artifacts remain
+  backward-compatible; consumers on `1.0.0` / `1.1.0` continue to work
+  without changes.
+
 ## [1.1.0] — 2026-06-28 — Phase 2A: Canonical LandVault Registry
 
 * **ADR-0002 — Canonical LandVault Registry**: introduces the first
