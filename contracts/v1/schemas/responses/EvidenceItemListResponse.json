@@ -32,5 +32,5 @@
   ],
   "title": "EvidenceItemListResponse",
   "type": "object",
-  "x-contract-version": "1.4.0"
+  "x-contract-version": "1.5.0"
 }

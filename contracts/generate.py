@@ -88,6 +88,9 @@ RESPONSE_DTOS = (
     "IntegrityCheckResponse",
     "IntegrityChainResponse",
     "CtlogCheckpointResponse",
+    # Phase 3.8 — Projection engine admin
+    "ProjectionStatusResponse",
+    "ProjectionListResponse",
 )
 
 # Domain events — names mirror `kernel.events.outbox.EVENT_TYPES` and the
@@ -1427,6 +1430,15 @@ def _build_security_contracts() -> dict[str, dict]:
             {"action": "evidence.legal_hold.release",
              "required_roles": ["super_admin", "compliance_officer"],
              "description": "Release a Legal Hold. Release is itself immutable."},
+        ],
+        "kernel_actions": [
+            {"action": "kernel.projections.admin",
+             "required_roles": ["super_admin"],
+             "description": (
+                 "Admin gate for Phase 3.8 projection engine endpoints — "
+                 "health, lag inspection, replay (deterministic rebuild), "
+                 "and snapshot timestamps. super_admin only (ADR-0010 §5)."
+             )},
         ],
     }
 

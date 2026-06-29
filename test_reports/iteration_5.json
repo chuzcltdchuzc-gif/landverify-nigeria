@@ -1,0 +1,42 @@
+{
+  "summary": "Phase 3.8 (Projection Engine, Read Models & Replay) verified end-to-end. ALL 17 tests in /app/backend/tests/test_phase38_projections.py pass — purity invariant (pure/mutation/publish), engine cursor+lag+snapshot+status semantics, the constitutional Projection Determinism Gate (ADR-0010 §3) end-to-end via a real Phase 3.4–3.6 evidence pipeline (registry create -> evidence init -> upload -> complete -> verify -> seal -> apply-worm -> 2.5s settle -> snapshot evidence_timeline+evidence_custody -> replay -> byte-identical compare), admin router auth matrix (401/403/200), unknown-projection problem-detail 404 with code 'kernel.projection.not_found', OpenAPI surface (all 4 admin paths present), and Contracts VERSION==1.5.0. Live HTTP verification confirms: (a) GET /api/v1/admin/projections returns the engine-owned DTO with all 9 required fields {name,version,cursor_event_id,last_delivered_at,last_event_type,delivered_count,lag_events,rebuilding,last_snapshot_at} including evidence.timeline registered at startup, (b) IDENTITY_USER (default) gets 403 on list AND replay, unauth gets 401, super_admin gets 200, (c) snapshot upserts a parseable ISO last_snapshot_at, (d) lag_events == N-M when N inserted at DELIVERED and M delivered via the wrapper. Full constitutional DDD suite (140 tests: test_phase1_identity + test_registry_aggregate_invariants + test_evidence_aggregate_invariants + test_evidence_storage_foundation + test_phase36_aggregates + test_phase37_timeline + test_phase38_projections + test_contract_freeze) is GREEN — 140/140 passed in 43s, zero regressions. Contract freeze gate (8/8 incl. drift sentinel) is clean: `python -m contracts.generate` is a no-op against the tree and test_contract_package_has_no_drift passes. The four legacy-suite failures pre-existing in tests/backend_test.py / tests/test_concurrency.py / tests/test_tenant_isolation.py / tests/test_worker_reports.py (1-char ward/lga -> allocator regex mismatch documented in iteration_4.json) are unchanged and explicitly out-of-scope per the agent-to-agent context note.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "main.py startup/shutdown",
+        "issue": "FastAPI emits DeprecationWarning: '@app.on_event(\"startup\"/\"shutdown\") is deprecated, use lifespan event handlers instead'. Non-blocking but flagged for future cleanup. Lines 348 and surrounding."
+      }
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_phase38_projections.py",
+    "/app/test_reports/pytest/phase38_results.xml",
+    "/app/test_reports/pytest/constitutional_suite.xml"
+  ],
+  "action_items": [
+    "OPTIONAL: migrate main.py @app.on_event handlers to FastAPI lifespan() context manager to silence DeprecationWarnings (cosmetic only, not a regression).",
+    "Pre-existing (carried from iteration_4): enforce ≥2-char min on state/lga/ward inside MongoRegistryNumberAllocator._normalize so legacy /api/parcels returns 400 instead of 500 for 1-char tokens. NOT a Phase 3.8 concern; left unchanged here."
+  ],
+  "critical_code_review_comments": [
+    "Projection Purity invariant is correctly enforced via source-token scan (`.archive(`, `await publish(`, `kernel.events.outbox.publish`, `.save_seal(`, `.save_item()`). Reference impure projection raises InvariantError; clean projection passes — gate is tight.",
+    "ProjectionEngine.replay() correctly: (a) sets rebuilding=True, (b) awaits projection.reset(), (c) replays the outbox slice matching event_glob in cursor order, (d) updates cursor & delivered_count, (e) clears rebuilding. Byte-identical reconstruction verified end-to-end (timeline+custody) against the live evidence.timeline projector — Determinism Gate PASSES.",
+    "Admin router enforces kernel.projections.admin via enforce() against the request context — super_admin only. The 401/403 split is correctly tied to identity presence (no token -> 401, IDENTITY_USER token -> 403) on all 4 endpoints.",
+    "Unknown projection name returns a structured problem-detail with code='kernel.projection.not_found', status=404, correlation_id, and instance — matches the kernel error contract.",
+    "Cursor doc lives in kernel_projection_cursors keyed by name and persists {cursor_event_id, delivered_count, last_delivered_at, last_event_type, last_snapshot_at, version, rebuilding}. lag_events is computed live by counting outbox docs matching event_glob with status=DELIVERED that are NOT in the delivered-id set / past cursor — semantically correct under the test (N=10, M=4 -> lag=6).",
+    "TimelineProjector.reset() deletes both evidence_timeline AND evidence_custody — required for deterministic rebuild because both projections are owned by the same engine handle.",
+    "Contracts VERSION=1.5.0; CHANGELOG entry present; `python -m contracts.generate` is idempotent against the tree (drift gate clean); ProjectionStatusResponse + ProjectionListResponse are in RESPONSE_DTOS; kernel.projections.admin appears in kernel_actions; all 4 admin paths live in /openapi.json."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "Phase 3.8: 17/17 (100%). Full constitutional DDD suite: 140/140 (100%). Contract freeze: 8/8 (100%). Live HTTP smoke (auth matrix, DTO shape, problem-detail, snapshot ISO, OpenAPI presence): 100%.",
+    "frontend": "not tested (testing_type=backend only)"
+  },
+  "test_credentials": "Super_admin: POST /api/v1/auth/register {email, password:'TestPass123!', full_name, country:'NG'} -> mongo db.identity_users.updateOne({email: lowercased}, {$set:{roles:['super_admin'],role:'super_admin'},$inc:{version:1}}) -> POST /api/v1/auth/login. Field/default: same register/login without the role promotion (role=IDENTITY_USER).",
+  "seed_data_creation": "Per-test ephemeral users p38_admin_<hex>@example.com, p38_field_<hex>@example.com, p38_uploader_<hex>@example.com promoted in-flight. Determinism-gate test creates 1 registry + 1 evidence item + 1 seal + apply-worm; live verification script created 2 extra users (live_p38_*, live_field_*) and ran 1 snapshot on evidence.timeline. Synthetic outbox events were inserted via _insert_test_events under per-test event_type prefixes test.replay.<hex>/test.dispose.<hex>/test.lag.<hex> and the kernel_projection_cursors collection is cleaned up by the isolated_engine fixture (regex ^test\\.).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Phase 3.8 is fully green and constitutionally compliant. The only remaining legacy hot-spot is the iteration_4-documented /api/parcels 500 on 1-char ward/lga — pre-existing, unrelated to Phase 3.8, NOT a regression. If a Phase 3.9+ delivery lands, re-run: (1) cd /app/backend && python -m pytest tests/test_phase38_projections.py -v  (should be 17/17), (2) full constitutional suite command from the review request (140/140). Live admin smoke harness lives inline in this iteration's bash; reproduce by POSTing /api/v1/auth/register, promoting in Mongo, then hitting /api/v1/admin/projections{,/{name},/{name}/replay,/{name}/snapshot}.",
+  "rca of the issue": "No new issues uncovered. Phase 3.8 acceptance gates all hold."
+}

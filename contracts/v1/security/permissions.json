@@ -301,6 +301,15 @@
       ]
     }
   ],
+  "kernel_actions": [
+    {
+      "action": "kernel.projections.admin",
+      "description": "Admin gate for Phase 3.8 projection engine endpoints — health, lag inspection, replay (deterministic rebuild), and snapshot timestamps. super_admin only (ADR-0010 §5).",
+      "required_roles": [
+        "super_admin"
+      ]
+    }
+  ],
   "platform_policies": [
     {
       "description": "Deny cross-tenant access unless super_admin.",
@@ -412,5 +421,5 @@
       ]
     }
   ],
-  "x-contract-version": "1.4.0"
+  "x-contract-version": "1.5.0"
 }

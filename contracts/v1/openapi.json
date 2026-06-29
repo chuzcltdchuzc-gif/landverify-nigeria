@@ -1261,6 +1261,101 @@
         "title": "PortfolioCreate",
         "type": "object"
       },
+      "ProjectionListResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "projections": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectionStatusResponse"
+            },
+            "title": "Projections",
+            "type": "array"
+          }
+        },
+        "required": [
+          "projections"
+        ],
+        "title": "ProjectionListResponse",
+        "type": "object"
+      },
+      "ProjectionStatusResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "cursor_event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cursor Event Id"
+          },
+          "delivered_count": {
+            "title": "Delivered Count",
+            "type": "integer"
+          },
+          "lag_events": {
+            "title": "Lag Events",
+            "type": "integer"
+          },
+          "last_delivered_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Delivered At"
+          },
+          "last_event_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Event Type"
+          },
+          "last_snapshot_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Snapshot At"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "rebuilding": {
+            "title": "Rebuilding",
+            "type": "boolean"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "version",
+          "delivered_count",
+          "lag_events",
+          "rebuilding"
+        ],
+        "title": "ProjectionStatusResponse",
+        "type": "object"
+      },
       "PropertyType": {
         "enum": [
           "RES",
@@ -2113,9 +2208,9 @@
   "info": {
     "description": "Canonical, governed API surface for AquaSavannah LandVault. Endpoints under `/api/v1/*` are the supported platform contract. Endpoints under `/api/*` (without `/v1/`) are LEGACY and deprecated — see `contracts/deprecation-policy.md`.",
     "title": "Aquasavannah LandVault — Platform Contract",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "x-contract-package": "aquasavannah-landvault",
-    "x-contract-version": "1.4.0"
+    "x-contract-version": "1.5.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -7042,6 +7137,297 @@
         ],
         "x-deprecation-policy": "See contracts/deprecation-policy.md. Bug fixes only; no new functionality.",
         "x-legacy": true
+      }
+    },
+    "/api/v1/admin/projections": {
+      "get": {
+        "operationId": "list_projections_api_v1_admin_projections_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lv_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lv Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectionListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Projections",
+        "tags": [
+          "admin-projections"
+        ],
+        "x-canonical": true
+      }
+    },
+    "/api/v1/admin/projections/{name}": {
+      "get": {
+        "operationId": "get_projection_api_v1_admin_projections__name__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lv_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lv Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectionStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Projection",
+        "tags": [
+          "admin-projections"
+        ],
+        "x-canonical": true
+      }
+    },
+    "/api/v1/admin/projections/{name}/replay": {
+      "post": {
+        "operationId": "replay_projection_api_v1_admin_projections__name__replay_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lv_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lv Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectionStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Replay Projection",
+        "tags": [
+          "admin-projections"
+        ],
+        "x-canonical": true
+      }
+    },
+    "/api/v1/admin/projections/{name}/snapshot": {
+      "post": {
+        "operationId": "snapshot_projection_api_v1_admin_projections__name__snapshot_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lv_access",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lv Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectionStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Snapshot Projection",
+        "tags": [
+          "admin-projections"
+        ],
+        "x-canonical": true
       }
     },
     "/api/v1/auth/login": {

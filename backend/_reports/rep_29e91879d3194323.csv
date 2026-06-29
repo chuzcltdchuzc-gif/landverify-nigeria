@@ -1,0 +1,22 @@
+Section,Key,Value
+Report,ID,rep_29e91879d3194323
+Report,Requested by,legal.demo@landvault.test
+Report,Generated at,2026-06-29T13:11:03.683392+00:00
+Parcel,Parcel number,LAGOS-IKEJA-IKEJAWAR-RES-000007
+Parcel,Status,UNVERIFIED
+Parcel,Confidence,10
+Parcel,Community,TEST_LegShim_1048e2
+Parcel,LGA,Ikeja
+Parcel,Ward,Ikeja Ward 3
+Parcel,State,Lagos
+Evidence,total,0
+Evidence,approved,0
+Evidence,rejected,0
+Evidence,pending,0
+Evidence,sealed,0
+Evidence,integrity_pass,0
+Attestation,total,0
+Attestation,approved,0
+Attestation,pending,0
+Attestation,contested,0
+Attestation,rejected,0

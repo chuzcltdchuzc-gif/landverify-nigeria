@@ -11,6 +11,33 @@ Every entry below MUST reference its ADR.
 
 ---
 
+## [1.5.0] — 2026-06-29 — Phase 3.8: Projection Engine, Read Models & Replay
+
+* **ADR-0010 — Projection Engine, Read Models & Replay**: introduces
+  the binding constitutional rules for read models (zero business
+  logic, zero aggregate mutation, idempotent on_event, disposable +
+  byte-identical replay) AND the in-process projection engine that
+  mechanically enforces them.
+* **Additive (`/api/v1/*`)** — 4 new admin endpoints under
+  `/api/v1/admin/projections` (super_admin only):
+  * `GET  /api/v1/admin/projections`              — health for every projection.
+  * `GET  /api/v1/admin/projections/{name}`       — single status.
+  * `POST /api/v1/admin/projections/{name}/replay`   — deterministic rebuild.
+  * `POST /api/v1/admin/projections/{name}/snapshot` — record snapshot baseline.
+* **Additive (security)** — 1 new action `kernel.projections.admin`
+  under a new `kernel_actions` block (super_admin only).
+* **Additive (DTOs)** — 2 new response schemas:
+  `ProjectionStatusResponse`, `ProjectionListResponse`.
+* **Refactor (read-side)** — the existing `TimelineProjector` is now a
+  formal `Projection` (name=`evidence.timeline`, version=1,
+  event_glob=`evidence.*`). Cursor + lag metrics are tracked
+  automatically; the projection subscribes via the engine wrapper.
+* **Invariants**: Projection Purity (static + runtime) MUST hold for
+  every registered projection; full delete + replay MUST produce
+  byte-identical state; cursor advances atomically with delivery.
+* **Drift gate** updated — 98 frozen artifacts at 1.5.0 (up from 96).
+  Backward-compatible with all prior 1.x consumers.
+
 ## [1.4.0] — 2026-06-29 — Phase 3.7: Timeline + Custody + Legal Hold + Supersession
 
 * **ADR-0009 — Timeline, Custody, Legal Hold, Supersession**:

@@ -1,0 +1,81 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/ProjectionStatusResponse.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "cursor_event_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Cursor Event Id"
+    },
+    "delivered_count": {
+      "title": "Delivered Count",
+      "type": "integer"
+    },
+    "lag_events": {
+      "title": "Lag Events",
+      "type": "integer"
+    },
+    "last_delivered_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Last Delivered At"
+    },
+    "last_event_type": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Last Event Type"
+    },
+    "last_snapshot_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Last Snapshot At"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "rebuilding": {
+      "title": "Rebuilding",
+      "type": "boolean"
+    },
+    "version": {
+      "title": "Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "name",
+    "version",
+    "delivered_count",
+    "lag_events",
+    "rebuilding"
+  ],
+  "title": "ProjectionStatusResponse",
+  "type": "object",
+  "x-contract-version": "1.5.0"
+}

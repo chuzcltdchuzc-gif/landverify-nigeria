@@ -96,6 +96,9 @@ from kernel.events import (
     subscribe,
 )
 from kernel.observability.metrics import configure_metrics, increment
+from kernel.projections import configure_engine
+from kernel.projections import admin_router as projections_admin_router
+from kernel.projections.authorization import register_projection_policies
 from kernel.security.jwt import JwtIssuer, JwtVerifier
 from kernel.security.keys import KeyStore
 
@@ -137,6 +140,9 @@ api.include_router(evidence_router.router)
 api.include_router(evidence_anchor_router.router)
 api.include_router(evidence_timeline_router.router)
 
+# Phase 3.8 — Projection admin endpoints (super_admin only)
+api.include_router(projections_admin_router.router)
+
 app.include_router(api)
 
 # Webhooks register their own absolute /api/webhook/* paths.
@@ -167,10 +173,13 @@ async def _startup() -> None:
     configure_audit_store(db)
     configure_metrics(db)
     configure_outbox(db)
+    projection_engine = configure_engine(db)
+    await projection_engine.ensure_indexes()
     register_default_policies()
     register_demo_resource_policies()
     register_registry_policies()
     register_evidence_policies()
+    register_projection_policies()
 
     # Audit-event metric subscriber — every domain event bumps a counter.
     async def _audit_event_counter(env) -> None:
@@ -314,12 +323,15 @@ async def _startup() -> None:
         timeline_repo=timeline_repo, custody_repo=custody_repo,
         holds_repo=holds_repo, custody_svc=custody_svc,
         holds_svc=holds_svc, supersession_svc=supersession_svc)
-    # Subscribe the timeline projector to the outbox.
-    subscribe("evidence.*", timeline_projector.on_event)
+    # Subscribe the timeline projector via the Phase 3.8 projection engine
+    # so cursor + lag metrics are tracked automatically (ADR-0010).
+    timeline_handler = projection_engine.register(timeline_projector)
+    subscribe("evidence.*", timeline_handler)
     app.state.timeline_repo = timeline_repo
     app.state.custody_repo = custody_repo
     app.state.legal_holds_repo = holds_repo
     app.state.timeline_projector = timeline_projector
+    app.state.projection_engine = projection_engine
 
     logger.info("Phase 1A constitutional kernel + Identity admin surface ready")
     logger.info("Phase 2A Registry bounded context ready at /api/v1/registry/*")
@@ -330,6 +342,7 @@ async def _startup() -> None:
                 evidence_kms.kms_id)
     logger.info("Phase 3.4 + 3.5 Evidence aggregate + Sealing ready at /api/v1/evidence/*")
     logger.info("Phase 3.6 Anchoring + Integrity + Locking ready at /api/v1/evidence/anchor-batches/* + /locks/* + /integrity-checks/* + /ctlog/*")
+    logger.info("Phase 3.8 Projection engine ready at /api/v1/admin/projections/*")
 
 
 @app.on_event("shutdown")

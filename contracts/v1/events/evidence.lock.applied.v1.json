@@ -181,7 +181,7 @@
   "type": "object",
   "x-aggregate": "EvidenceLock",
   "x-bounded-context": "evidence",
-  "x-contract-version": "1.4.0",
+  "x-contract-version": "1.5.0",
   "x-event-name": "evidence.lock.applied",
   "x-event-version": 1,
   "x-idempotency": "Dedup by `event_id`.",

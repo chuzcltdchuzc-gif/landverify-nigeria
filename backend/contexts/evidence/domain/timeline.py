@@ -101,6 +101,43 @@ class TimelineEntry:
                     summary=summary, payload=payload)
 
     @classmethod
+    def from_event(cls, *, source_event_id: str, source_event_occurred_at: str,
+                   evidence_id: str, tenant_id: str, country_code: str,
+                   kind: str, actor: str, seq: int,
+                   prev_hash: Optional[str], summary: str,
+                   payload: dict) -> "TimelineEntry":
+        """Phase 3.8 deterministic factory.
+
+        ``timeline_id`` and ``occurred_at`` are derived from the source
+        event so replay produces byte-identical rows. This is the only
+        constructor a projection MAY call (ADR-0010 determinism gate).
+        """
+        if kind not in {k.value for k in TimelineEventKind}:
+            raise InvariantViolation(f"invalid timeline kind: {kind!r}")
+        if seq < 0:
+            raise InvariantViolation("seq must be >= 0")
+        if seq == 0 and prev_hash is not None:
+            raise InvariantViolation("genesis entry must have prev_hash=None")
+        if seq > 0 and prev_hash is None:
+            raise InvariantViolation("non-genesis requires prev_hash")
+        import hashlib as _h
+        tid = "tln_" + _h.sha256(
+            f"{source_event_id}:{evidence_id}:{seq}".encode()
+        ).hexdigest()[:32]
+        occurred_at = source_event_occurred_at
+        chain_payload = {
+            "timeline_id": tid, "evidence_id": evidence_id, "kind": kind,
+            "actor": actor, "occurred_at": occurred_at, "seq": seq,
+            "summary": summary, "payload": payload,
+        }
+        entry_hash = compute_entry_hash(prev_hash, chain_payload)
+        return cls(timeline_id=tid, evidence_id=evidence_id,
+                    tenant_id=tenant_id, country_code=country_code,
+                    kind=kind, actor=actor, occurred_at=occurred_at,
+                    seq=seq, prev_hash=prev_hash, entry_hash=entry_hash,
+                    summary=summary, payload=payload)
+
+    @classmethod
     def from_state(cls, state: dict) -> "TimelineEntry":
         clean = {k: v for k, v in state.items()
                  if k in cls.__dataclass_fields__}
@@ -168,6 +205,48 @@ class CustodyEntry:
             raise InvariantViolation("non-genesis requires prev_hash")
         cid = new_custody_id()
         occurred_at = now_iso()
+        chain_payload = {
+            "custody_id": cid, "evidence_id": evidence_id, "actor": actor,
+            "role": role, "action": action, "occurred_at": occurred_at,
+            "justification": justification, "seq": seq,
+            "previous_custody_id": previous_custody_id,
+            "signature_kid": signature_kid, "signature": signature,
+        }
+        entry_hash = compute_entry_hash(prev_hash, chain_payload)
+        return cls(custody_id=cid, evidence_id=evidence_id,
+                    tenant_id=tenant_id, country_code=country_code,
+                    actor=actor, role=role, action=action,
+                    occurred_at=occurred_at, justification=justification,
+                    signature_kid=signature_kid, signature=signature,
+                    previous_custody_id=previous_custody_id,
+                    seq=seq, prev_hash=prev_hash, entry_hash=entry_hash)
+
+    @classmethod
+    def from_event(cls, *, source_event_id: str,
+                   source_event_occurred_at: str,
+                   evidence_id: str, tenant_id: str, country_code: str,
+                   actor: str, role: str, action: str,
+                   justification: str, seq: int,
+                   prev_hash: Optional[str],
+                   previous_custody_id: Optional[str] = None,
+                   signature_kid: Optional[str] = None,
+                   signature: Optional[str] = None) -> "CustodyEntry":
+        """Phase 3.8 deterministic factory — see TimelineEntry.from_event."""
+        if action not in {a.value for a in CustodyAction}:
+            raise InvariantViolation(f"invalid custody action: {action!r}")
+        if not justification or len(justification) < 3:
+            raise InvariantViolation("custody requires non-empty justification")
+        if seq < 0:
+            raise InvariantViolation("seq must be >= 0")
+        if seq == 0 and prev_hash is not None:
+            raise InvariantViolation("genesis custody requires prev_hash=None")
+        if seq > 0 and prev_hash is None:
+            raise InvariantViolation("non-genesis requires prev_hash")
+        import hashlib as _h
+        cid = "cus_" + _h.sha256(
+            f"{source_event_id}:{evidence_id}:{seq}".encode()
+        ).hexdigest()[:32]
+        occurred_at = source_event_occurred_at
         chain_payload = {
             "custody_id": cid, "evidence_id": evidence_id, "actor": actor,
             "role": role, "action": action, "occurred_at": occurred_at,

@@ -95,7 +95,9 @@ class TimelineProjector:
                 head = await self._timeline.head(evidence_id)
                 seq = (head.seq + 1) if head else 0
                 prev_hash = head.entry_hash if head else None
-                entry = TimelineEntry.create(
+                entry = TimelineEntry.from_event(
+                    source_event_id=env.event_id,
+                    source_event_occurred_at=env.occurred_at,
                     evidence_id=evidence_id, tenant_id=tenant_id,
                     country_code=country, kind=kind,
                     actor=env.actor or "system",
@@ -114,7 +116,9 @@ class TimelineProjector:
                 chead = await self._custody.head(evidence_id)
                 seq = (chead.seq + 1) if chead else 0
                 prev_hash = chead.entry_hash if chead else None
-                cust = CustodyEntry.create(
+                cust = CustodyEntry.from_event(
+                    source_event_id=env.event_id,
+                    source_event_occurred_at=env.occurred_at,
                     evidence_id=evidence_id, tenant_id=tenant_id,
                     country_code=country,
                     actor=payload.get("principal_id") or env.actor or "system",

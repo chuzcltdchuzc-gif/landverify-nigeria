@@ -73,7 +73,11 @@ class ProjectionEngine:
 
     def register(self, projection: Projection) -> Callable[[Envelope], Awaitable[None]]:
         """Return a cursor-tracking wrapper around the projection's
-        ``on_event`` so subscriber registrations stay one-liners."""
+        ``on_event`` so subscriber registrations stay one-liners.
+
+        Enforces the ADR-0010 purity invariant before the projection is
+        accepted into the engine."""
+        assert_projection_purity(projection)
         self.registry[projection.name] = projection
 
         async def handler(env: Envelope) -> None:
@@ -123,19 +127,27 @@ class ProjectionEngine:
         if pattern == "*":
             return {}
         if pattern.endswith(".*"):
-            return {"event_type": {"$regex": f"^{pattern[:-1]}"}}
+            prefix = pattern[:-2].replace(".", r"\.")
+            return {"event_type": {"$regex": f"^{prefix}\\."}}
         return {"event_type": pattern}
 
     async def replay(self, name: str) -> ProjectionStatus:
         """Disposable rebuild: reset projection state + cursor, then
         replay every matching outbox event in occurred_at order. The
-        constitutional determinism gate."""
+        constitutional determinism gate (ADR-0010).
+
+        Walks the outbox over events with status ``DELIVERED`` — those
+        are the events the publisher has confirmed and the projections
+        have ever seen. Re-delivery during replay is safe because every
+        projection is idempotent (adapter-level dedup on aggregate
+        identity + seq)."""
         if name not in self.registry:
             raise KeyError(f"projection {name!r} not registered")
         proj = self.registry[name]
         await self.db[PROJECTION_CURSORS_COLLECTION].update_one(
             {"name": name},
-            {"$set": {"rebuilding": True,
+            {"$set": {"name": name, "version": proj.version,
+                       "rebuilding": True,
                        "rebuild_started_at": datetime.now(timezone.utc).isoformat()}},
             upsert=True)
         # 1. Reset projection-owned state.
@@ -155,20 +167,22 @@ class ProjectionEngine:
         cur = self.db[OUTBOX_COLLECTION].find(flt, {"_id": 0}).sort(
             "occurred_at", 1)
         replayed = 0
+        last_env: Optional[Envelope] = None
         async for doc in cur:
             env = Envelope(**{k: doc.get(k)
                               for k in Envelope.__dataclass_fields__})
             try:
                 await proj.on_event(env)
                 replayed += 1
+                last_env = env
             except Exception:  # noqa: BLE001
                 logger.exception("replay handler crashed on %s", env.event_id)
         await self.db[PROJECTION_CURSORS_COLLECTION].update_one(
             {"name": name},
             {"$set": {"rebuilding": False,
                        "delivered_count": replayed,
-                       "last_event_type": env.event_type if replayed else None,
-                       "cursor_event_id": env.event_id if replayed else None,
+                       "last_event_type": last_env.event_type if last_env else None,
+                       "cursor_event_id": last_env.event_id if last_env else None,
                        "last_delivered_at": datetime.now(timezone.utc).isoformat(),
                        "rebuild_completed_at": datetime.now(timezone.utc).isoformat()}})
         self.delivered_counts[name] = replayed
@@ -179,10 +193,15 @@ class ProjectionEngine:
         projection-specific concern (each projection owns its rows);
         the engine just records that a snapshot was taken so the lag
         monitor can mark a baseline."""
+        if name not in self.registry:
+            raise KeyError(f"projection {name!r} not registered")
+        proj = self.registry[name]
         await self.db[PROJECTION_CURSORS_COLLECTION].update_one(
             {"name": name},
-            {"$set": {"last_snapshot_at":
-                       datetime.now(timezone.utc).isoformat()}})
+            {"$set": {"name": name, "version": proj.version,
+                       "last_snapshot_at":
+                       datetime.now(timezone.utc).isoformat()}},
+            upsert=True)
 
     async def health(self) -> list[ProjectionStatus]:
         return [await self.status(n) for n in sorted(self.registry)]
@@ -203,3 +222,46 @@ def current_engine() -> ProjectionEngine:
     if _engine is None:
         raise RuntimeError("projection engine not configured")
     return _engine
+
+
+# ---- Projection Purity Invariant (ADR-0010 §1) -------------------------
+
+
+class InvariantError(Exception):
+    """Raised when a projection violates ADR-0010 constitutional rules."""
+
+
+FORBIDDEN_IMPORT_NAMES = (
+    # Publishing commands FROM a projection is a constitutional violation.
+    "kernel.events.outbox.publish",
+    # Aggregate mutation FROM a projection is a constitutional violation.
+    ".save", ".release", ".archive", ".transfer", ".extend",
+)
+
+
+def assert_projection_purity(projection: Projection) -> None:
+    """Static (best-effort) check that a Projection's on_event method
+    body does not call any forbidden mutator. Runs once at engine
+    registration and is also driven by
+    ``tests/test_phase38_projections.py::test_projection_purity_invariant``.
+
+    This is intentionally a coarse check — it inspects the class source
+    for forbidden tokens. A determined author can work around it; the
+    test suite + ADR-0010 are the binding governance. The point is to
+    catch accidental drift early.
+    """
+    import inspect
+    try:
+        src = inspect.getsource(projection.__class__)
+    except (OSError, TypeError):
+        return  # dynamically-built test doubles skip the static check
+    for token in (
+        "kernel.events.outbox.publish",
+        "await publish(",
+        # Aggregate mutators that would break the read-only contract.
+        ".save_seal(", ".save_item(", ".archive(",
+    ):
+        if token in src:
+            raise InvariantError(
+                f"projection {projection.name!r} violates ADR-0010 purity: "
+                f"source code contains forbidden token {token!r}")
