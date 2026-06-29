@@ -14,6 +14,19 @@ import SurveyorDashboard from './pages/SurveyorDashboard.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import Billing, { BillingSuccess, BillingCancel, PaystackSuccess } from './pages/Billing.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
+import EvidenceWorkspace from './pages/evidence/EvidenceWorkspace.jsx';
+import EvidenceList from './pages/evidence/EvidenceList.jsx';
+import EvidenceUpload from './pages/evidence/EvidenceUpload.jsx';
+import EvidenceDetail, {
+    OverviewTab,
+    TimelineTab,
+    CustodyTab,
+    SealTab,
+    IntegrityTab,
+    VersionsTab,
+    LegalHoldTab,
+} from './pages/evidence/EvidenceDetail.jsx';
+import ProjectionsAdmin from './pages/evidence/ProjectionsAdmin.jsx';
 
 function Router() {
     const location = useLocation();
@@ -34,6 +47,21 @@ function Router() {
             <Route path="/billing/cancel" element={<ProtectedRoute><BillingCancel /></ProtectedRoute>} />
             <Route path="/billing/paystack-success" element={<ProtectedRoute><PaystackSuccess /></ProtectedRoute>} />
             <Route path="/billing/paystack-callback" element={<ProtectedRoute><PaystackSuccess /></ProtectedRoute>} />
+            {/* Phase 3.9 — Evidence bounded context UI (SDK-only) */}
+            <Route path="/evidence" element={<EvidenceWorkspace />}>
+                <Route index element={<EvidenceList />} />
+                <Route path="upload" element={<EvidenceUpload />} />
+                <Route path="admin/projections" element={<ProjectionsAdmin />} />
+                <Route path="items/:evidenceId" element={<EvidenceDetail />}>
+                    <Route index element={<OverviewTab />} />
+                    <Route path="timeline" element={<TimelineTab />} />
+                    <Route path="seal" element={<SealTab />} />
+                    <Route path="integrity" element={<IntegrityTab />} />
+                    <Route path="custody" element={<CustodyTab />} />
+                    <Route path="versions" element={<VersionsTab />} />
+                    <Route path="legal-holds" element={<LegalHoldTab />} />
+                </Route>
+            </Route>
         </Routes>
     );
 }

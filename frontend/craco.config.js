@@ -85,6 +85,18 @@ let webpackConfig = {
     },
     configure: (webpackConfig) => {
 
+      // Phase 3.9 — ensure .ts/.tsx files (the LandVault SDK) resolve.
+      webpackConfig.resolve = webpackConfig.resolve || {};
+      const exts = new Set([
+        ...(webpackConfig.resolve.extensions || []),
+        '.ts',
+        '.tsx',
+        '.js',
+        '.jsx',
+        '.json',
+      ]);
+      webpackConfig.resolve.extensions = Array.from(exts);
+
       // Add ignored patterns to reduce watched directories
         webpackConfig.watchOptions = {
           ...webpackConfig.watchOptions,
