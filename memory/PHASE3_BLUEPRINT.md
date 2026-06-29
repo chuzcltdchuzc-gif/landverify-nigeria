@@ -340,23 +340,25 @@ evidence.integrity.trigger              priority 270   (super_admin + compliance
 evidence.ctlog.checkpoint.read          priority 280   (authenticated + governance — public verifier consumes via Phase 5)
 ```
 
-## 8. Open questions for Phase 3.6 sign-off
+## 8. Locked decisions for Phase 3.6 (ADR-0008 §15 approved 2026-06-29)
 
-Following the operator's confirmed decisions in Phase 3.0, the Phase
-3.6 blueprint (ADR-0008) takes the following defaults — explicit
-confirmation requested before implementation:
+All five open questions are now resolved. The implementation will ship
+exactly these defaults; every value is operator-tunable via env without
+domain changes.
 
-* **CT-log checkpoint publishing target** — Phase 3.6 ships an R2-public
-  stub (`r2_public_checkpoint` writes a local file in dev; swaps to R2
-  Public in production via env). Operator confirms: R2 Public only for
-  v1, IPFS pin deferred to Phase 5?
-* **OTS calendar list** — `alice.btc.calendar.opentimestamps.org`,
-  `bob.btc.calendar.opentimestamps.org`,
-  `finney.calendar.eternitywall.com`. Operator confirms list +
-  confirmation quorum (N=2 of 3 calendars upgrade).
-* **Saga schedule cadence** — anchor batcher 60s, confirmer backoff
-  `[10s, 60s, 5min, 1h, 6h, 24h]`, max attempts 12. Operator confirms
-  or adjusts.
-* **Integrity check cadence** — default scheduled re-hash every 30 days
-  per sealed evidence item. Operator confirms.
-* **Max batch size** — 256 seals per `AnchorBatch`. Operator confirms.
+| # | Topic                            | Locked default                                                                                     | Env knob                                            |
+| - | -------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| 1 | CheckpointPublisherPort target   | Disabled by default; dev = local-FS exporter; prod = R2 Public and/or IPFS (fan-out)                | `EVIDENCE_CHECKPOINT_PUBLISHERS` (csv)              |
+| 2 | OTS calendar list                | `btc.calendar.opentimestamps.org`, `alice.btc.calendar.opentimestamps.org`, `finney.calendar.eternitywall.com` | `EVIDENCE_OTS_CALENDARS` (csv)                      |
+| 2 | OTS confirmation quorum          | 2 of N (calendar failure does NOT fail the saga)                                                    | `EVIDENCE_OTS_CALENDAR_QUORUM=2`                    |
+| 3 | Batch creation cadence           | 60s                                                                                                | `EVIDENCE_ANCHOR_BATCHER_INTERVAL_SECONDS=60`       |
+| 3 | Confirmation retry backoff       | `[10s, 60s, 5min, 1h, 6h, 24h]`, cap 24h thereafter, max 12 attempts → DLQ                          | `EVIDENCE_ANCHOR_BACKOFF_SECONDS`, `EVIDENCE_ANCHOR_MAX_ATTEMPTS=12` |
+| 4 | Integrity baseline cadence       | 30 days per sealed item                                                                            | `EVIDENCE_INTEGRITY_CHECK_INTERVAL_DAYS=30`         |
+| 4 | Integrity mandatory triggers     | `pre_certificate`, `pre_public_verification`, `pre_ownership_transfer`, `pre_subdivision`, `post_storage_migration`, `on_demand`, `security_incident` — see ADR-0008 §15 Decision 4 | — (domain enum)                                     |
+| 5 | Max Merkle batch size            | 256 seals (auto-split above)                                                                       | `EVIDENCE_ANCHOR_MAX_BATCH_SIZE=256`                |
+
+Twelve **constitutional invariants** (see ADR-0008 §15) are binding for
+every release in Phase 3.6 onward; named acceptance tests map 1:1.
+
+Sequencing constraint (binding): Phase 4 implementation does NOT begin
+until Phase 3.10 passes its formal Acceptance Review.

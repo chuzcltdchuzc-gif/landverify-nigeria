@@ -467,17 +467,116 @@ Additive minor. New artifacts:
 
 ---
 
-## 15. Sign-off section (blueprint-only)
+## 15. Sign-off section — APPROVED 2026-06-29
 
-> The undersigned approves the Phase 3.6 blueprint above, including:
->
-> * Two new aggregates (`EvidenceLock`, `EvidenceIntegrityCheck`)
-> * The `AnchorBatch` saga FSM with eight states (`pending_batch → sealed → submitted → confirming → confirmed | failed → dead_letter → replay`)
-> * `AnchorPort` + `CheckpointPublisherPort` Protocols
-> * `ctlog_internal` as the primary adapter, `ots_v1` as the secondary adapter, sharing zero domain code
-> * Six security invariants (§9) as binding acceptance gates
-> * Contract bump target 1.3.0
-> * No implementation code lands until this blueprint is approved
+> Phase 3.6 blueprint approved by operator with the five implementation
+> decisions locked below. Implementation proceeds exactly per ADR-0008.
 
-*Signed*: __________________________
-*Date*:   __________________________
+### Decision 1 — CheckpointPublisherPort (R2/IPFS)
+
+* **Default**: disabled. The port must not couple the domain to any
+  publishing destination.
+* **Dev**: local-filesystem checkpoint exporter (writes signed tree
+  heads under `${EVIDENCE_CHECKPOINT_DIR}`).
+* **Production**: operator-configurable adapter(s). Supported targets:
+  R2 Public bucket, IPFS pin, or both simultaneously (fan-out).
+* **Binding rule**: the core domain depends only on the
+  `CheckpointPublisherPort` Protocol. Adding a destination is purely
+  additive — new adapter file, new env, no domain change.
+
+### Decision 2 — OpenTimestamps calendars + quorum
+
+* **Default calendar list** (env: `EVIDENCE_OTS_CALENDARS`):
+  `btc.calendar.opentimestamps.org`,
+  `alice.btc.calendar.opentimestamps.org`,
+  `finney.calendar.eternitywall.com`.
+* **Quorum**: configurable via `EVIDENCE_OTS_CALENDAR_QUORUM` (default
+  **2 of N**). Confirmation requires `quorum` calendars to upgrade
+  the proof to a Bitcoin merkle path.
+* **Single-calendar failure does NOT fail the saga.** The adapter
+  records per-calendar attempts; the saga advances to `confirmed` as
+  soon as the quorum is met, leaves remaining calendars polling in
+  the background for full coverage but does not block.
+* OTS remains a pure `AnchorPort` adapter — calendar list and quorum
+  are configuration, never code.
+
+### Decision 3 — Saga cadence
+
+* **Batch creation**: every **60s** (env:
+  `EVIDENCE_ANCHOR_BATCHER_INTERVAL_SECONDS=60`).
+* **Confirmation retry backoff**: `[10s, 60s, 5min, 1h, 6h, 24h]`
+  (env: `EVIDENCE_ANCHOR_BACKOFF_SECONDS`, comma-separated).
+* **Max retry window**: capped at **24h per attempt** thereafter.
+* **Max attempts**: 12 (env: `EVIDENCE_ANCHOR_MAX_ATTEMPTS`). On
+  exhaustion → `dead_letter` (terminal). Replay remains fully
+  supported via super_admin endpoint.
+* All cadences configurable; defaults shipped in `.env.example`.
+
+### Decision 4 — Integrity verification cadence + mandatory triggers
+
+* **Scheduled baseline**: every **30 days** per sealed evidence item
+  (env: `EVIDENCE_INTEGRITY_CHECK_INTERVAL_DAYS=30`).
+* **Mandatory additional triggers** (each fires an
+  `EvidenceIntegrityCheck` with `triggered_by` set accordingly):
+  * `pre_certificate` — before any legal certificate generation
+    (Phase 6 consumer).
+  * `pre_public_verification` — before public verifier publishes a
+    record (Phase 5 consumer).
+  * `pre_ownership_transfer` — emitted before the Registry's
+    `RecordOwnershipTransfer` command (subscriber on
+    `registry.ownership.transfer.requested` once Phase 4 lands).
+  * `pre_subdivision` — before parent → child LandVault split
+    (Phase 4 inheritance template consumer).
+  * `post_storage_migration` — after any `MediaRemediationSaga`
+    cutover (Phase 3.3 consumer).
+  * `on_demand` — operator-triggered via
+    `POST /api/v1/evidence/integrity-checks`.
+  * `security_incident` — emitted by any subscriber on
+    `evidence.signed_url.issued.v1` flagged anomalous or by external
+    incident-management hook (operational, not domain).
+* **`triggered_by` enum extended** to: `scheduled`, `on_demand`,
+  `pre_seal`, `pre_certificate`, `pre_public_verification`,
+  `pre_ownership_transfer`, `pre_subdivision`,
+  `post_storage_migration`, `post_remediation`, `security_incident`.
+
+### Decision 5 — Maximum Merkle batch size
+
+* **Default**: **256 evidence items** per `AnchorBatch` (env:
+  `EVIDENCE_ANCHOR_MAX_BATCH_SIZE=256`).
+* **Automatic splitting**: when the batcher scoops > 256 eligible
+  seals in a single sweep, it produces ⌈N/256⌉ batches in the same
+  transaction. Each batch is independently submittable.
+* **Deterministic ordering**: seals within a batch are sorted
+  lexicographically by `seal_id` before Merkle construction; batches
+  themselves are ordered by `created_at` + tiebreak on `batch_id`.
+* **Merkle root determinism**: `compute_merkle_root` is set-equivalent
+  on the input list, so root computation is independent of processing
+  order.
+* **Replay-safe + idempotent**: replay produces a new `batch_id` with
+  the same `seal_ids` set → same `merkle_root`. Idempotency keys on
+  the provider call prevent double-submission.
+
+### Constitutional invariants (must NEVER be violated)
+
+The implementation MUST continue to enforce, with named tests:
+
+1. Evidence remains immutable after sealing.
+2. Registry is never mutated by the Evidence context (static-scan test).
+3. All cross-context communication occurs only through immutable domain events.
+4. Anchor records are append-only (`evidence_anchor_batches` post-terminal is frozen; `evidence_anchor_attempts` and `evidence_ctlog_tree` insert-only).
+5. Merkle roots are deterministic (set-equivalent test, NIST RFC 6234 vectors).
+6. CT-log is the primary trust anchor (saga confirms on CT-log checkpoint inclusion; OTS upgrades arrive asynchronously).
+7. OpenTimestamps is a secondary independent anchor (failure of OTS does NOT fail the saga; CT-log confirmation is sufficient for `confirmed`).
+8. Replay is idempotent (replay of a confirmed/DLQ batch produces a new row with the same root; the original is never mutated).
+9. DLQ is resumable (workers re-claim `submitted`/`confirming` rows whose `next_attempt_at` has passed, CAS on `state`).
+10. Complete audit coverage (every FSM edge → one outbox event + one audit row; exhaustiveness test).
+11. No binary data inside MongoDB documents (binaries live only behind StoragePort).
+12. No PII leakage through checkpoints or anchor metadata (checkpoint and anchor payloads carry only `merkle_root` + `seal_id` + provider metadata — no evidence content, no owner names, no addresses; static-scan test on event payload schemas).
+
+### Sequencing (binding)
+
+Phase 3.6 → 3.7 → 3.8 → 3.9 → 3.10 → **Acceptance Review** → Phase 4.
+Phase 4 implementation MUST NOT begin until Phase 3.10 passes its
+formal Acceptance Review.
+
+*Signed*: Operator, 2026-06-29 — ADR-0008 APPROVED.
