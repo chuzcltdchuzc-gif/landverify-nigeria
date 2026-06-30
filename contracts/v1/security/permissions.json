@@ -421,5 +421,106 @@
       ]
     }
   ],
-  "x-contract-version": "1.5.0"
+  "workflow_actions": [
+    {
+      "action": "workflow.instance.start",
+      "description": "Start a new workflow instance from a frozen definition.",
+      "required_roles": [
+        "super_admin",
+        "compliance_officer",
+        "surveyor_general"
+      ]
+    },
+    {
+      "action": "workflow.instance.read",
+      "description": "Read a workflow instance (role-projected)."
+    },
+    {
+      "action": "workflow.instance.list",
+      "description": "List workflow instances scoped to the caller."
+    },
+    {
+      "action": "workflow.instance.cancel",
+      "description": "Cancel a non-terminal workflow instance.",
+      "required_roles": [
+        "super_admin",
+        "compliance_officer",
+        "surveyor_general"
+      ]
+    },
+    {
+      "action": "workflow.instance.suspend",
+      "description": "Suspend an instance (no commands or timers fire).",
+      "required_roles": [
+        "super_admin"
+      ]
+    },
+    {
+      "action": "workflow.instance.reactivate",
+      "description": "Reactivate a suspended instance.",
+      "required_roles": [
+        "super_admin"
+      ]
+    },
+    {
+      "action": "workflow.task.read",
+      "description": "Read a workflow task."
+    },
+    {
+      "action": "workflow.task.list",
+      "description": "List workflow tasks scoped to the caller."
+    },
+    {
+      "action": "workflow.task.claim",
+      "description": "Claim an OPEN workflow task as the current principal."
+    },
+    {
+      "action": "workflow.task.complete",
+      "description": "Complete a CLAIMED workflow task (claimer only)."
+    },
+    {
+      "action": "workflow.task.cancel",
+      "description": "Administratively cancel a non-terminal task.",
+      "required_roles": [
+        "super_admin"
+      ]
+    },
+    {
+      "action": "workflow.timer.read",
+      "description": "Read a workflow timer."
+    },
+    {
+      "action": "workflow.timer.list",
+      "description": "List workflow timers (admin / ops)."
+    },
+    {
+      "action": "workflow.timer.fire",
+      "description": "Manually fire a scheduled timer (operator break-glass).",
+      "required_roles": [
+        "super_admin"
+      ]
+    },
+    {
+      "action": "workflow.timer.cancel",
+      "description": "Cancel a scheduled timer.",
+      "required_roles": [
+        "super_admin"
+      ]
+    },
+    {
+      "action": "workflow.admin.replay",
+      "description": "Replay a workflow instance from the outbox event stream. Result MUST be byte-identical to the committed state (ADR-0019 §C-19.3 constitutional replay gate).",
+      "required_roles": [
+        "super_admin"
+      ]
+    },
+    {
+      "action": "workflow.admin.fire_timer",
+      "description": "Admin endpoint to fire a timer manually for ops / break-glass.",
+      "required_roles": [
+        "super_admin"
+      ]
+    }
+  ],
+  "x-contract-version": "2.0.0"
 }

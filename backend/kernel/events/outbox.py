@@ -73,6 +73,22 @@ EVENT_TYPES = (
     "evidence.legal_hold.applied",
     "evidence.legal_hold.released",
     "evidence.supersession.recorded",
+    # Phase 4 — Slice 4.0 — Workflow bounded context
+    "workflow.instance.started",
+    "workflow.instance.transitioned",
+    "workflow.instance.completed",
+    "workflow.instance.cancelled",
+    "workflow.instance.suspended",
+    "workflow.instance.reactivated",
+    "workflow.task.created",
+    "workflow.task.claimed",
+    "workflow.task.completed",
+    "workflow.task.cancelled",
+    "workflow.task.expired",
+    "workflow.timer.scheduled",
+    "workflow.timer.fired",
+    "workflow.timer.cancelled",
+    "workflow.compensation.recorded",
 )
 
 # In-process subscriber registry — handler(envelope) -> awaitable

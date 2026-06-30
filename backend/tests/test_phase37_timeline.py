@@ -372,4 +372,6 @@ def test_contract_at_or_above_1_4_0() -> None:
     root = Path(__file__).resolve().parent.parent.parent
     version = (root / "contracts" / "VERSION").read_text().strip()
     major, minor, _ = version.split(".")
-    assert int(major) == 1 and int(minor) >= 4, f"got {version}"
+    # Accept >= 1.4 OR >= 2.0 (Phase 4 majored the contract).
+    assert (int(major) == 1 and int(minor) >= 4) or int(major) >= 2, \
+        f"got {version}"

@@ -170,7 +170,7 @@
   "type": "object",
   "x-aggregate": "TimelineEntry",
   "x-bounded-context": "evidence",
-  "x-contract-version": "1.5.0",
+  "x-contract-version": "2.0.0",
   "x-event-name": "evidence.timeline.appended",
   "x-event-version": 1,
   "x-idempotency": "Dedup by `event_id`. Timeline insertion is also dedup'd by `(evidence_id, seq)` at the adapter.",

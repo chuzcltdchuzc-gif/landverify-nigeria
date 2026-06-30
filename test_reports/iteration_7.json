@@ -1,0 +1,37 @@
+{
+  "summary": "Phase 4 Slice 4.0 — Workflow Engine Foundation acceptance gate PASSED end-to-end. 51/51 tests green: 29 in-process binding tests (tests/test_phase4_slice40_workflow.py — definitions, instance state-machine, replay determinism, tasks, timers, PEP enforcement, projection), 8 contract freeze tests (tests/test_contract_freeze.py — contract pinned at v2.0.0, no drift, role matrix + event catalog + SDK fingerprints clean), and 14 new public-URL probes (tests/test_phase4_slice40_public_url.py) exercising every acceptance bullet in the review_request through https://evidence-trust.preview.emergentagent.com. Every workflow endpoint behaves per spec: unauth=401, plain-user start=403, super_admin start returns instance_id with business_state=received, echo.v1 generates a workflow_tasks row scoped to compliance_officer, suspend→reactivate moves lifecycle suspended→running, cancel sets lifecycle=cancelled, replay returns matches_committed=true (after the documented ~2.5s outbox publish window), replay denies plain users with 403, /api/v1/workflow/admin/timers/{nonexistent}/fire returns 404, POST /instances with nonexistent.v9 returns 404 workflow.definition.not_found, GET /api/v1/admin/projections lists BOTH evidence.timeline and the new workflow.instance projection, and /api/v1/admin/projections/workflow.instance reports delivered_count>=1. The schema field for the start payload is `payload` (not `input`) — verified against /app/backend/contexts/workflow/api/router.py StartWorkflowRequest. Pre-existing Phase 2A legacy failures (test_concurrency, test_tenant_isolation, test_worker_reports) were explicitly skipped per agent_to_agent_context_note (D-5 technical debt, NOT Phase 4-caused).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_phase4_slice40_workflow.py",
+    "/app/backend/tests/test_phase4_slice40_public_url.py",
+    "/app/backend/tests/test_contract_freeze.py",
+    "/app/test_reports/pytest/iter7_phase4_slice40_full.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Replay endpoint depends on the outbox publisher having delivered the started event before /admin/instances/{id}/replay is called — the slice test wisely sleeps 2.5s, and the public-URL probe does too. For ops, suggest documenting this eventual-consistency window in the ADR-0023 acceptance notes or returning 425 Too Early (rather than 404 workflow.instance.not_found with 'has no events') when the instance exists but its events have not yet been published, to avoid operator confusion.",
+    "Pydantic 'extra_forbidden' on the start payload is good (constitutional strictness), but consider documenting that the field name is `payload` not `input` in the OpenAPI/SDK examples — an external integrator following common REST naming would naturally try `input` and get a 422.",
+    "Two pre-existing deprecation warnings (FastAPI @app.on_event startup/shutdown in main.py:186 and main.py:413) — pre-existing, not Slice 4.0 scope, but worth scheduling a migration to lifespan handlers."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_phase4_slice40_public_url.py (NEW — added by testing agent for end-to-end ingress verification)"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "n/a (testing_type=backend only)"
+  },
+  "test_credentials": "Ephemeral super_admin created per fixture: sa_probe_<hex>@test.com / TestPass123! — promoted via Mongo identity_users.updateOne($set roles=['super_admin'], role='super_admin', $inc version+1). Ephemeral plain user: user_probe_<hex>@test.com / TestPass123!. Both auto-created at fixture setup; no manual seed required.",
+  "seed_data_creation": "Two ephemeral users per run (super_admin + plain). Multiple echo.v1 instances started during probe — they remain in workflow_instances but are isolated by random correlation IDs and tenant scoping; no production data touched.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Phase 4 Slice 4.0 is constitutional-clean and the contract is now at v2.0.0 (major bump). When testing Slice 4.1+ (future workflows beyond echo.v1), reuse /app/backend/tests/test_phase4_slice40_public_url.py as a regression smoke — it exercises the full state-machine + PEP + projection + replay-determinism gate through the external URL. The start-instance payload uses the field name `payload` (not `input`). Replay requires ~2.5s settle time for the outbox publisher. The Slice 4.0 file (test_phase4_slice40_workflow.py) also auto-creates super_admin via its own helper. Pre-existing Phase 2A legacy failures (test_concurrency, test_tenant_isolation, test_worker_reports — D-5 technical debt with single-char location tokens in legacy /api/parcels) are explicitly out of constitutional DDD scope and must NOT be flagged as Phase 4 regressions.",
+  "rca of the issue": "N/A — no defects found in Phase 4 Slice 4.0 surface. The only test iteration friction was self-inflicted (initial probe used wrong field name `input` instead of `payload`, and `asyncio.get_event_loop()` instead of `asyncio.new_event_loop()` — both fixed in the public-URL probe file)."
+}

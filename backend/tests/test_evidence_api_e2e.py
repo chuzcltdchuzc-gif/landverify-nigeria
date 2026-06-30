@@ -489,7 +489,8 @@ def test_contract_freeze_at_1_2_0() -> None:
     root = Path(__file__).resolve().parent.parent.parent
     version = (root / "contracts" / "VERSION").read_text().strip()
     major, minor, _patch = version.split(".")
-    assert int(major) == 1 and int(minor) >= 2, f"got {version}"
+    assert (int(major) == 1 and int(minor) >= 2) or int(major) >= 2, \
+        f"got {version}"
 
 
 def test_evidence_event_types_are_registered_in_outbox() -> None:

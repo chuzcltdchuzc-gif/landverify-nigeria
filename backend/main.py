@@ -84,6 +84,18 @@ from contexts.evidence.application.evidence_service import (
     EvidenceQueryService,
 )
 from contexts.evidence.authorization import register_evidence_policies
+from contexts.workflow.adapters.definition_loader import FsDefinitionLoader
+from contexts.workflow.adapters.mongo_repositories import (
+    MongoCompensationRepository,
+    MongoTaskRepository,
+    MongoTimerRepository,
+    MongoWorkflowInstanceRepository,
+)
+from contexts.workflow.api import router as workflow_router
+from contexts.workflow.application.engine import TaskService, WorkflowEngine
+from contexts.workflow.application.projector import WorkflowInstanceProjector
+from contexts.workflow.application.saga_composer import SagaComposer
+from contexts.workflow.authorization import register_workflow_policies
 from kernel.audit import configure_audit_store
 from kernel.authorization.pep import configure_pep
 from kernel.authorization.policies import register_default_policies
@@ -144,6 +156,9 @@ api.include_router(evidence_timeline_router.router)
 # Phase 3.8 — Projection admin endpoints (super_admin only)
 api.include_router(projections_admin_router.router)
 
+# Phase 4 — Workflow bounded context endpoints under /api/v1/workflow/*
+api.include_router(workflow_router.router)
+
 app.include_router(api)
 
 # Webhooks register their own absolute /api/webhook/* paths.
@@ -190,6 +205,7 @@ async def _startup() -> None:
     register_registry_policies()
     register_evidence_policies()
     register_projection_policies()
+    register_workflow_policies()
 
     # Audit-event metric subscriber — every domain event bumps a counter.
     async def _audit_event_counter(env) -> None:
@@ -343,6 +359,43 @@ async def _startup() -> None:
     app.state.timeline_projector = timeline_projector
     app.state.projection_engine = projection_engine
 
+    # --- Phase 4 Slice 4.0 — Workflow bounded context -------------------
+    from pathlib import Path as _Path
+    workflow_defs_dir = _Path(__file__).resolve().parent.parent / \
+        "contracts" / "v1" / "workflow_definitions"
+    definition_loader = FsDefinitionLoader(workflow_defs_dir)
+    definition_loader.load()
+    workflow_instances_repo = MongoWorkflowInstanceRepository(db)
+    workflow_tasks_repo = MongoTaskRepository(db)
+    workflow_timers_repo = MongoTimerRepository(db)
+    workflow_compensations_repo = MongoCompensationRepository(db)
+    await workflow_instances_repo.ensure_indexes()
+    await workflow_tasks_repo.ensure_indexes()
+    await workflow_timers_repo.ensure_indexes()
+    await workflow_compensations_repo.ensure_indexes()
+    saga_composer = SagaComposer(definition_loader)
+    workflow_engine = WorkflowEngine(
+        client=client, db=db,
+        instances=workflow_instances_repo,
+        tasks=workflow_tasks_repo,
+        timers=workflow_timers_repo,
+        compensations=workflow_compensations_repo,
+        definitions=definition_loader,
+        saga=saga_composer,
+    )
+    workflow_task_service = TaskService(workflow_tasks_repo)
+    workflow_router.configure_router(workflow_engine, workflow_task_service,
+                                       definition_loader)
+    # Register the foundation read-model projection.
+    workflow_instance_projector = WorkflowInstanceProjector(db)
+    await workflow_instance_projector.ensure_indexes()
+    workflow_handler = projection_engine.register(workflow_instance_projector)
+    subscribe("workflow.instance.*", workflow_handler)
+    app.state.workflow_engine = workflow_engine
+    app.state.workflow_task_service = workflow_task_service
+    app.state.workflow_definition_loader = definition_loader
+    app.state.workflow_instance_projector = workflow_instance_projector
+
     logger.info("Phase 1A constitutional kernel + Identity admin surface ready")
     logger.info("Phase 2A Registry bounded context ready at /api/v1/registry/*")
     logger.info("Phase 3.1 Evidence storage foundation ready "
@@ -353,6 +406,8 @@ async def _startup() -> None:
     logger.info("Phase 3.4 + 3.5 Evidence aggregate + Sealing ready at /api/v1/evidence/*")
     logger.info("Phase 3.6 Anchoring + Integrity + Locking ready at /api/v1/evidence/anchor-batches/* + /locks/* + /integrity-checks/* + /ctlog/*")
     logger.info("Phase 3.8 Projection engine ready at /api/v1/admin/projections/*")
+    logger.info("Phase 4 Slice 4.0 Workflow engine ready at /api/v1/workflow/* "
+                 "(definitions=%d)", len(definition_loader.list_definitions()))
 
 
 @app.on_event("shutdown")

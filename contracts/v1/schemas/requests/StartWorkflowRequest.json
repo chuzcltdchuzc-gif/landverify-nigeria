@@ -1,0 +1,48 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/StartWorkflowRequest.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "correlation_id": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Correlation Id"
+    },
+    "definition_name": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Definition Name",
+      "type": "string"
+    },
+    "definition_version": {
+      "anyOf": [
+        {
+          "minimum": 1.0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Definition Version"
+    },
+    "payload": {
+      "additionalProperties": true,
+      "title": "Payload",
+      "type": "object"
+    }
+  },
+  "required": [
+    "definition_name"
+  ],
+  "title": "StartWorkflowRequest",
+  "type": "object",
+  "x-contract-version": "2.0.0"
+}

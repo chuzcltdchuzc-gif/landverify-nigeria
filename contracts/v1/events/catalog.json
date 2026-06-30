@@ -659,7 +659,236 @@
       "producer": "evidence",
       "replay_support": "Idempotent.",
       "version": 1
+    },
+    {
+      "aggregate": "WorkflowInstance",
+      "bounded_context": "workflow",
+      "event_name": "workflow.instance.started",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "metrics",
+        "ui-projection"
+      ],
+      "ordering_guarantees": "Per-WorkflowInstance ordering by `aggregate_version`.",
+      "payload_schema": "v1/events/workflow.instance.started.v1.json",
+      "producer": "workflow",
+      "replay_support": "Idempotent. Replay rebuilds aggregate state via pure apply().",
+      "version": 1
+    },
+    {
+      "aggregate": "WorkflowInstance",
+      "bounded_context": "workflow",
+      "event_name": "workflow.instance.transitioned",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "metrics",
+        "ui-projection"
+      ],
+      "ordering_guarantees": "Per-WorkflowInstance ordering.",
+      "payload_schema": "v1/events/workflow.instance.transitioned.v1.json",
+      "producer": "workflow",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "WorkflowInstance",
+      "bounded_context": "workflow",
+      "event_name": "workflow.instance.completed",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "metrics",
+        "saga-composer"
+      ],
+      "ordering_guarantees": "Per-WorkflowInstance ordering. Terminal-positive.",
+      "payload_schema": "v1/events/workflow.instance.completed.v1.json",
+      "producer": "workflow",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "WorkflowInstance",
+      "bounded_context": "workflow",
+      "event_name": "workflow.instance.cancelled",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "metrics"
+      ],
+      "ordering_guarantees": "Per-WorkflowInstance ordering. Terminal.",
+      "payload_schema": "v1/events/workflow.instance.cancelled.v1.json",
+      "producer": "workflow",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "WorkflowInstance",
+      "bounded_context": "workflow",
+      "event_name": "workflow.instance.suspended",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "metrics",
+        "ops-alerting"
+      ],
+      "ordering_guarantees": "Per-WorkflowInstance ordering.",
+      "payload_schema": "v1/events/workflow.instance.suspended.v1.json",
+      "producer": "workflow",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "WorkflowInstance",
+      "bounded_context": "workflow",
+      "event_name": "workflow.instance.reactivated",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "metrics"
+      ],
+      "ordering_guarantees": "Per-WorkflowInstance ordering.",
+      "payload_schema": "v1/events/workflow.instance.reactivated.v1.json",
+      "producer": "workflow",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "WorkflowTask",
+      "bounded_context": "workflow",
+      "event_name": "workflow.task.created",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "ui-projection",
+        "notifications"
+      ],
+      "ordering_guarantees": "Per-WorkflowTask ordering.",
+      "payload_schema": "v1/events/workflow.task.created.v1.json",
+      "producer": "workflow",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "WorkflowTask",
+      "bounded_context": "workflow",
+      "event_name": "workflow.task.claimed",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "ui-projection"
+      ],
+      "ordering_guarantees": "Per-WorkflowTask ordering.",
+      "payload_schema": "v1/events/workflow.task.claimed.v1.json",
+      "producer": "workflow",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "WorkflowTask",
+      "bounded_context": "workflow",
+      "event_name": "workflow.task.completed",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "ui-projection",
+        "engine"
+      ],
+      "ordering_guarantees": "Per-WorkflowTask ordering. Terminal-positive.",
+      "payload_schema": "v1/events/workflow.task.completed.v1.json",
+      "producer": "workflow",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "WorkflowTask",
+      "bounded_context": "workflow",
+      "event_name": "workflow.task.cancelled",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log"
+      ],
+      "ordering_guarantees": "Per-WorkflowTask ordering. Terminal.",
+      "payload_schema": "v1/events/workflow.task.cancelled.v1.json",
+      "producer": "workflow",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "WorkflowTask",
+      "bounded_context": "workflow",
+      "event_name": "workflow.task.expired",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "ops-alerting"
+      ],
+      "ordering_guarantees": "Per-WorkflowTask ordering. Terminal.",
+      "payload_schema": "v1/events/workflow.task.expired.v1.json",
+      "producer": "workflow",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "WorkflowTimer",
+      "bounded_context": "workflow",
+      "event_name": "workflow.timer.scheduled",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "timer-runner"
+      ],
+      "ordering_guarantees": "Per-WorkflowTimer ordering.",
+      "payload_schema": "v1/events/workflow.timer.scheduled.v1.json",
+      "producer": "workflow",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "WorkflowTimer",
+      "bounded_context": "workflow",
+      "event_name": "workflow.timer.fired",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log",
+        "engine"
+      ],
+      "ordering_guarantees": "Per-WorkflowTimer ordering. Terminal-positive.",
+      "payload_schema": "v1/events/workflow.timer.fired.v1.json",
+      "producer": "workflow",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "WorkflowTimer",
+      "bounded_context": "workflow",
+      "event_name": "workflow.timer.cancelled",
+      "idempotency_requirements": "Dedup by `event_id`.",
+      "known_consumers": [
+        "audit-log"
+      ],
+      "ordering_guarantees": "Per-WorkflowTimer ordering. Terminal.",
+      "payload_schema": "v1/events/workflow.timer.cancelled.v1.json",
+      "producer": "workflow",
+      "replay_support": "Idempotent.",
+      "version": 1
+    },
+    {
+      "aggregate": "WorkflowCompensation",
+      "bounded_context": "workflow",
+      "event_name": "workflow.compensation.recorded",
+      "idempotency_requirements": "Dedup by `event_id`. Append-only.",
+      "known_consumers": [
+        "audit-log",
+        "saga-composer"
+      ],
+      "ordering_guarantees": "Per-instance ordering by `recorded_at`.",
+      "payload_schema": "v1/events/workflow.compensation.recorded.v1.json",
+      "producer": "workflow",
+      "replay_support": "Idempotent.",
+      "version": 1
     }
   ],
-  "x-contract-version": "1.5.0"
+  "x-contract-version": "2.0.0"
 }

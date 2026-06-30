@@ -1,0 +1,42 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/WorkflowReplayResponse.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "business_state": {
+      "title": "Business State",
+      "type": "string"
+    },
+    "instance_id": {
+      "title": "Instance Id",
+      "type": "string"
+    },
+    "lifecycle": {
+      "title": "Lifecycle",
+      "type": "string"
+    },
+    "matches_committed": {
+      "title": "Matches Committed",
+      "type": "boolean"
+    },
+    "replay_event_count": {
+      "title": "Replay Event Count",
+      "type": "integer"
+    },
+    "version": {
+      "title": "Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "instance_id",
+    "replay_event_count",
+    "business_state",
+    "lifecycle",
+    "version",
+    "matches_committed"
+  ],
+  "title": "WorkflowReplayResponse",
+  "type": "object",
+  "x-contract-version": "2.0.0"
+}

@@ -1,0 +1,22 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/ReactivateWorkflowRequest.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "reason": {
+      "anyOf": [
+        {
+          "maxLength": 512,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Reason"
+    }
+  },
+  "title": "ReactivateWorkflowRequest",
+  "type": "object",
+  "x-contract-version": "2.0.0"
+}

@@ -1,0 +1,194 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/events/workflow.task.created.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Domain event emitted by the `workflow` bounded context for aggregate `WorkflowTask`. Schema validates the full envelope; `payload` carries the aggregate-specific fields documented under `x-payload-fields`.",
+  "properties": {
+    "actor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "aggregate_id": {
+      "type": "string"
+    },
+    "aggregate_type": {
+      "const": "WorkflowTask",
+      "type": "string"
+    },
+    "aggregate_version": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "causation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "correlation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "country": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "event_id": {
+      "pattern": "^evt_[a-f0-9]{32}$",
+      "type": "string"
+    },
+    "event_type": {
+      "const": "workflow.task.created",
+      "type": "string"
+    },
+    "event_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "organization_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "payload": {
+      "additionalProperties": true,
+      "properties": {
+        "assigned_to_principal": {
+          "description": "string|null",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "assigned_to_role": {
+          "description": "string|null",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "definition_name": {
+          "description": "string",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "due_at": {
+          "description": "string|null",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "instance_id": {
+          "description": "string",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "task_id": {
+          "description": "string",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "title": {
+          "description": "string",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "producer": {
+      "const": "workflow",
+      "type": "string"
+    },
+    "tenant_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "aggregate_type",
+    "aggregate_id",
+    "aggregate_version",
+    "occurred_at",
+    "producer",
+    "payload"
+  ],
+  "title": "workflow.task.created",
+  "type": "object",
+  "x-aggregate": "WorkflowTask",
+  "x-bounded-context": "workflow",
+  "x-contract-version": "2.0.0",
+  "x-event-name": "workflow.task.created",
+  "x-event-version": 1,
+  "x-idempotency": "Dedup by `event_id`.",
+  "x-known-consumers": [
+    "audit-log",
+    "ui-projection",
+    "notifications"
+  ],
+  "x-ordering": "Per-WorkflowTask ordering.",
+  "x-payload-fields": {
+    "assigned_to_principal": "string|null",
+    "assigned_to_role": "string|null",
+    "definition_name": "string",
+    "due_at": "string|null",
+    "instance_id": "string",
+    "task_id": "string",
+    "title": "string"
+  },
+  "x-producer": "workflow",
+  "x-replay": "Idempotent."
+}

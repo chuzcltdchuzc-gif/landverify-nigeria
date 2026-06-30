@@ -1,0 +1,53 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/WorkflowDefinitionResponse.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "description": {
+      "title": "Description",
+      "type": "string"
+    },
+    "initial_state": {
+      "title": "Initial State",
+      "type": "string"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "states": {
+      "items": {
+        "type": "string"
+      },
+      "title": "States",
+      "type": "array"
+    },
+    "terminal_states": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Terminal States",
+      "type": "array"
+    },
+    "transition_count": {
+      "title": "Transition Count",
+      "type": "integer"
+    },
+    "version": {
+      "title": "Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "name",
+    "version",
+    "description",
+    "initial_state",
+    "states",
+    "terminal_states",
+    "transition_count"
+  ],
+  "title": "WorkflowDefinitionResponse",
+  "type": "object",
+  "x-contract-version": "2.0.0"
+}

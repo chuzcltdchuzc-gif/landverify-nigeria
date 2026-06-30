@@ -69,6 +69,12 @@ REQUEST_DTOS = (
     "ReplayAnchorBatchRequest",
     "ExtendLockRetentionRequest",
     "TriggerIntegrityCheckRequest",
+    # Phase 4 — Workflow bounded context (Slice 4.0 Foundation)
+    "StartWorkflowRequest",
+    "CancelWorkflowRequest",
+    "SuspendWorkflowRequest",
+    "ReactivateWorkflowRequest",
+    "CompleteTaskRequest",
 )
 RESPONSE_DTOS = (
     "TokenResponse",
@@ -91,6 +97,16 @@ RESPONSE_DTOS = (
     # Phase 3.8 — Projection engine admin
     "ProjectionStatusResponse",
     "ProjectionListResponse",
+    # Phase 4 — Workflow bounded context (Slice 4.0 Foundation)
+    "WorkflowInstanceResponse",
+    "WorkflowInstanceListResponse",
+    "WorkflowTaskResponse",
+    "WorkflowTaskListResponse",
+    "WorkflowTimerResponse",
+    "WorkflowTimerListResponse",
+    "WorkflowReplayResponse",
+    "WorkflowDefinitionResponse",
+    "WorkflowDefinitionListResponse",
 )
 
 # Domain events — names mirror `kernel.events.outbox.EVENT_TYPES` and the
@@ -797,6 +813,208 @@ EVENT_DEFINITIONS: tuple[dict, ...] = (
             "superseded_reason": "string",
         },
     },
+    # ---- Phase 4 Slice 4.0 — Workflow bounded context -------------------
+    {
+        "event_name": "workflow.instance.started", "version": 1,
+        "aggregate": "WorkflowInstance", "bounded_context": "workflow",
+        "producer": "workflow",
+        "known_consumers": ["audit-log", "metrics", "ui-projection"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-WorkflowInstance ordering by `aggregate_version`.",
+        "replay_support": "Idempotent. Replay rebuilds aggregate state via pure apply().",
+        "payload_fields": {
+            "instance_id": "string", "definition_name": "string",
+            "definition_version": "integer", "initial_state": "string",
+            "initiator_id": "string", "payload": "object",
+        },
+    },
+    {
+        "event_name": "workflow.instance.transitioned", "version": 1,
+        "aggregate": "WorkflowInstance", "bounded_context": "workflow",
+        "producer": "workflow",
+        "known_consumers": ["audit-log", "metrics", "ui-projection"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-WorkflowInstance ordering.",
+        "replay_support": "Idempotent.",
+        "payload_fields": {
+            "instance_id": "string", "definition_name": "string",
+            "definition_version": "integer",
+            "command": "string", "actor": "string",
+            "from_state": "string", "to_state": "string",
+            "payload": "object",
+        },
+    },
+    {
+        "event_name": "workflow.instance.completed", "version": 1,
+        "aggregate": "WorkflowInstance", "bounded_context": "workflow",
+        "producer": "workflow",
+        "known_consumers": ["audit-log", "metrics", "saga-composer"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-WorkflowInstance ordering. Terminal-positive.",
+        "replay_support": "Idempotent.",
+        "payload_fields": {
+            "instance_id": "string", "definition_name": "string",
+            "definition_version": "integer", "final_state": "string",
+        },
+    },
+    {
+        "event_name": "workflow.instance.cancelled", "version": 1,
+        "aggregate": "WorkflowInstance", "bounded_context": "workflow",
+        "producer": "workflow",
+        "known_consumers": ["audit-log", "metrics"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-WorkflowInstance ordering. Terminal.",
+        "replay_support": "Idempotent.",
+        "payload_fields": {
+            "instance_id": "string", "actor": "string", "reason": "string",
+            "at_state": "string",
+        },
+    },
+    {
+        "event_name": "workflow.instance.suspended", "version": 1,
+        "aggregate": "WorkflowInstance", "bounded_context": "workflow",
+        "producer": "workflow",
+        "known_consumers": ["audit-log", "metrics", "ops-alerting"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-WorkflowInstance ordering.",
+        "replay_support": "Idempotent.",
+        "payload_fields": {
+            "instance_id": "string", "actor": "string", "reason": "string",
+        },
+    },
+    {
+        "event_name": "workflow.instance.reactivated", "version": 1,
+        "aggregate": "WorkflowInstance", "bounded_context": "workflow",
+        "producer": "workflow",
+        "known_consumers": ["audit-log", "metrics"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-WorkflowInstance ordering.",
+        "replay_support": "Idempotent.",
+        "payload_fields": {
+            "instance_id": "string", "actor": "string",
+        },
+    },
+    {
+        "event_name": "workflow.task.created", "version": 1,
+        "aggregate": "WorkflowTask", "bounded_context": "workflow",
+        "producer": "workflow",
+        "known_consumers": ["audit-log", "ui-projection", "notifications"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-WorkflowTask ordering.",
+        "replay_support": "Idempotent.",
+        "payload_fields": {
+            "task_id": "string", "instance_id": "string",
+            "definition_name": "string", "title": "string",
+            "assigned_to_role": "string|null",
+            "assigned_to_principal": "string|null",
+            "due_at": "string|null",
+        },
+    },
+    {
+        "event_name": "workflow.task.claimed", "version": 1,
+        "aggregate": "WorkflowTask", "bounded_context": "workflow",
+        "producer": "workflow",
+        "known_consumers": ["audit-log", "ui-projection"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-WorkflowTask ordering.",
+        "replay_support": "Idempotent.",
+        "payload_fields": {
+            "task_id": "string", "instance_id": "string",
+            "claimed_by": "string",
+        },
+    },
+    {
+        "event_name": "workflow.task.completed", "version": 1,
+        "aggregate": "WorkflowTask", "bounded_context": "workflow",
+        "producer": "workflow",
+        "known_consumers": ["audit-log", "ui-projection", "engine"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-WorkflowTask ordering. Terminal-positive.",
+        "replay_support": "Idempotent.",
+        "payload_fields": {
+            "task_id": "string", "instance_id": "string",
+            "completed_by": "string", "payload": "object",
+        },
+    },
+    {
+        "event_name": "workflow.task.cancelled", "version": 1,
+        "aggregate": "WorkflowTask", "bounded_context": "workflow",
+        "producer": "workflow",
+        "known_consumers": ["audit-log"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-WorkflowTask ordering. Terminal.",
+        "replay_support": "Idempotent.",
+        "payload_fields": {
+            "task_id": "string", "instance_id": "string",
+            "actor": "string", "reason": "string",
+        },
+    },
+    {
+        "event_name": "workflow.task.expired", "version": 1,
+        "aggregate": "WorkflowTask", "bounded_context": "workflow",
+        "producer": "workflow",
+        "known_consumers": ["audit-log", "ops-alerting"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-WorkflowTask ordering. Terminal.",
+        "replay_support": "Idempotent.",
+        "payload_fields": {
+            "task_id": "string", "instance_id": "string",
+        },
+    },
+    {
+        "event_name": "workflow.timer.scheduled", "version": 1,
+        "aggregate": "WorkflowTimer", "bounded_context": "workflow",
+        "producer": "workflow",
+        "known_consumers": ["audit-log", "timer-runner"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-WorkflowTimer ordering.",
+        "replay_support": "Idempotent.",
+        "payload_fields": {
+            "timer_id": "string", "instance_id": "string",
+            "definition_name": "string", "fire_at": "string ISO8601",
+            "command_on_fire": "string",
+        },
+    },
+    {
+        "event_name": "workflow.timer.fired", "version": 1,
+        "aggregate": "WorkflowTimer", "bounded_context": "workflow",
+        "producer": "workflow",
+        "known_consumers": ["audit-log", "engine"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-WorkflowTimer ordering. Terminal-positive.",
+        "replay_support": "Idempotent.",
+        "payload_fields": {
+            "timer_id": "string", "instance_id": "string",
+            "command_on_fire": "string",
+        },
+    },
+    {
+        "event_name": "workflow.timer.cancelled", "version": 1,
+        "aggregate": "WorkflowTimer", "bounded_context": "workflow",
+        "producer": "workflow",
+        "known_consumers": ["audit-log"],
+        "idempotency_requirements": "Dedup by `event_id`.",
+        "ordering_guarantees": "Per-WorkflowTimer ordering. Terminal.",
+        "replay_support": "Idempotent.",
+        "payload_fields": {
+            "timer_id": "string", "instance_id": "string",
+            "reason": "string",
+        },
+    },
+    {
+        "event_name": "workflow.compensation.recorded", "version": 1,
+        "aggregate": "WorkflowCompensation", "bounded_context": "workflow",
+        "producer": "workflow",
+        "known_consumers": ["audit-log", "saga-composer"],
+        "idempotency_requirements": "Dedup by `event_id`. Append-only.",
+        "ordering_guarantees": "Per-instance ordering by `recorded_at`.",
+        "replay_support": "Idempotent.",
+        "payload_fields": {
+            "compensation_id": "string", "instance_id": "string",
+            "definition_name": "string", "verb": "string",
+            "actor": "string", "payload": "object",
+        },
+    },
 )
 
 # Canonical RFC7807 error contracts (Phase 1C, §5). Every error a v1
@@ -1440,6 +1658,59 @@ def _build_security_contracts() -> dict[str, dict]:
                  "and snapshot timestamps. super_admin only (ADR-0010 §5)."
              )},
         ],
+        "workflow_actions": [
+            {"action": "workflow.instance.start",
+             "required_roles": ["super_admin", "compliance_officer",
+                                 "surveyor_general"],
+             "description": "Start a new workflow instance from a frozen definition."},
+            {"action": "workflow.instance.read",
+             "description": "Read a workflow instance (role-projected)."},
+            {"action": "workflow.instance.list",
+             "description": "List workflow instances scoped to the caller."},
+            {"action": "workflow.instance.cancel",
+             "required_roles": ["super_admin", "compliance_officer",
+                                 "surveyor_general"],
+             "description": "Cancel a non-terminal workflow instance."},
+            {"action": "workflow.instance.suspend",
+             "required_roles": ["super_admin"],
+             "description": "Suspend an instance (no commands or timers fire)."},
+            {"action": "workflow.instance.reactivate",
+             "required_roles": ["super_admin"],
+             "description": "Reactivate a suspended instance."},
+            {"action": "workflow.task.read",
+             "description": "Read a workflow task."},
+            {"action": "workflow.task.list",
+             "description": "List workflow tasks scoped to the caller."},
+            {"action": "workflow.task.claim",
+             "description": "Claim an OPEN workflow task as the current principal."},
+            {"action": "workflow.task.complete",
+             "description": "Complete a CLAIMED workflow task (claimer only)."},
+            {"action": "workflow.task.cancel",
+             "required_roles": ["super_admin"],
+             "description": "Administratively cancel a non-terminal task."},
+            {"action": "workflow.timer.read",
+             "description": "Read a workflow timer."},
+            {"action": "workflow.timer.list",
+             "description": "List workflow timers (admin / ops)."},
+            {"action": "workflow.timer.fire",
+             "required_roles": ["super_admin"],
+             "description": "Manually fire a scheduled timer (operator break-glass)."},
+            {"action": "workflow.timer.cancel",
+             "required_roles": ["super_admin"],
+             "description": "Cancel a scheduled timer."},
+            {"action": "workflow.admin.replay",
+             "required_roles": ["super_admin"],
+             "description": (
+                 "Replay a workflow instance from the outbox event stream. "
+                 "Result MUST be byte-identical to the committed state "
+                 "(ADR-0019 §C-19.3 constitutional replay gate)."
+             )},
+            {"action": "workflow.admin.fire_timer",
+             "required_roles": ["super_admin"],
+             "description": (
+                 "Admin endpoint to fire a timer manually for ops / break-glass."
+             )},
+        ],
     }
 
     field_projection = {
@@ -1680,6 +1951,74 @@ def _build_security_contracts() -> dict[str, dict]:
                                           "provider_response", "seal_ids"],
                 "pii_fields": [],
             },
+            # Phase 4 — Workflow bounded context
+            "workflow.instance": {
+                "public": ["instance_id", "definition_name",
+                            "definition_version", "business_state",
+                            "lifecycle", "created_at"],
+                "owner": ["instance_id", "definition_name",
+                           "definition_version", "business_state",
+                           "lifecycle", "initiator_id",
+                           "correlation_id", "payload",
+                           "last_command", "last_actor",
+                           "last_transitioned_at", "terminated_at",
+                           "created_at", "version"],
+                "privileged": ["instance_id", "definition_name",
+                                "definition_version", "business_state",
+                                "lifecycle", "initiator_id",
+                                "correlation_id", "payload",
+                                "last_command", "last_actor",
+                                "last_transitioned_at", "terminated_at",
+                                "suspended_reason",
+                                "tenant_id", "country_code",
+                                "schema_version", "created_at", "version"],
+                "redacted_for_public": ["tenant_id", "payload",
+                                          "initiator_id", "correlation_id"],
+                "pii_fields": [],
+            },
+            "workflow.task": {
+                "public": ["task_id", "instance_id", "title",
+                            "state", "assigned_to_role",
+                            "created_at"],
+                "owner": ["task_id", "instance_id", "definition_name",
+                           "title", "state",
+                           "assigned_to_role", "assigned_to_principal",
+                           "claimed_by", "claimed_at",
+                           "completed_by", "completed_at",
+                           "completion_payload", "due_at",
+                           "cancelled_reason",
+                           "created_at", "version"],
+                "privileged": ["task_id", "instance_id", "definition_name",
+                                "title", "state",
+                                "assigned_to_role", "assigned_to_principal",
+                                "claimed_by", "claimed_at",
+                                "completed_by", "completed_at",
+                                "completion_payload", "due_at",
+                                "cancelled_reason",
+                                "tenant_id", "country_code",
+                                "schema_version", "created_at", "version"],
+                "redacted_for_public": ["tenant_id", "claimed_by",
+                                          "completed_by", "completion_payload"],
+                "pii_fields": [],
+            },
+            "workflow.timer": {
+                "public": ["timer_id", "instance_id", "fire_at",
+                            "state", "command_on_fire", "created_at"],
+                "owner": ["timer_id", "instance_id", "definition_name",
+                           "fire_at", "state",
+                           "command_on_fire", "payload_on_fire",
+                           "fired_at", "cancelled_at", "cancelled_reason",
+                           "created_at", "version"],
+                "privileged": ["timer_id", "instance_id", "definition_name",
+                                "fire_at", "state",
+                                "command_on_fire", "payload_on_fire",
+                                "fired_at", "cancelled_at",
+                                "cancelled_reason",
+                                "tenant_id", "country_code",
+                                "schema_version", "created_at", "version"],
+                "redacted_for_public": ["tenant_id", "payload_on_fire"],
+                "pii_fields": [],
+            },
         },
     }
 
@@ -1732,6 +2071,18 @@ def _build_artifacts() -> list[Artifact]:
     for name, doc in sec.items():
         out.append(Artifact(f"v1/security/{name}", _dumps(doc)))
 
+    # Phase 4 — Workflow definitions are frozen content. They are not
+    # GENERATED here (they live as authored JSON on disk under
+    # contracts/v1/workflow_definitions/*.json), but they ARE part of
+    # the drift-detected freeze: the canonical bytes are normalized
+    # through ``_dumps`` so the freeze gate catches any silent edit.
+    wf_def_dir = V1_DIR / "workflow_definitions"
+    if wf_def_dir.exists():
+        for path in sorted(wf_def_dir.glob("*.json")):
+            doc = json.loads(path.read_text())
+            relpath = f"v1/workflow_definitions/{path.name}"
+            out.append(Artifact(relpath, _dumps(doc)))
+
     return out
 
 
@@ -1755,7 +2106,7 @@ def _build_sdk_metadata(artifacts: list[Artifact]) -> list[Artifact]:
         "sdk_version": sdk_version,
         "aggregate_sha256": aggregate,
         "min_supported_contract": "1.0.0",
-        "max_supported_contract": "1.x.x",
+        "max_supported_contract": "2.x.x",
         "breaks_on_major_bump": True,
         "compatible_languages": ["typescript", "python"],
         "regeneration_command": "python -m contracts.generate",
@@ -1793,6 +2144,7 @@ def _build_release_manifest(all_artifacts: list[Artifact]) -> Artifact:
             "ADR-0007 — Canonical Evidence Aggregate + Sealing",
             "ADR-0008 — Evidence Anchoring & Integrity Saga",
             "ADR-0009 — Timeline, Custody Chain, Legal Hold, Supersession (Phase 3.7)",
+            "ADR-0023 — Workflow Engine Foundation (Phase 4 Slice 4.0)",
         ],
         "checksums": {
             "openapi_sha256": openapi_sha,

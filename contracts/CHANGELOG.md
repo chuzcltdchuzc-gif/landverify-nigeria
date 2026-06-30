@@ -11,6 +11,57 @@ Every entry below MUST reference its ADR.
 
 ---
 
+## [2.0.0] — 2026-06-30 — Phase 4 Slice 4.0: Workflow Engine Foundation
+
+* **ADR-0023 — Workflow Engine Foundation**: introduces the
+  constitutional Workflow bounded context with 5 foundational
+  aggregates (WorkflowDefinition, WorkflowInstance, Task, Timer,
+  CompensationEntry), the engine (``start_workflow``,
+  ``apply_command``, ``fire_timer``, ``cancel``, ``suspend``,
+  ``reactivate``, ``replay``), the saga composer scaffold, and one
+  minimal projector (``workflow.instance`` v1).
+* **MAJOR bump** because this is the first non-additive contract
+  release since v1.0.0 — the v2 series carries the workflow contract
+  family, including a brand-new artifact directory
+  (``v1/workflow_definitions/*.json``). Phase 3 endpoints, events,
+  schemas, and security policies remain unchanged and continue to be
+  served at v1 semantics.
+* **Additive (`/api/v1/*`)** — new endpoints under
+  `/api/v1/workflow/*`:
+  * `GET  /api/v1/workflow/definitions`
+  * `POST /api/v1/workflow/instances`                       (privileged roles)
+  * `GET  /api/v1/workflow/instances`
+  * `GET  /api/v1/workflow/instances/{id}`
+  * `POST /api/v1/workflow/instances/{id}/cancel`
+  * `POST /api/v1/workflow/instances/{id}/suspend`           (super_admin)
+  * `POST /api/v1/workflow/instances/{id}/reactivate`        (super_admin)
+  * `GET  /api/v1/workflow/tasks`
+  * `GET  /api/v1/workflow/tasks/{id}`
+  * `POST /api/v1/workflow/tasks/{id}/claim`
+  * `POST /api/v1/workflow/tasks/{id}/complete`
+  * `GET  /api/v1/workflow/timers`
+  * `GET  /api/v1/workflow/timers/{id}`
+  * `POST /api/v1/workflow/admin/instances/{id}/replay`      (super_admin)
+  * `POST /api/v1/workflow/admin/timers/{id}/fire`           (super_admin)
+* **Additive (events)** — 15 new domain events in `workflow.*`:
+  `instance.{started,transitioned,completed,cancelled,suspended,reactivated}`,
+  `task.{created,claimed,completed,cancelled,expired}`,
+  `timer.{scheduled,fired,cancelled}`, `compensation.recorded`.
+* **Additive (DTOs)** — 5 request DTOs (`Start/Cancel/Suspend/Reactivate
+  WorkflowRequest`, `CompleteTaskRequest`) + 9 response DTOs
+  (`Workflow{Instance,Task,Timer}Response` + their list variants,
+  `WorkflowReplayResponse`, `WorkflowDefinition{Response,ListResponse}`).
+* **Additive (security)** — new `workflow_actions` block with 17
+  actions. New field-projection entries: `workflow.instance`,
+  `workflow.task`, `workflow.timer`.
+* **NEW artifact family** — `v1/workflow_definitions/*.json` is now
+  governed by the drift gate. The Slice 4.0 release ships
+  `echo.v1.json` to prove the engine end-to-end.
+* **Strict non-goals** — consent / community / inheritance are
+  CONSTITUTIONALLY PROHIBITED until separate Key 2 authorizations
+  unblock Slices 4.2 / 4.3 / 4.4. Outbound `emit_command` and
+  `spawn` actions are scaffolded for Slice 4.5.
+
 ## [1.5.0] — 2026-06-29 — Phase 3.8: Projection Engine, Read Models & Replay
 
 * **ADR-0010 — Projection Engine, Read Models & Replay**: introduces

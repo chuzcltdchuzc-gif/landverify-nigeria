@@ -388,7 +388,8 @@ def test_contract_freeze_at_1_3_0() -> None:
     root = Path(__file__).resolve().parent.parent.parent
     version = (root / "contracts" / "VERSION").read_text().strip()
     major, minor, _ = version.split(".")
-    assert int(major) == 1 and int(minor) >= 3, f"got {version}"
+    assert (int(major) == 1 and int(minor) >= 3) or int(major) >= 2, \
+        f"got {version}"
 
 
 def test_constitutional_no_pii_in_anchor_event_payloads() -> None:

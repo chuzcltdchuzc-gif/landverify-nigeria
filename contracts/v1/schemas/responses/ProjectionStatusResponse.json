@@ -77,5 +77,5 @@
   ],
   "title": "ProjectionStatusResponse",
   "type": "object",
-  "x-contract-version": "1.5.0"
+  "x-contract-version": "2.0.0"
 }

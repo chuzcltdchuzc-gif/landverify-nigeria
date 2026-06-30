@@ -1,0 +1,158 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/WorkflowInstanceListResponse.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "count": {
+      "title": "Count",
+      "type": "integer"
+    },
+    "items": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "business_state": {
+            "title": "Business State",
+            "type": "string"
+          },
+          "correlation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correlation Id"
+          },
+          "country_code": {
+            "title": "Country Code",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "definition_name": {
+            "title": "Definition Name",
+            "type": "string"
+          },
+          "definition_version": {
+            "title": "Definition Version",
+            "type": "integer"
+          },
+          "initiator_id": {
+            "title": "Initiator Id",
+            "type": "string"
+          },
+          "instance_id": {
+            "title": "Instance Id",
+            "type": "string"
+          },
+          "last_actor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Actor"
+          },
+          "last_command": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Command"
+          },
+          "last_transitioned_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Transitioned At"
+          },
+          "lifecycle": {
+            "title": "Lifecycle",
+            "type": "string"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          },
+          "schema_version": {
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "suspended_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suspended Reason"
+          },
+          "tenant_id": {
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "terminated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terminated At"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "instance_id",
+          "definition_name",
+          "definition_version",
+          "business_state",
+          "lifecycle",
+          "initiator_id",
+          "tenant_id",
+          "country_code",
+          "payload",
+          "version",
+          "schema_version",
+          "created_at"
+        ],
+        "title": "WorkflowInstanceResponse",
+        "type": "object"
+      },
+      "title": "Items",
+      "type": "array"
+    }
+  },
+  "required": [
+    "items",
+    "count"
+  ],
+  "title": "WorkflowInstanceListResponse",
+  "type": "object",
+  "x-contract-version": "2.0.0"
+}

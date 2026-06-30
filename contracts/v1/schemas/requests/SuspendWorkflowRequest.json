@@ -1,0 +1,19 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/SuspendWorkflowRequest.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "reason": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Reason",
+      "type": "string"
+    }
+  },
+  "required": [
+    "reason"
+  ],
+  "title": "SuspendWorkflowRequest",
+  "type": "object",
+  "x-contract-version": "2.0.0"
+}

@@ -1,0 +1,125 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/WorkflowTimerListResponse.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "count": {
+      "title": "Count",
+      "type": "integer"
+    },
+    "items": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "cancelled_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelled At"
+          },
+          "cancelled_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelled Reason"
+          },
+          "command_on_fire": {
+            "title": "Command On Fire",
+            "type": "string"
+          },
+          "country_code": {
+            "title": "Country Code",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "definition_name": {
+            "title": "Definition Name",
+            "type": "string"
+          },
+          "fire_at": {
+            "title": "Fire At",
+            "type": "string"
+          },
+          "fired_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fired At"
+          },
+          "instance_id": {
+            "title": "Instance Id",
+            "type": "string"
+          },
+          "payload_on_fire": {
+            "additionalProperties": true,
+            "title": "Payload On Fire",
+            "type": "object"
+          },
+          "schema_version": {
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "tenant_id": {
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "timer_id": {
+            "title": "Timer Id",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "timer_id",
+          "instance_id",
+          "definition_name",
+          "fire_at",
+          "state",
+          "command_on_fire",
+          "payload_on_fire",
+          "tenant_id",
+          "country_code",
+          "version",
+          "schema_version",
+          "created_at"
+        ],
+        "title": "WorkflowTimerResponse",
+        "type": "object"
+      },
+      "title": "Items",
+      "type": "array"
+    }
+  },
+  "required": [
+    "items",
+    "count"
+  ],
+  "title": "WorkflowTimerListResponse",
+  "type": "object",
+  "x-contract-version": "2.0.0"
+}

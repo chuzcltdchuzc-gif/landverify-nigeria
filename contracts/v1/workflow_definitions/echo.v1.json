@@ -1,0 +1,46 @@
+{
+  "description": "Minimal foundation-slice demo workflow. Demonstrates the engine end-to-end without touching any business context.",
+  "initial_state": "received",
+  "name": "echo.v1",
+  "states": {
+    "acknowledged": {
+      "on_enter": []
+    },
+    "completed": {
+      "on_enter": [
+        {
+          "params": {
+            "payload": {},
+            "verb": "echo_no_op"
+          },
+          "verb": "record_compensation"
+        }
+      ],
+      "terminal": true
+    },
+    "received": {
+      "on_enter": [
+        {
+          "params": {
+            "assigned_to_role": "compliance_officer",
+            "title": "Echo: confirm receipt"
+          },
+          "verb": "create_task"
+        }
+      ]
+    }
+  },
+  "transitions": [
+    {
+      "command": "acknowledge",
+      "from": "received",
+      "to": "acknowledged"
+    },
+    {
+      "command": "complete",
+      "from": "acknowledged",
+      "to": "completed"
+    }
+  ],
+  "version": 1
+}

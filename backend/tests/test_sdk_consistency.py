@@ -158,5 +158,8 @@ def test_evidence_pages_import_only_from_sdk_for_network():
 def test_compatibility_manifest_at_or_above_v1_5_0():
     compat = _load_json(COMPAT_PATH)
     v = compat["contract_version"].split(".")
-    assert int(v[0]) == 1 and int(v[1]) >= 5, (
-        f"Compatibility manifest contract_version too old: {compat['contract_version']}")
+    # Phase 4 majors the contract to v2.x — accept >= 1.5 OR >= 2.0.
+    ok = (int(v[0]) == 1 and int(v[1]) >= 5) or int(v[0]) >= 2
+    assert ok, (
+        f"Compatibility manifest contract_version too old: "
+        f"{compat['contract_version']}")

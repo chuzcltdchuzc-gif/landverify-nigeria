@@ -461,7 +461,9 @@ def test_contract_at_or_above_1_5_0() -> None:
     root = Path(__file__).resolve().parent.parent.parent
     version = (root / "contracts" / "VERSION").read_text().strip()
     major, minor, _ = version.split(".")
-    assert int(major) == 1 and int(minor) >= 5, f"got {version}"
+    # Accept v1.5+ OR any v2+ — Phase 4 majors the contract.
+    assert (int(major) == 1 and int(minor) >= 5) or int(major) >= 2, \
+        f"got {version}"
 
 
 def test_admin_projection_endpoints_in_openapi() -> None:

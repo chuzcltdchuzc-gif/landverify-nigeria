@@ -1,0 +1,15 @@
+{
+  "$id": "https://aquasavannah.landvault/contracts/v1/schemas/CompleteTaskRequest.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "payload": {
+      "additionalProperties": true,
+      "title": "Payload",
+      "type": "object"
+    }
+  },
+  "title": "CompleteTaskRequest",
+  "type": "object",
+  "x-contract-version": "2.0.0"
+}

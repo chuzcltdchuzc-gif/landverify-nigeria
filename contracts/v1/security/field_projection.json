@@ -535,7 +535,162 @@
         "evidence_seal_hash",
         "ownership_history"
       ]
+    },
+    "workflow.instance": {
+      "owner": [
+        "instance_id",
+        "definition_name",
+        "definition_version",
+        "business_state",
+        "lifecycle",
+        "initiator_id",
+        "correlation_id",
+        "payload",
+        "last_command",
+        "last_actor",
+        "last_transitioned_at",
+        "terminated_at",
+        "created_at",
+        "version"
+      ],
+      "pii_fields": [],
+      "privileged": [
+        "instance_id",
+        "definition_name",
+        "definition_version",
+        "business_state",
+        "lifecycle",
+        "initiator_id",
+        "correlation_id",
+        "payload",
+        "last_command",
+        "last_actor",
+        "last_transitioned_at",
+        "terminated_at",
+        "suspended_reason",
+        "tenant_id",
+        "country_code",
+        "schema_version",
+        "created_at",
+        "version"
+      ],
+      "public": [
+        "instance_id",
+        "definition_name",
+        "definition_version",
+        "business_state",
+        "lifecycle",
+        "created_at"
+      ],
+      "redacted_for_public": [
+        "tenant_id",
+        "payload",
+        "initiator_id",
+        "correlation_id"
+      ]
+    },
+    "workflow.task": {
+      "owner": [
+        "task_id",
+        "instance_id",
+        "definition_name",
+        "title",
+        "state",
+        "assigned_to_role",
+        "assigned_to_principal",
+        "claimed_by",
+        "claimed_at",
+        "completed_by",
+        "completed_at",
+        "completion_payload",
+        "due_at",
+        "cancelled_reason",
+        "created_at",
+        "version"
+      ],
+      "pii_fields": [],
+      "privileged": [
+        "task_id",
+        "instance_id",
+        "definition_name",
+        "title",
+        "state",
+        "assigned_to_role",
+        "assigned_to_principal",
+        "claimed_by",
+        "claimed_at",
+        "completed_by",
+        "completed_at",
+        "completion_payload",
+        "due_at",
+        "cancelled_reason",
+        "tenant_id",
+        "country_code",
+        "schema_version",
+        "created_at",
+        "version"
+      ],
+      "public": [
+        "task_id",
+        "instance_id",
+        "title",
+        "state",
+        "assigned_to_role",
+        "created_at"
+      ],
+      "redacted_for_public": [
+        "tenant_id",
+        "claimed_by",
+        "completed_by",
+        "completion_payload"
+      ]
+    },
+    "workflow.timer": {
+      "owner": [
+        "timer_id",
+        "instance_id",
+        "definition_name",
+        "fire_at",
+        "state",
+        "command_on_fire",
+        "payload_on_fire",
+        "fired_at",
+        "cancelled_at",
+        "cancelled_reason",
+        "created_at",
+        "version"
+      ],
+      "pii_fields": [],
+      "privileged": [
+        "timer_id",
+        "instance_id",
+        "definition_name",
+        "fire_at",
+        "state",
+        "command_on_fire",
+        "payload_on_fire",
+        "fired_at",
+        "cancelled_at",
+        "cancelled_reason",
+        "tenant_id",
+        "country_code",
+        "schema_version",
+        "created_at",
+        "version"
+      ],
+      "public": [
+        "timer_id",
+        "instance_id",
+        "fire_at",
+        "state",
+        "command_on_fire",
+        "created_at"
+      ],
+      "redacted_for_public": [
+        "tenant_id",
+        "payload_on_fire"
+      ]
     }
   },
-  "x-contract-version": "1.5.0"
+  "x-contract-version": "2.0.0"
 }
