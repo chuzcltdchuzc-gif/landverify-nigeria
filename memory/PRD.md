@@ -1,6 +1,38 @@
 # Aquasavannah LandVault — Product Requirements Document (Living)
 
-_Last updated: 2026-06-29_
+_Last updated: 2026-06-30_
+
+## ⏱ 2026-06-30 — Post-Acceptance: R-2 + D-10 + PRR COMPLETE
+
+Phase 3 was formally accepted by the operator on 2026-06-29. The three mandatory production-readiness milestones (R-2 platform security hardening, D-10 operational runbook, Production Readiness Review) are now complete. Phase 4 remains constitutionally prohibited.
+
+### R-2 — Platform Security Hardening
+- **9 production-grade HTTP security headers** set on every response via `kernel/security/http_hardening.py::SecurityHeadersMiddleware` (CSP L3 strict, HSTS 2-year-preload, COOP/COEP/CORP, Referrer-Policy no-referrer, X-Content-Type-Options nosniff, X-Frame-Options DENY, Permissions-Policy disabling all sensor APIs).
+- **Sliding-window rate limiter** on auth-sensitive routes (`/auth/login`, `/auth/register`, `/auth/login/google`, `/evidence/items`, `/admin/projections`). 429 with RFC-7807 body + Retry-After header. Production manifest sets `RATE_LIMIT_ENABLED=1`; dev/test default off.
+- **10 binding tests** in `backend/tests/test_security_headers.py` — all green.
+- Verified: signed-URL TTL bounds, WORM dual-layer enforcement, encryption inventory (SHA-256 / Ed25519 / RS256 / AES-256-GCM), secret hygiene (0 hardcoded), R2 Object Lock in `compliance` mode (production manifest).
+- **Security Readiness Report** at `/app/audit/R-2-SECURITY-READINESS-REPORT.md`.
+- Residual: R-2.1 CSP `'unsafe-inline'` for Tailwind styles (Low), R-2.4 Trusted-Types not yet declared (Low). No High-severity risks open. R-2 from the Phase 3 backlog is CLOSED.
+
+### D-10 — Operational Runbook
+- **497-line `RUNBOOK.md`** at `/app/audit/RUNBOOK.md` covering 16 binding procedures: deployment + pre-flight checklist, rollback, disaster recovery (pod / region / data), backup & restore, RPO/RTO (≤15 m / ≤2 h), evidence replay, projection replay, merkle/anchor replay, legal hold ops, break-glass (15-min ceiling), key rotation (90-day JWT, on-demand CT-log), monitoring dashboards, alert handling (7 named alarms), incident response (SEV-1/2/3), operational responsibilities (5 roles), maintenance procedures (patching, indexes, contract bumps, soak testing).
+
+### Production Readiness Review
+- **193-line `PRODUCTION-READINESS-REVIEW.md`** at `/app/audit/PRODUCTION-READINESS-REVIEW.md`.
+- Verdict: **GO** for production launch, conditional on 3 operator config switches (`RATE_LIMIT_ENABLED=1`, `OTS_MODE=public`, R2 Object Lock in `compliance` mode).
+- 157/157 strict DDD tests green (147 Phase 3 + 10 R-2 security).
+- Phase 4 (ADR-0019..0022, Workflow / Consent / Inheritance) remains CONSTITUTIONALLY PROHIBITED until operator explicitly approves PRR.
+
+### Deliverable map
+- `/app/audit/PHASE-3-ACCEPTANCE-PACKET.md` + `/app/audit/sections/*.md` — Phase 3 acceptance (1,767 lines)
+- `/app/audit/R-2-SECURITY-READINESS-REPORT.md` — R-2 evidence (174 lines)
+- `/app/audit/RUNBOOK.md` — D-10 operational guide (497 lines)
+- `/app/audit/PRODUCTION-READINESS-REVIEW.md` — PRR (193 lines)
+- `/app/audit/perf/results.json` — measured perf bench
+- `/app/backend/kernel/security/http_hardening.py` — implementation
+- `/app/backend/tests/test_security_headers.py` — 10 binding tests
+
+---
 
 ## ⏱ 2026-06-29 — Phase 3.10 COMPLETE: Formal Phase Acceptance Review
 

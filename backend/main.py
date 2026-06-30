@@ -99,6 +99,7 @@ from kernel.observability.metrics import configure_metrics, increment
 from kernel.projections import configure_engine
 from kernel.projections import admin_router as projections_admin_router
 from kernel.projections.authorization import register_projection_policies
+from kernel.security.http_hardening import configure_security
 from kernel.security.jwt import JwtIssuer, JwtVerifier
 from kernel.security.keys import KeyStore
 
@@ -155,6 +156,15 @@ app.add_middleware(
     allow_origins=CORS_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+# R-2 — security headers + rate limiter (Phase 3 Post-Acceptance).
+# Rate limiter defaults OFF in dev/test (production manifest MUST set
+# RATE_LIMIT_ENABLED=1). Security headers are always on.
+import os as _os
+configure_security(
+    app,
+    rate_limit_enabled=_os.environ.get("RATE_LIMIT_ENABLED", "0") == "1",
 )
 
 
