@@ -1249,3 +1249,42 @@ Library / Domain Events / Business Observability / Authorization Test Matrix).
 - Bulk verification API for institutional users
 - Cloudflare R2 file storage
 - Rate limiting + Sentry instrumentation
+
+## 11. Phase 4 — Workflow Bounded Context (in progress)
+
+### Slice 4.0 Foundation — DELIVERED 2026-06-30 ✅
+- ADR-0023 + 5 foundational aggregates (WorkflowDefinition, WorkflowInstance,
+  Task, Timer, CompensationEntry).
+- WorkflowEngine with full lifecycle + pure `replay_apply` (byte-identical).
+- Saga composer scaffold; one minimal projection (`workflow.instance` v1).
+- `echo.v1` demo workflow proves the engine end-to-end.
+- Contract bumped **1.5.0 → 2.0.0** (15 new events, 5 req + 9 resp DTOs,
+  17 new authorization actions, new `v1/workflow_definitions/` artifact
+  family, drift gate green).
+- Tests: 29 in-process + 14 public-URL probes + 8 contract freeze =
+  51/51 green via testing agent (`iteration_7.json`).
+- 195/195 strict DDD constitutional tests green overall.
+- Phase 3 codebase untouched. Repository now FROZEN.
+
+### Slice 4.1 — DEFERRED (requires separate Key 2)
+Workflow Engine MVP business extensions (concrete `emit_command`
+outbound envelopes to Registry/Evidence, real `spawn` fan-out).
+
+### Slice 4.2 — DEFERRED (requires separate Key 2)
+Consent sub-context (ADR-0020).
+
+### Slice 4.3 — DEFERRED (requires separate Key 2)
+Community Validation sub-context (ADR-0021).
+
+### Slice 4.4 — DEFERRED (requires separate Key 2)
+Inheritance sub-context (ADR-0022).
+
+### Slice 4.5 — DEFERRED (requires separate Key 2)
+Saga composition + projections.
+
+### Slice 4.6 — DEFERRED (requires separate Key 2)
+React UI workspace + TS SDK regeneration for workflow.
+
+### Slice 4.7 — DEFERRED (requires separate Key 2)
+Phase 4 Acceptance Packet (17-section audit + benchmarks +
+Production Readiness Review).
