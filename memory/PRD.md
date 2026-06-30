@@ -2,6 +2,33 @@
 
 _Last updated: 2026-06-30_
 
+## ⏱ 2026-06-30 — Phase 4 BLUEPRINT DRAFTED (architecture-only; awaiting operator review)
+
+Per operator directive "Constitutional Authorization — Begin Phase 4 Blueprinting Only" (2026-06-30), the complete Phase 4 architectural package has been produced. **No implementation work has been initiated** — no code, no contracts, no SDK, no schemas, no migrations, no tests, no UI. Phase 3 codebase untouched; 157 tests remain green; contract drift gate green.
+
+### Deliverables (architecture only, under `/app/blueprints/phase4/`)
+- **`ADR-0019-workflow-engine.md`** (264 lines) — Workflow bounded context: aggregates (Definition / Instance / Task / Timer / CompensationLog), event-sourced replay rules, saga ownership, 8 binding constitutional constraints (C-19.1..8). No cross-context writes; commands only via outbox.
+- **`ADR-0020-consent-engine.md`** (282 lines) — Consent sub-context: 9-state lifecycle, 5 capture modes (audio/video/signature/written/biometric), witness slate, deterministic strength scoring formula, revocation semantics with reliance window, 7 binding constraints (C-20.1..7). Every capture is an Evidence item via Phase 3 pipeline.
+- **`ADR-0021-community-validation-and-attestation.md`** (301 lines) — 6 workflow definitions (survey_assignment / community_validation / clarification / compliance_review / surveyor_general_review / attestation_appeal), 4 new RBAC roles (village_elder, traditional_authority, community_representative, surveyor_general), deterministic consensus scoring with role weights as content, 7 binding constraints (C-21.1..7). SG is the ONLY role that may emit `registry.command.commit_parcel`.
+- **`ADR-0022-inheritance-and-customary-resolution.md`** (375 lines) — Inheritance workflow: death verification, beneficiary validation, applicable-regime selection (5 regimes including Maliki Faraidh, Yoruba idi-igi, Igbo Okpara, statutory NG, civil court order), deterministic share calculation, court order integration with enumerated directive verbs, subdivision via Registry supersession, appeal workflow, 8 binding constraints (C-22.1..8).
+- **`PHASE4_SPEC.md`** (431 lines) — Constitutional implementation contract: 17 workflows, 16 aggregates, 35 invariants (INV-WF / INV-CN / INV-CV / INV-IH families), complete event catalogue, command catalogue, role catalogue, 10 acceptance-gate checklists. Proposed contract bump to v2.0.0 (first non-additive major since v1.0.0).
+- **`PHASE4_BLUEPRINT.md`** (382 lines) — Implementation blueprint: directory structure, package layout, ports & adapters per ADR, Mongo collection design with proposed indexes, application-layer service inventory, **7-slice implementation order** (4.0 foundation → 4.7 acceptance review), 10-item risk register, migration strategy (purely additive — no Phase 3 data migration), replay strategy, failure recovery, operational considerations.
+
+### Total architecture output
+- **6 documents · 2,035 lines** of constitutional architecture
+- **Zero lines of implementation code**
+- Phase 3 production codebase: untouched
+- Contract package v1.5.0: untouched (drift gate still green at 8/8)
+- Strict DDD test suite: untouched (157/157 still green)
+
+### Constitutional posture
+Phase 4 is **DRAFTED, NOT AUTHORIZED**. Per the operator directive, implementation is constitutionally prohibited until:
+1. Operator reviews `/app/blueprints/phase4/`.
+2. Operator explicitly approves the blueprint + 4 ADRs + spec.
+3. Operator issues a separate constitutional authorization for slice 4.0 onward.
+
+---
+
 ## ⏱ 2026-06-30 — Post-Acceptance: R-2 + D-10 + PRR COMPLETE
 
 Phase 3 was formally accepted by the operator on 2026-06-29. The three mandatory production-readiness milestones (R-2 platform security hardening, D-10 operational runbook, Production Readiness Review) are now complete. Phase 4 remains constitutionally prohibited.
