@@ -1,9 +1,13 @@
 # Aquasavannah LandVault — Authoritative ADR Catalogue (ADR_INDEX)
 
 * **Status:** OPERATOR-RATIFIED (single source of truth)
-* **Date:** 2026-06-30
+* **Version:** v1.1 (2026-07-01) — Step 3 of Constitutional Remediation
+  applied vocabulary compliance to §2. No ADR is renumbered, deleted,
+  or promoted.
+* **Prior version:** v1.0 (2026-06-30). Superseded by v1.1.
 * **Authority:** Foundation Specification §11 (ADR immutability) +
-  Operator Constitutional Reconciliation directive
+  Operator Constitutional Reconciliation directive + Operator
+  Constitutional Remediation directive (Step 3)
 * **Scope:** This is the authoritative ADR catalogue for the entire
   Aquasavannah LandVault platform. ADR-0001 through ADR-0022 listed
   here are CONSTITUTIONALLY BINDING.
@@ -312,20 +316,33 @@
 
 ---
 
-## 2. Out-of-Catalogue Artifacts (delivery records, NOT constitutional)
+## 2. Out-of-Catalogue Artifacts (Superseded or Non-decisional)
 
 The following artifacts EXIST on disk but are NOT constitutional ADRs.
-They are reclassified as delivery / acceptance records or blueprint
-design notes. They are NOT renamed or renumbered (immutability §11);
-they are simply de-promoted from constitutional standing.
+Per the vocabulary compliance requirement of CR-001 v2 and the
+Operator Constitutional Remediation directive (Step 3), each is
+classified as either **`Superseded`** (design content is now embedded
+in the canonical catalogue elsewhere — the row cites where) or
+**`Non-decisional`** (informational content only; carries no
+constitutional decision). No file is renamed or renumbered
+(Foundation Spec §11 — immutability).
 
-| Path | Reclassified as |
-| --- | --- |
-| `/app/contracts/v1/adr/ADR-0023-workflow-engine-foundation.md` | Slice 4.0 delivery / acceptance record. NOT a constitutional ADR. |
-| `/app/blueprints/phase4/ADR-0019-workflow-engine.md` | Phase 4 Blueprint Note — workflow engine design rationale. NOT a constitutional ADR (the canonical ADR-0019 is Notifications). |
-| `/app/blueprints/phase4/ADR-0020-consent.md` | Phase 4 Blueprint Note — Consent design rationale. Content is largely consistent with canonical ADR-0020. |
-| `/app/blueprints/phase4/ADR-0021-community-validation.md` | Phase 4 Blueprint Note — Community Validation design rationale. NOT a constitutional ADR (the canonical ADR-0021 is Sagas; Community Validation maps to ADR-0020). |
-| `/app/blueprints/phase4/ADR-0022-inheritance.md` | Phase 4 Blueprint Note — Inheritance design rationale. NOT a constitutional ADR (Inheritance has no dedicated per-slice ADR per Decision §1.1; canonical ADR-0022 is the Workflow Engine + Policy). |
+| Path | Classification | Rationale / where the design now lives |
+| --- | --- | --- |
+| `/app/contracts/v1/adr/ADR-0023-workflow-engine-foundation.md` | **`Non-decisional`** | Delivery record produced during Slice 4.0 acceptance. Contains no new architectural decision; its content is a rendered summary of decisions already recorded in canonical ADR-0021 (Sagas) and ADR-0022 (Workflow-as-Context / Policy Engine), and of the Slice 4.0 Acceptance Packet (`/app/audit/PHASE-4-SLICE-4.0-ACCEPTANCE.md`). Retained as an implementation-history artifact only. |
+| `/app/blueprints/phase4/ADR-0019-workflow-engine.md` | **`Superseded`** | Design content is embedded in canonical **ADR-0022** (Workflow as a First-Class Bounded Context & Policy Engine) and **ADR-0021** (Workflow Orchestration via Sagas). The blueprint number 0019 collides with canonical ADR-0019 (Notifications) — the blueprint carries no constitutional weight. |
+| `/app/blueprints/phase4/ADR-0020-consent-engine.md` | **`Superseded`** | Design content is embedded in canonical **ADR-0020** (Consent & Customary Consensus). The blueprint's content is a design rationale early-draft; the canonical ADR is the constitutional decision. |
+| `/app/blueprints/phase4/ADR-0021-community-validation-and-attestation.md` | **`Superseded`** | Design content is embedded in canonical **ADR-0020** (deterministic, evidence-backed consensus applies equally to individual consent and community validation). The blueprint number 0021 collides with canonical ADR-0021 (Sagas) — the blueprint carries no constitutional weight. |
+| `/app/blueprints/phase4/ADR-0022-inheritance-and-customary-resolution.md` | **`Superseded`** | Design content is embedded in canonical **ADR-0001** (LandVault as canonical aggregate root) + **ADR-0014** (Canonical Registry Aggregate). Inheritance does not introduce a new System of Record; it mutates registry state. The blueprint number 0022 collides with canonical ADR-0022 (Workflow-as-Context / Policy Engine) — the blueprint carries no constitutional weight. |
+
+### 2.1 Amendment record
+
+* **v1.0 → v1.1 (2026-07-01):** Reclassification vocabulary changed
+  from ("delivery record" / "Blueprint Note") to (`Superseded` /
+  `Non-decisional`) with per-item rationale citing where the design
+  content now lives, per Operator Constitutional Remediation §Step 3.
+  Ratification entry: `/app/governance/RATIFICATION_LOG.md`
+  (2026-07-01 row).
 
 ---
 

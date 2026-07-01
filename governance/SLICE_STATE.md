@@ -1,5 +1,8 @@
 # SLICE_STATE.md — Machine-Readable Slice Governance Ledger
 
+* **Version:** v1.1 (2026-07-01) — Step 4 of Constitutional Remediation
+  set the Slice 4.0 Freeze Commit/Tag to an immutable SHA.
+* **Prior version:** v1.0 (2026-06-30). Superseded by v1.1.
 * **Authority:** CR-001 §D.3 / §D.5 authoritative input
 * **Seeded from:** `/app/blueprints/phase4/PHASE4_ROADMAP_RECONCILIATION.md` §3
   (Roadmap Validation Matrix) reflecting the reconciled slice order
@@ -7,12 +10,16 @@
 * **Update discipline:** This ledger is APPEND-ORIENTED. Rows are
   updated in place ONLY to record status transitions (`Authorized →
   In-Progress → Accepted → Frozen`), and every change is mirrored by an
-  entry in `/app/governance/GOVERNANCE_VALIDATION_LOG.md`. Adding a new
-  slice REQUIRES a superseding Roadmap Reconciliation document.
+  entry in `/app/governance/GOVERNANCE_VALIDATION_LOG.md` AND the
+  `/app/governance/RATIFICATION_LOG.md`. Adding a new slice REQUIRES a
+  superseding Roadmap Reconciliation document.
 * **Immutable columns** (never rewritten once set): `Slice`, `Title`,
-  `Constitutional Owner`, `Depends-On`.
+  `Constitutional Owner`, `Depends-On`. **Also immutable once set:**
+  `Freeze Commit/Tag` (a freeze SHA is immutable evidence).
 * **Mutable columns** (updated via logged transitions only): `Status`,
-  `Freeze Commit/Tag`, `Acceptance Review Ref`, `Last Updated`.
+  `Acceptance Review Ref`, `Last Updated`. `Freeze Commit/Tag` moves
+  from `pending` to a real SHA exactly once, and never changes
+  thereafter.
 
 ## 0. Status vocabulary
 
@@ -28,7 +35,7 @@
 
 | Slice | Title | Status | Freeze Commit/Tag | Acceptance Review Ref | Depends-On | Constitutional Owner | Last Updated |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 4.0 | Workflow Engine Foundation | `Accepted+Frozen` | `<recorded-at-freeze>` (contract `VERSION=2.0.0`; slice tag `phase4-slice-4.0`) | `/app/audit/PHASE-4-SLICE-4.0-ACCEPTANCE.md` | — | ADR-0021 + ADR-0022 + ADR-0004 + ADR-0005 | 2026-06-30 |
+| 4.0 | Workflow Engine Foundation | `Accepted+Frozen` | **SHA `4e472e24eb2f1c85744ef00ae061a3c71ca572fe`** (contract `VERSION=2.0.0`; no annotated tag issued at freeze time — SHA is the immutable anchor). | `/app/audit/PHASE-4-SLICE-4.0-ACCEPTANCE.md` | — | ADR-0021 + ADR-0022 + ADR-0004 + ADR-0005 | 2026-07-01 (Freeze SHA recorded per Remediation §Step 4) |
 | 4.1 | Workflow Engine Completion (real `emit_command`, real `spawn` fan-out, Policy Engine, SLA / Escalation, Notification delivery infrastructure) | `Pending` | — | — | 4.0 | ADR-0021 + ADR-0022 + ADR-0019 + ADR-0004 + ADR-0005 | 2026-06-30 |
 | 4.2 | Consent | `Pending` | — | — | 4.1 | ADR-0020 + ADR-0009 + ADR-0015 + ADR-0016 | 2026-06-30 |
 | 4.3 | Survey Assignment (DEDICATED per Operator Decision #1) | `Pending` | — | — | 4.1 | ADR-0001 + ADR-0014 + ADR-0009 + ADR-0015 (consumes engine + policy from 4.1) | 2026-06-30 |

@@ -114,6 +114,53 @@ repository remains constitutionally frozen at contract VERSION 2.0.0.
 <!-- APPEND NEW ENTRIES BELOW THIS COMMENT. -->
 
 ---
+timestamp: 2026-07-01T00:22:00Z
+key2_id: K2-GOV-REMEDIATION-20260701-01
+phase: Governance (Constitutional Remediation)
+slice: n/a
+result: FAIL (partial — Steps 1–4 completed; Step 5 halted per directive)
+operator: <operator-of-record>
+report_ref: /app/governance/RATIFICATION_LOG.md (rows 2026-07-01T00:10:00Z .. 2026-07-01T00:18:00Z)
+evidence_summary:
+  - /app/governance/RATIFICATION_LOG.md :: sha256 f073f5b172b511961a3c376536feee161969a2c409e35dcd5de6b2b9c109bc9f (Steps 1–4 logged)
+  - /app/governance/CONSTITUTIONAL_LOADABILITY_MATRIX.md :: sha256 499cd35045f061b803352f292a0ff459fe07e1b363a775117985aea1145874bd (seeded; Foundation Spec row = Pending Content)
+  - /app/contracts/v1/adr/ADR_INDEX.md :: sha256 e7e6ec0fd25118a1d4a5c6e7dfa5410829c3fee68dfc77eb9d4abf0addf9b35e (v1.1 — 11 canonical Superseded/Non-decisional occurrences in §2; 0 non-canonical labels remain in §2 rows)
+  - /app/governance/SLICE_STATE.md :: sha256 089364fe0cb80f22bdbb99ac21d5143011bba510e99edd09eb63aa9b4c6244bb (v1.1 — Slice 4.0 Freeze SHA = 4e472e24eb2f1c85744ef00ae061a3c71ca572fe recorded)
+  - Foundation Specification content :: NOT SUPPLIED in the Constitutional Remediation directive
+  - Contract drift gate :: not re-run (no contract change); prior state GREEN at 2026-07-01T00:00:00Z
+corrective_action_if_any: |
+  Operator must supply the authoritative Phase 0 Foundation Specification content
+  (verbatim; not a coverage bullet list) so that Step 5 can PUBLISH it at
+  /app/blueprints/foundation/FOUNDATION_SPECIFICATION.md. Steps 6, 7, 8, 9, 10
+  remain BLOCKED until Step 5 completes:
+    * Step 6 (PHASE4_ROADMAP_RECONCILIATION amendment) is technically independent
+      of Step 5 content, but the directive fixes strict ordering "Execute in the
+      order below" so it is halted with Step 5.
+    * Step 7 (GOVERNANCE_CONSTITUTION.md creation) explicitly REQUIRES Steps 3–6
+      complete before it may assert internal consistency.
+    * Step 8 (CR-001 v2 → v2.1) requires Step 7 (references Constitution as sole
+      hierarchy source).
+    * Steps 9 and 10 depend on Steps 5–8.
+  Repository remains constitutionally frozen at contract VERSION 2.0.0. No
+  implementation artifact, contract, SDK, or bounded-context file was modified.
+references:
+  - 2026-07-01T00:00:00Z :: K2-P4-4.1-20260701-01
+---
+Constitutional Remediation directive executed. Steps 1–4 completed
+successfully: Ratification Log created (Step 1); Loadability Matrix
+created (Step 2); ADR_INDEX.md §2 vocabulary compliance applied per
+CR-001 v2 (Step 3); SLICE_STATE.md row 4.0 Freeze Commit/Tag set to
+immutable SHA 4e472e24eb2f1c85744ef00ae061a3c71ca572fe (Step 4). Step
+5 (Publish Foundation Specification) HALTED per the directive's own
+failure clause — the authoritative Phase 0 Foundation Specification
+content was NOT supplied in this session, and the directive
+explicitly forbids synthesis or summarization from a coverage bullet
+list. Steps 6–10 constitutionally blocked pending Operator-supplied
+Foundation Specification content. Repository remains frozen.
+
+<!-- APPEND NEW ENTRIES BELOW THIS COMMENT. -->
+
+---
 timestamp: 2026-07-01T00:00:00Z
 key2_id: K2-P4-4.1-20260701-01
 phase: Phase 4
