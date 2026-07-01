@@ -112,3 +112,53 @@ or bounded-context file was modified as part of this adoption. The
 repository remains constitutionally frozen at contract VERSION 2.0.0.
 
 <!-- APPEND NEW ENTRIES BELOW THIS COMMENT. -->
+
+---
+timestamp: 2026-07-01T00:00:00Z
+key2_id: K2-P4-4.1-20260701-01
+phase: Phase 4
+slice: 4.1 — Workflow Engine Completion (GENERIC ONLY)
+result: FAIL
+operator: <operator-of-record>
+report_ref: /app/governance/reports/K2-P4-4.1-20260701-01-4.1.md
+evidence_summary:
+  - /app/contracts/VERSION :: 2.0.0 (sha256 c28fcca53637bc88e124af1725df13cb98c69dedefd62fb3cdbe1cdb6b760624)
+  - /app/contracts/v1/adr/ADR_INDEX.md :: sha256 29bf19cbf84c3c09e53451745c6b0f6536d164edea2543e9c9c14ce7d6d028d5
+  - /app/blueprints/phase4/PHASE4_ROADMAP_RECONCILIATION.md :: sha256 0f3ac01df9e1349a53328c2cc4f350f204bc5035d9b442d7578d197c364074a0
+  - /app/governance/CR-001-GOVERNANCE-DRIFT-PREVENTION.md :: sha256 3c5560a697c80dca7829be971492ad59055256b0be838ca9771ade268414cdf1
+  - /app/governance/SLICE_STATE.md :: sha256 a1e3ccae0169a5241aade9ccf94aacea65b4f4ea1319fe76234b03069602f444 (4.0 Freeze Commit/Tag == "<recorded-at-freeze>" placeholder — NOT a real SHA)
+  - Governance Constitution v1.0 :: NOT LOADABLE (no file matches "*constitution*" under /app)
+  - Foundation Specification :: NOT LOADABLE (no file matches "*foundation*spec*" under /app)
+  - Contract drift gate :: GREEN ("Contract freeze OK — no drift.")
+  - git HEAD :: 4e472e24eb2f1c85744ef00ae061a3c71ca572fe
+  - ADR_INDEX.md "Superseded|Non-decisional" occurrences :: 0
+corrective_action_if_any: |
+  Operator must resolve the following before re-issuing a valid Key 2:
+  (1) Publish and ratify the Governance Constitution v1.0 (currently no file exists);
+      log its ratification entry.
+  (2) Publish or explicitly identify the Foundation Specification document
+      (or re-issue Key 2 clarifying that PRD + Reconciliation collectively fulfil this role).
+  (3) Amend ADR_INDEX.md §2 to reclassify ADR-0023 and blueprint ADR-0019..0022
+      using the governance-vocabulary labels "Superseded" or "Non-decisional"
+      (currently uses "delivery record" / "Blueprint Note").
+  (4) Populate SLICE_STATE.md row 4.0 `Freeze Commit/Tag` with a real SHA
+      (candidate: 4e472e24eb2f1c85744ef00ae061a3c71ca572fe) or an immutable annotated tag,
+      and log the amendment.
+  (5) Optional: clarify Slice 4.1 scope vs. Reconciliation §3 which lists 4.1
+      as owning Notification delivery infrastructure; Key 2 places Notifications OUT.
+  (6) Optional: add explicit security-verification criterion to §Acceptance Gate.
+  Only after (1)–(4) minimum are complete may a re-issued Key 2 pass validation.
+references: []
+---
+Slice 4.1 pre-flight FAILED under CR-001 v2. Two Key-2-referenced
+governing documents ("Governance Constitution v1.0", "Foundation
+Specification") are NOT LOADABLE — no such files exist. Pre-condition
+#2's exact-vocabulary requirement ("Superseded" / "Non-decisional")
+does not match ADR_INDEX.md §2 which uses "delivery record" /
+"Blueprint Note". SLICE_STATE.md row 4.0 Freeze Commit/Tag remains a
+placeholder, blocking CR-001 §D.3 dependency + §D.5 repo-state
+comparisons. Implementation REFUSED. Repository REMAINS
+constitutionally frozen at contract VERSION 2.0.0. No Slice 4.1 code,
+contract, or bounded-context change was written. Full corrective
+actions enumerated in the report; six items required from the
+Operator to unblock a re-issued Key 2.
