@@ -209,3 +209,59 @@ constitutionally frozen at contract VERSION 2.0.0. No Slice 4.1 code,
 contract, or bounded-context change was written. Full corrective
 actions enumerated in the report; six items required from the
 Operator to unblock a re-issued Key 2.
+
+
+---
+timestamp: 2026-07-01T00:35:00Z
+key2_id: K2-GOV-REMEDIATION-STEP5-FINAL-20260701-02
+phase: Governance (Constitutional Remediation — Step 5 FINAL)
+slice: n/a
+result: FAIL (missing source — halted per directive's own §FAILURE clause and CR-001 §G)
+operator: <operator-of-record>
+report_ref: /app/governance/GOVERNANCE_VALIDATION_LOG.md (this entry)
+evidence_summary:
+  - Directive §STEP 5 FINAL requires PUBLISH-verbatim of a supplied Phase 0 Foundation Specification (~8.6k words, sections 0-15 + ADR-0001..0022 + Appendix A).
+  - Directive message body :: no substantive Foundation Specification content present (only ~600 words of governance instructions).
+  - Repository search :: `find /app -iname "*foundation*"` returned only the prior FAIL report (`K2-P4-4.1-20260701-01-4.1.md`). No `FOUNDATION_SPECIFICATION*` file present.
+  - Attached asset "Phase 4 updated.pdf" :: title = "AquaSavannah LandVault — Phase 4 Definitive Delivery Specification"; 11 sections; ~3,800 words; ADRs 019–022 only; no Appendix A. NOT the Foundation Spec.
+  - Attached asset "Registry_Brief Aquasavannah.pdf" :: title = "AquaSavannah LandVault — Phase 2 Definitive Delivery Specification"; ~3,100 words. NOT the Foundation Spec.
+  - Attached asset "Phase3.pdf" :: title = "AquaSavannah LandVault — Phase 3 Definitive Delivery Specification"; ~3,582 words; no sections 0-15; no ADR-0001..0022; no Appendix A. NOT the Foundation Spec.
+  - CR-001 §F Loadability :: FAIL for the Foundation Specification row of `/app/governance/CONSTITUTIONAL_LOADABILITY_MATRIX.md`.
+  - Directive §FAILURE :: "any unresolved conflict, missing source, or hierarchy contradiction → halt, log, request the Operator decision (CR-001 §G). Do not proceed."
+corrective_action_if_any: |
+  Operator must supply the ratified Phase 0 Foundation Specification content itself,
+  verbatim and publication-ready. Acceptable delivery channels (any ONE of):
+    (a) Paste the full ~8,600-word body directly in the next message (fenced markdown preferred).
+    (b) Attach a NEW asset containing the Foundation Specification (a file whose page-1 title reads
+        "Foundation Specification" or "Phase 0 Foundation Specification"), and reference it in the
+        next message.
+    (c) Provide a public URL to the ratified document (I will fetch and publish verbatim; I will not
+        edit, summarize, or reformat beyond fenced-markdown containment if the source is not markdown).
+  On receipt, I will:
+    1. Publish the content VERBATIM at /app/blueprints/foundation/FOUNDATION_SPECIFICATION.md.
+    2. Add ONLY citations ("Derived-From / Consistent-With: PRD §…, ADR-00xx, PHASE4_SPEC §…") — no
+       rewording, no reinterpretation.
+    3. Update the Loadability Matrix (Foundation row = Loaded=YES with real sha256 + version).
+    4. Append a Ratification Log row.
+    5. If Operator supplies precedence for Foundation-vs-PRD (KNOWN OPEN QUESTION per directive),
+       record it verbatim; otherwise surface it in Step 7 as OPERATOR-DECISION-PENDING.
+    6. Execute Steps 6–10 in constitutional order.
+  Until then Steps 6–10 remain BLOCKED. Repository remains constitutionally frozen at contract 2.0.0.
+  No implementation artifact, contract, SDK, or bounded-context file was modified.
+references:
+  - 2026-07-01T00:00:00Z :: K2-P4-4.1-20260701-01
+  - 2026-07-01T00:22:00Z :: K2-GOV-REMEDIATION-20260701-01
+---
+Step 5 (FINAL) HALTED per its own §FAILURE clause: the Operator-supplied
+Phase 0 Foundation Specification content (~8.6k words, sections 0-15 +
+ADR-0001..0022 + Appendix A) is NOT PRESENT in this session. Message
+body contains only ~600 words of governance instructions, not the
+substantive document body. Three attached PDFs are the Phase 2, Phase 3,
+and Phase 4 Definitive Delivery Specifications — verified by extracting
+their page-1 titles — none is a Phase 0 Foundation Specification and
+none matches the size/structure the directive describes. The directive
+forbids me from synthesizing, summarizing, or compiling a competing
+version from PRD + Phase specs + ADR_INDEX; therefore I cannot proceed
+by any authored path. Steps 6–10 remain BLOCKED. Repository frozen.
+Awaiting Operator delivery of the Foundation Specification content
+itself, by paste / attach / URL.
