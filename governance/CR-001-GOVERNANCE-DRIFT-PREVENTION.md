@@ -1,10 +1,11 @@
-# CR-001 v2 — Governance Drift Prevention (Hardened)
+# CR-001 v2.1 — Governance Drift Prevention (Hierarchy Deferred to Constitution)
 
 * **Series:** Constitutional Rules (CR-series)
 * **Number:** CR-001
-* **Version:** v2 (hardened; supersedes any prior CR-001 draft)
-* **Status:** ADOPTED — permanent, immutable
-* **Adopted:** 2026-06-30
+* **Version:** v2.1 (2026-07-01)
+* **Prior version:** v2 (2026-06-30) — superseded by v2.1
+* **Status:** ADOPTED — permanent; amendable only by a superseding CR
+* **Change from v2:** §H (Constitutional Hierarchy) is REPLACED with a reference to `/app/governance/GOVERNANCE_CONSTITUTION.md` §2 as the SOLE source of the hierarchy. §F (Loadability) is EXTENDED to require `GOVERNANCE_CONSTITUTION.md` and `FOUNDATION_SPECIFICATION.md` as mandatory loadable constitutional artifacts. All other constitutional behaviour is unchanged.
 * **Applies to:** All remaining Phase 4 slices, all future phases, and
   every future Key 2 authorization on Aquasavannah LandVault
 * **Scope note:** Governance-only. This rule creates no implementation
@@ -215,11 +216,24 @@ per CR-001 §E".
 
 ## F. Loadability Requirement
 
-The Validator MUST load and quote (in-session) the referenced
-governance / architecture documents. If any referenced document is not
-available or not loadable in the current session (missing file,
-inaccessible path, corrupted content), validation FAILS. Documents are
-NEVER assumed — they are read.
+The Validator MUST load and quote (in-session) the referenced governance / architecture documents. If any referenced document is not available or not loadable in the current session (missing file, inaccessible path, corrupted content), validation FAILS. Documents are NEVER assumed — they are read.
+
+### F.1 Mandatory constitutional artifacts (extended by v2.1)
+Every Key 2 pre-flight MUST successfully load ALL of the following before any check may PASS:
+
+| # | Artifact | Path |
+| --- | --- | --- |
+| 1 | **Governance Constitution v1+** | `/app/governance/GOVERNANCE_CONSTITUTION.md` |
+| 2 | **Foundation Specification v1.1+** | `/app/blueprints/foundation/FOUNDATION_SPECIFICATION.md` |
+| 3 | PRD | `/app/memory/PRD.md` |
+| 4 | ADR Index | `/app/contracts/v1/adr/ADR_INDEX.md` |
+| 5 | This CR-001 | `/app/governance/CR-001-GOVERNANCE-DRIFT-PREVENTION.md` |
+| 6 | SLICE_STATE ledger | `/app/governance/SLICE_STATE.md` |
+| 7 | Constitutional Loadability Matrix | `/app/governance/CONSTITUTIONAL_LOADABILITY_MATRIX.md` |
+| 8 | Ratification Log | `/app/governance/RATIFICATION_LOG.md` |
+| 9 | Governance Validation Log | `/app/governance/GOVERNANCE_VALIDATION_LOG.md` |
+
+Additional Key-2-specific documents (Phase Spec, Roadmap Reconciliation, Acceptance Packets) MUST also be loaded.
 
 ---
 
@@ -243,33 +257,17 @@ in order:
 
 ---
 
-## H. Constitutional Hierarchy
+## H. Constitutional Hierarchy — DEFERRED TO GOVERNANCE CONSTITUTION
 
-Highest to lowest. Higher levels prevail on conflict.
+**As of CR-001 v2.1, this section defers entirely to the sole authoritative source: `/app/governance/GOVERNANCE_CONSTITUTION.md` §2 (Constitutional Hierarchy).**
 
-| # | Level | Authoritative artifact |
-| --- | --- | --- |
-| 1 | Foundation Specification | Foundation Spec document |
-| 2 | Product Requirements Document | `/app/memory/PRD.md` |
-| 3 | Master ADR Index | `/app/contracts/v1/adr/ADR_INDEX.md` |
-| 4 | Constitutional Rules (CR-series) | `/app/governance/CR-*.md` including this rule |
-| 5 | Phase Specifications | `/app/blueprints/phase*/PHASE*_SPEC.md` |
-| 6 | Phase Roadmap Reconciliation | `/app/blueprints/phase4/PHASE4_ROADMAP_RECONCILIATION.md` |
-| 7 | Phase Blueprints | `/app/blueprints/phase*/PHASE*_BLUEPRINT.md` |
-| 8 | Acceptance Review Packets | `/app/audit/PHASE-*-*.md` and slice acceptance packets |
-| 9 | Production Readiness Review | `/app/audit/PRODUCTION-READINESS-REVIEW.md` |
-| 10 | Slice-Level Key 2 Authorisations | operator directive of record |
+No hierarchy is defined locally in CR-001. Any Key 2 pre-flight validation MUST cite the Constitution's §2 for the authoritative hierarchy. The v2 CR-001 §H 10-level list is HISTORIC only; it has no constitutional weight after 2026-07-01.
 
 ### H-note-1 — ADR Index governs numbering
-Level 3 (`ADR_INDEX.md`) is the **sole** authority for ADR numbering.
-No slice, blueprint, phase spec, or Key 2 may introduce or reassign an
-ADR number without a formal amendment to Level 3.
+Foundation-Constitution §2 places the ADR Index at L3. No slice, blueprint, phase spec, or Key 2 may introduce or reassign an ADR number without a formal amendment recorded in `RATIFICATION_LOG.md`.
 
 ### H-note-2 — CR and ADR series are non-colliding
-Constitutional Rules use the `CR-NNN` namespace. Architectural
-Decisions use the `ADR-NNNN` namespace. The two series are
-independent: `CR-001` and `ADR-0001` are distinct artefacts with
-distinct amendment paths.
+Constitutional Rules use the `CR-NNN` namespace. Architectural Decisions use the `ADR-NNNN` namespace. The two series are independent. CR-series artefacts operate ACROSS hierarchy levels; they are not themselves levels.
 
 ---
 

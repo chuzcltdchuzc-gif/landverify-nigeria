@@ -1,7 +1,9 @@
 # Phase 4 Roadmap ↔ Definitive Specification — Constitutional Reconciliation
 
+* **Version:** v1.1 (2026-07-01) — Step 6 of Constitutional Remediation
+  adds §7 Permanent Ratified Statements.
+* **Prior version:** v1.0 (2026-06-30). Superseded by v1.1.
 * **Status:** OPERATOR-RESOLVED (no implementation; documentation only)
-* **Date:** 2026-06-30
 * **Authority:** Operator Constitutional Reconciliation directive
 * **Scope:** Documentation reconciliation between the approved Phase 4
   Definitive Delivery Specification + Foundation Specification ADR
@@ -229,3 +231,34 @@ All prior Roadmap drafts, blueprint ADR files, and slice citations are
 and acceptance.
 
 ## 7. End of Reconciliation
+
+## 8. Permanent Ratified Statements (Step 6 amendment; 2026-07-01)
+
+The following statements are **PERMANENTLY BINDING** on every future Phase 4 slice and every future Key 2 authorisation. They resolve ambiguities left implicit in the v1.0 reconciliation. Any future scope statement in conflict with these MUST be corrected before a Key 2 may pass CR-001 §D.1 / §D.2 validation.
+
+### 8.1 Notification homing (permanent)
+* **Notification DELIVERY infrastructure** (provider adapters, retry, DLQ, delivery logs, provider abstraction) belongs to the **generic Workflow Foundation (engine layer)** — i.e. it is a generic infrastructure capability owned by Slice 4.1 (Workflow Engine Completion) per canonical ADR-0019 + ADR-0022.
+* **Business notification POLICIES** (which events notify whom, what template, what channel, what jurisdictional variant) belong to **their respective bounded contexts** (Consent, Survey, Community, Inheritance, etc.). Business slices CONFIGURE policies; they NEVER embed delivery.
+
+### 8.2 Survey Assignment scope (permanent)
+Survey Assignment (Slice 4.3) OWNS: **assignment, acceptance, execution, submission, geometry hand-off, evidence hand-off**. These capabilities MUST NOT be duplicated in Community Validation or Inheritance.
+
+### 8.3 Community Validation dependency (permanent)
+Community Validation begins **ONLY after Survey Assignment completion**. `SLICE_STATE.md` row 4.4 `Depends-On: 4.1, 4.3` reflects this. No future Key 2 may reorder these two slices.
+
+### 8.4 Generic Workflow capabilities (permanent, reaffirms Decisions #3 and #4)
+The following remain **GENERIC Workflow capabilities** owned by the engine slice (4.1); business slices CONSUME via configuration and NEVER embed:
+* Workflow **Policy Engine** (mayTransition / requiredEvidence / requiredRoles / requiredConsensus / timeout / escalation).
+* Jurisdiction / Country **Templates**.
+* **SLA** engine (WorkflowDeadline).
+* **Escalation** engine (reminders → escalation chain → reassignment).
+
+### 8.5 Impact on the pending Slice 4.1 Key 2
+The prior Key 2 attempt for Slice 4.1 (`K2-P4-4.1-20260701-01`) placed Notifications OUT of scope. Under §8.1, notification-delivery infrastructure is IN scope for Slice 4.1. Any re-issued Key 2 MUST align its Scope statement with §8.1 (i.e. Notification delivery infrastructure is IN; business notification templates and content are OUT).
+
+### 8.6 SLICE_STATE.md consistency
+The Slice-State ledger dependency chains already reflect §8.1–§8.4:
+* 4.1 owns notification delivery infrastructure (constitutional owner cites ADR-0019 + ADR-0022).
+* 4.3 Survey precedes 4.4 Community (`Depends-On: 4.1, 4.3`).
+
+## 9. End of Amendments

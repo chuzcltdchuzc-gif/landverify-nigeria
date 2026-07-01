@@ -265,3 +265,42 @@ version from PRD + Phase specs + ADR_INDEX; therefore I cannot proceed
 by any authored path. Steps 6–10 remain BLOCKED. Repository frozen.
 Awaiting Operator delivery of the Foundation Specification content
 itself, by paste / attach / URL.
+
+---
+timestamp: 2026-07-01T01:45:00Z
+key2_id: K2-P4-GOVERNANCE-REVALIDATION-20260701-01
+phase: Governance (Constitutional Remediation — Final Revalidation)
+slice: n/a (governance-only)
+result: PASS
+operator: Operator
+report_ref: /app/governance/reports/K2-P4-GOVERNANCE-REVALIDATION.md
+evidence_summary:
+  - /app/governance/GOVERNANCE_CONSTITUTION.md :: sha256 815ed3893993988d71b5f8c24354239cae0f619107bedca06527ac64fb4d8321 (v1 — created; sole source of hierarchy)
+  - /app/blueprints/foundation/FOUNDATION_SPECIFICATION.md :: sha256 00ef79060b3332d22ca79ac6d7d5e8c57984825793fac589a2744f3e1c94079a (v1.1 Phase 0 — Operator-ratified, published verbatim)
+  - /app/governance/CR-001-GOVERNANCE-DRIFT-PREVENTION.md :: sha256 ffc91e5c2f243409d91a806e627cea5ea60eb1813a437cd0862a1cefdc94ff9e (v2.1 — §H defers to Constitution §2; §F.1 extended)
+  - /app/contracts/v1/adr/ADR_INDEX.md :: sha256 e7e6ec0fd25118a1d4a5c6e7dfa5410829c3fee68dfc77eb9d4abf0addf9b35e (v1.1 — vocabulary compliant: 11 Superseded/Non-decisional in §2, 0 non-canonical)
+  - /app/governance/SLICE_STATE.md :: sha256 089364fe0cb80f22bdbb99ac21d5143011bba510e99edd09eb63aa9b4c6244bb (v1.1 — 4.0 freeze SHA 4e472e24eb2f1c85744ef00ae061a3c71ca572fe immutable)
+  - /app/blueprints/phase4/PHASE4_ROADMAP_RECONCILIATION.md :: sha256 4af7afd659cc35a976e35e9767dfc5b54d52e0535dd2204f92d24cf5783a1559 (v1.1 — §8 permanent statements ratified)
+  - /app/governance/CONSTITUTIONAL_LOADABILITY_MATRIX.md :: FINALIZED (every Required=YES row has Loaded=YES + hash + version + level)
+  - /app/governance/RATIFICATION_LOG.md :: sha256 81ac836c594828a30fdb218c6f4e37f0768a88e959f92f6570891d4f70c3f151 (rows for Steps 1–9 recorded)
+  - /app/contracts/VERSION :: 2.0.0 (unchanged; drift gate = GREEN "Contract freeze OK — no drift.")
+  - Repository implementation artifacts (backend, frontend, contracts, SDKs, tests, bounded contexts) :: UNCHANGED since Slice 4.0 freeze
+corrective_action_if_any: none
+references:
+  - 2026-07-01T00:00:00Z :: K2-P4-4.1-20260701-01
+  - 2026-07-01T00:22:00Z :: K2-GOV-REMEDIATION-20260701-01
+  - 2026-07-01T00:35:00Z :: K2-GOV-REMEDIATION-STEP5-FINAL-20260701-02
+---
+Constitutional Remediation directive complete. Steps 1–10 executed in
+constitutional order. Verdict: **CONSTITUTIONALLY COMPLIANT — READY FOR
+FUTURE KEY 2 VALIDATION.** Foundation Specification published verbatim
+and ratified as Level-1 authority. Governance Constitution v1 created
+as sole source of the 5-level hierarchy. CR-001 upgraded to v2.1 with
+§H deferred to the Constitution and §F.1 extended to require Constitution
++ Foundation loadability. ADR_INDEX vocabulary compliant. SLICE_STATE
+row 4.0 freeze SHA immutable. Loadability Matrix finalized. Ratification
+Log updated. No implementation artifact modified — repository remains
+constitutionally frozen at contract VERSION 2.0.0. Future Key 2
+authorizations may now proceed against a fully loadable, versioned,
+hash-verified constitutional baseline.
+
