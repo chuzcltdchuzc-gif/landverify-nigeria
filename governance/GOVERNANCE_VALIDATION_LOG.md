@@ -458,3 +458,64 @@ HALT engaged per Operator §8 — no work performed toward Slice 4.2. No
 contracts / SDKs regenerated. No other bounded-context modifications.
 Repository awaits Operator instruction.
 
+---
+timestamp: 2026-07-04T14:50:00Z
+key2_id: K2-P4-4.1-20260701-02-FREEZE
+phase: Phase 4
+slice: 4.1 — Workflow Engine Completion (GENERIC ORCHESTRATION INFRASTRUCTURE ONLY)
+result: PASS (Slice 4.1 CLOSED — Accepted+Frozen)
+operator: Operator (Decision "SLICE 4.1 ACCEPTANCE REVIEW (FINAL, EXECUTABLE)", 2026-07-04)
+report_ref: /app/governance/reports/K2-P4-4.1-20260701-02-4.1-ACCEPTANCE.md
+evidence_summary:
+  - Operator §3 pre-record verifications :: ALL FOUR PASS
+  - §3.1 test-count consistency :: 16/16 targeted Slice 4.1 ⊂ 60/60 targeted subset ⊂ 106/106 full regression (nesting exact, no ambiguity)
+  - §3.2 replay determinism :: TRUE event-sourced replay verified from WorkflowEngine.replay() source — DELIVERED outbox events feed replay_apply reducer in (aggregate_version, occurred_at) order → 4-field identity check vs committed aggregate (business_state, lifecycle, version, existence). NOT endpoint idempotency. matches_committed=true observed via /admin/instances/{id}/replay end-to-end
+  - §3.3 scope verification :: implementation delta 4e472e24..b61c3096 confined to contexts/workflow/* + backend/main.py wiring + tests (14 workflow files + main.py + test file); zero React/UI; zero SDK-business surface; zero Consent/Survey/Community/Inheritance/other bounded-context files; §8.1 mock-provider disclosure explicit
+  - §3.4 SLICE_STATE reconciliation :: v1.2 rows 4.2–4.8 substantively match Operator's expected enumeration (4.2 Consent · 4.3 Survey · 4.4 Community Validation · 4.5 Inheritance · 4.6 Infrastructure/projections · 4.7 SDK & React Workspace · 4.8 Phase 4 Acceptance Review); no omissions, does not end at 4.7
+  - Freeze anchor (immutable) :: b61c3096002fcc37b47959c572e2f9ab1e0ccb97
+  - Annotated tag (immutable-once-created) :: phase4-slice-4.1 → b61c3096002fcc37b47959c572e2f9ab1e0ccb97 (verified via `git show phase4-slice-4.1 --no-patch`)
+  - Slice 4.0 implementation freeze anchor :: 4e472e24eb2f1c85744ef00ae061a3c71ca572fe (unchanged; not replaced)
+  - Governance remediation milestone :: 724c636ef65858668d1438097110c3064511d8e0 (governance-scope only; NOT an implementation anchor)
+  - /app/audit/PHASE-4-SLICE-4.1-ACCEPTANCE.md :: sha256 e0f6ea4674d19cc47ba6075f30c56a2c2e5dd0f5bf1f07be0f68b090c0db6b32
+  - /app/governance/reports/K2-P4-4.1-20260701-02-4.1-ACCEPTANCE.md :: sha256 0eb1b535eff12df80bea5cb791d9bcbfdc46ee3173b1010b3477338b3b6a3fd0
+  - /app/governance/reports/K2-P4-4.1-20260701-02-4.1.md (STEP 0 pre-flight) :: sha256 fe14dca03578e3424a17e9f0301ac877f0c0b1cdaa51389f835cedd3fc40bec6
+  - Contract VERSION :: 2.0.0 (unchanged; Operator Decision §4)
+  - Contract drift gate :: GREEN (`Contract freeze OK — no drift.` — 2026-07-04T14:41:00Z re-verified)
+  - compatibility.json.aggregate_sha256 :: 027d9c2bfb3616511717fffc5ce4e04b48519399782a43812db1fc5285187f7b == SDK_META.aggregateSha256 (test_sdk_consistency 7/7 green)
+corrective_action_if_any: none
+references:
+  - 2026-07-01T02:15:00Z :: K2-P4-4.1-20260701-02 (STEP 0 pre-flight PASS)
+  - 2026-07-01T02:30:00Z :: K2-P4-4.1-20260701-02-GRANT (Key 2 grant)
+  - 2026-07-01T02:50:00Z :: K2-P4-4.1-20260701-02-ACCEPTANCE (Slice 4.1 Acceptance Review PASS)
+follow_up_review_due: n/a — Slice 4.1 CLOSED. Future slices require independent Key 2 authorization per Operator Decision §7.
+---
+Slice 4.1 (Workflow Engine Completion — GENERIC ORCHESTRATION
+INFRASTRUCTURE ONLY) is now CLOSED, Accepted+Frozen. The immutable
+Slice 4.1 implementation freeze anchor is git commit SHA
+`b61c3096002fcc37b47959c572e2f9ab1e0ccb97`, referenced by the annotated
+tag `phase4-slice-4.1` (created 2026-07-04T14:47:51Z via
+`git tag -a phase4-slice-4.1 b61c3096002fcc37b47959c572e2f9ab1e0ccb97
+-m "Slice 4.1 Accepted+Frozen"`). Slice 4.0 implementation freeze
+anchor `4e472e24eb2f1c85744ef00ae061a3c71ca572fe` remains unchanged
+and distinct. Governance remediation milestone
+`724c636ef65858668d1438097110c3064511d8e0` remains a governance-only
+milestone; it is NOT an implementation freeze anchor. Operator §3
+pre-record verifications all PASSED with cited evidence: (§3.1)
+targeted 16/16 ⊂ subset 60/60 ⊂ full regression 106/106 — three
+distinct, unambiguous totals; (§3.2) TRUE event-sourced replay via
+`WorkflowEngine.replay()` source (`DELIVERED` outbox events →
+`replay_apply` reducer → 4-field identity check vs committed
+aggregate), NOT endpoint idempotency; (§3.3) implementation delta
+confined to `contexts/workflow/*` + `backend/main.py` wiring + tests,
+with the §8.1 mock-provider disclosure explicit; (§3.4)
+`SLICE_STATE.md` v1.2 rows 4.2–4.8 substantively match Operator's
+expected enumeration with no omissions and does not end at 4.7.
+Contract VERSION remains `2.0.0`; drift gate GREEN; compatibility
+manifest matches SDK aggregate hash. Repository returns to
+constitutionally-frozen state. Per Operator Decision §7 —
+"This approval closes Slice 4.1 ONLY and SHALL NOT be interpreted as
+authority for any subsequent slice. A completely new, independent
+Key 2 Constitutional Authorization — each with its own STEP 0
+governance pre-flight — remains mandatory before ANY implementation
+begins for the next slice."
+

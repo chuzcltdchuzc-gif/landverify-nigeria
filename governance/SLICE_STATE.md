@@ -1,10 +1,13 @@
 # SLICE_STATE.md — Machine-Readable Slice Governance Ledger
 
-* **Version:** v1.2 (2026-07-01T02:30:00Z) — Slice 4.1 row transitioned
-  `Status: Pending → In-Progress` under Key 2 grant
-  `K2-P4-4.1-20260701-02-GRANT`. Immutable columns unchanged. Freeze
-  Commit/Tag for row 4.1 remains empty until Operator-approved
-  Accepted+Frozen transition per Operator directive §7 item 4.
+* **Version:** v1.3 (2026-07-04T14:50:00Z) — Slice 4.1 row transitioned
+  `Status: In-Progress → Accepted+Frozen` under Operator Decision
+  §4 & §5. Freeze Commit SHA `b61c3096002fcc37b47959c572e2f9ab1e0ccb97`
+  and annotated tag `phase4-slice-4.1` recorded in the immutable
+  columns (immutable-once-set). Immutable columns (Slice, Title,
+  Constitutional Owner, Depends-On) unchanged.
+* **Prior version:** v1.2 (2026-07-01T02:30:00Z) — Superseded by v1.3.
+  v1.2 transitioned Slice 4.1 `Pending → In-Progress`.
 * **Prior version:** v1.1 (2026-07-01) — Superseded by v1.2. v1.1
   set the Slice 4.0 Freeze Commit/Tag to an immutable SHA.
 * **Prior version:** v1.0 (2026-06-30). Superseded by v1.1.
@@ -41,7 +44,7 @@
 | Slice | Title | Status | Freeze Commit/Tag | Acceptance Review Ref | Depends-On | Constitutional Owner | Last Updated |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 4.0 | Workflow Engine Foundation | `Accepted+Frozen` | **SHA `4e472e24eb2f1c85744ef00ae061a3c71ca572fe`** (contract `VERSION=2.0.0`; no annotated tag issued at freeze time — SHA is the immutable anchor). | `/app/audit/PHASE-4-SLICE-4.0-ACCEPTANCE.md` | — | ADR-0021 + ADR-0022 + ADR-0004 + ADR-0005 | 2026-07-01 (Freeze SHA recorded per Remediation §Step 4) |
-| 4.1 | Workflow Engine Completion (real `emit_command`, real `spawn` fan-out, Policy Engine, SLA / Escalation, Notification delivery infrastructure) | `In-Progress` | — | — | 4.0 | ADR-0021 + ADR-0022 + ADR-0019 + ADR-0004 + ADR-0005 | 2026-07-01T02:30:00Z (Key 2 grant `K2-P4-4.1-20260701-02-GRANT`; Pending → In-Progress) |
+| 4.1 | Workflow Engine Completion (real `emit_command`, real `spawn` fan-out, Policy Engine, SLA / Escalation, Notification delivery infrastructure) | `Accepted+Frozen` | **SHA `b61c3096002fcc37b47959c572e2f9ab1e0ccb97`** + annotated tag `phase4-slice-4.1` (references that commit only; immutable-once-set). Contract `VERSION=2.0.0`. | `/app/audit/PHASE-4-SLICE-4.1-ACCEPTANCE.md` | 4.0 | ADR-0021 + ADR-0022 + ADR-0019 + ADR-0004 + ADR-0005 | 2026-07-04T14:50:00Z (Operator Decision §5(b): In-Progress → Accepted+Frozen; Freeze SHA + tag recorded) |
 | 4.2 | Consent | `Pending` | — | — | 4.1 | ADR-0020 + ADR-0009 + ADR-0015 + ADR-0016 | 2026-06-30 |
 | 4.3 | Survey Assignment (DEDICATED per Operator Decision #1) | `Pending` | — | — | 4.1 | ADR-0001 + ADR-0014 + ADR-0009 + ADR-0015 (consumes engine + policy from 4.1) | 2026-06-30 |
 | 4.4 | Community Validation | `Pending` | — | — | 4.1, 4.3 | ADR-0020 + ADR-0009 + ADR-0015 | 2026-06-30 |
