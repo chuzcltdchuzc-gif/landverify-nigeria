@@ -1266,25 +1266,93 @@ Library / Domain Events / Business Observability / Authorization Test Matrix).
 - 195/195 strict DDD constitutional tests green overall.
 - Phase 3 codebase untouched. Repository now FROZEN.
 
-### Slice 4.1 — DEFERRED (requires separate Key 2)
-Workflow Engine MVP business extensions (concrete `emit_command`
-outbound envelopes to Registry/Evidence, real `spawn` fan-out).
+### Slice 4.1 — IMPLEMENTATION COMPLETE 2026-07-01 ✅ (awaiting Operator Accepted+Frozen approval)
+Workflow Engine Completion — **GENERIC ORCHESTRATION INFRASTRUCTURE
+ONLY** — delivered under Operator Key 2 `K2-P4-4.1-20260701-02`
+(grant token `K2-P4-4.1-20260701-02-GRANT`, 2026-07-01T02:30:00Z).
+
+Delivered:
+- Real `emit_command` outbound envelopes via `CommandDispatcher` +
+  durable `workflow_command_outbox` (deterministic exponential backoff,
+  retry, DLQ, operator-inspectable via `list_dead_lettered()`).
+- Deterministic `spawn` fan-out via `ChildSpawner` + parent-child
+  registry (`workflow_child_registry`); real child `WorkflowInstance`
+  per `for_each` item; `join_on_terminal` recorded for future
+  business slices.
+- LIFO `CompensationExecutor` triggered by
+  `cancel(reason='saga_failed:*')`; generic verbs `noop` /
+  `emit_command` / `record_audit`; never deletes data (emits
+  corrective events only).
+- `SlaEngine` schedules policy-driven escalation timers on state entry;
+  advances escalation chains on `WorkflowScheduler` tick. All events
+  flow through existing `workflow.timer.*` +
+  `workflow.instance.transitioned` — **NO new event types**.
+- `PolicyEngine` overlay on transition legality (`may_transition`,
+  `required_roles`, `required_evidence_kinds`, `required_consensus`,
+  SLA / escalation, RetryPolicy). Jurisdiction / country / tenant
+  scope with deterministic specificity ranking.
+- Notification DELIVERY infrastructure (ADR-0019 non-authoritative):
+  `NotificationDispatcher` + `LogProvider` / `EmailStubProvider` /
+  `SmsStubProvider`; retry + DLQ; **NO PII in delivery log**
+  (addresses hashed at enqueue, payload never persisted); **NO
+  business notification templates or content** — infrastructure only.
+- `WorkflowScheduler` background loop (configurable tick +
+  batch sizes) drives timers + command outbox + notification outbox.
+
+Constitutional posture:
+- Contract VERSION locked at **2.0.0** (unchanged; Operator §5
+  requirement satisfied). Drift gate GREEN throughout.
+- **No new public event types** (verified by static test).
+- **No new HTTP endpoints / pydantic response DTOs / SDK
+  regeneration** (verified by drift gate GREEN + version tests).
+- Bounded-context isolation preserved: **static scan finds zero
+  imports** from `contexts.evidence` / `contexts.registry` /
+  `contexts.identity` and zero references to their collections.
+- Deterministic replay preserved: `replay_apply` unchanged; every
+  Slice 4.1 side-effect is a separate aggregate. End-to-end HTTP
+  replay verification (`test_slice41_replay_byte_identical_via_httpx`):
+  `matches_committed=true`.
+- Every new service emits `kernel.audit.audit()` trails and
+  `workflow_*` metrics.
+
+Testing:
+- 16 new tests (`test_phase4_slice41_workflow.py`) — 16/16 PASS.
+- 106-test regression suite (Slice 4.0 + Slice 4.1 + SDK +
+  contract freeze + authorization engine + matrix) — 106/106 PASS.
+
+Slice 4.0 implementation freeze anchor
+`4e472e24eb2f1c85744ef00ae061a3c71ca572fe` **remains immutable** —
+Slice 4.1 work does NOT replace or modify it. Slice 4.1 freeze SHA
++ annotated tag (e.g. `phase4-slice-4.1`) pending Operator §7 item 4
+approval; `SLICE_STATE.md` row 4.1 currently `In-Progress`.
+
+**Post-implementation HALT engaged per Operator §8** — no work
+performed toward Slice 4.2. No contracts / SDKs regenerated. No
+other bounded-context modifications. Awaiting Operator instruction.
+
+Deliverables:
+- Acceptance Review Packet: `/app/audit/PHASE-4-SLICE-4.1-ACCEPTANCE.md`
+- Acceptance Governance Validation Report:
+  `/app/governance/reports/K2-P4-4.1-20260701-02-4.1-ACCEPTANCE.md`
+- STEP 0 pre-flight report:
+  `/app/governance/reports/K2-P4-4.1-20260701-02-4.1.md`
 
 ### Slice 4.2 — DEFERRED (requires separate Key 2)
 Consent sub-context (ADR-0020).
 
 ### Slice 4.3 — DEFERRED (requires separate Key 2)
-Community Validation sub-context (ADR-0021).
+Survey Assignment (dedicated, per Operator Decision #1 in
+Reconciliation §5.3).
 
 ### Slice 4.4 — DEFERRED (requires separate Key 2)
-Inheritance sub-context (ADR-0022).
+Community Validation (ADR-0020).
 
 ### Slice 4.5 — DEFERRED (requires separate Key 2)
-Saga composition + projections.
+Inheritance (ADR-0001 + ADR-0014).
 
 ### Slice 4.6 — DEFERRED (requires separate Key 2)
-React UI workspace + TS SDK regeneration for workflow.
+Infrastructure — notification projections / inbox + cross-slice
+projections.
 
 ### Slice 4.7 — DEFERRED (requires separate Key 2)
-Phase 4 Acceptance Packet (17-section audit + benchmarks +
-Production Readiness Review).
+SDK & React Workspace (contract v2.x pinned).

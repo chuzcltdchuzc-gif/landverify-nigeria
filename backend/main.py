@@ -91,10 +91,35 @@ from contexts.workflow.adapters.mongo_repositories import (
     MongoTimerRepository,
     MongoWorkflowInstanceRepository,
 )
+from contexts.workflow.adapters.slice41_repositories import (
+    MongoChildRegistry,
+    MongoCommandOutbox,
+    MongoNotificationLog,
+)
 from contexts.workflow.api import router as workflow_router
+from contexts.workflow.application.child_spawner import ChildSpawner
+from contexts.workflow.application.command_dispatcher import (
+    CommandDispatcher,
+    NullCommandHandler,
+)
+from contexts.workflow.application.compensation_executor import (
+    CompensationExecutor,
+)
 from contexts.workflow.application.engine import TaskService, WorkflowEngine
+from contexts.workflow.application.notification_dispatcher import (
+    EmailStubProvider,
+    LogProvider,
+    NotificationDispatcher,
+    SmsStubProvider,
+)
+from contexts.workflow.application.policy_engine import (
+    InMemoryPolicyRegistry,
+    PolicyEngine,
+)
 from contexts.workflow.application.projector import WorkflowInstanceProjector
 from contexts.workflow.application.saga_composer import SagaComposer
+from contexts.workflow.application.scheduler import WorkflowScheduler
+from contexts.workflow.application.sla_engine import SlaEngine
 from contexts.workflow.authorization import register_workflow_policies
 from kernel.audit import configure_audit_store
 from kernel.authorization.pep import configure_pep
@@ -374,6 +399,41 @@ async def _startup() -> None:
     await workflow_timers_repo.ensure_indexes()
     await workflow_compensations_repo.ensure_indexes()
     saga_composer = SagaComposer(definition_loader)
+
+    # --- Phase 4 Slice 4.1 — Generic engine infrastructure --------------
+    # Policy Engine: load JSON policies (if a directory exists) — the
+    # authoritative location is server-internal; policies are content.
+    workflow_policies_dir = _Path(__file__).resolve().parent.parent / \
+        "contracts" / "v1" / "workflow_policies"
+    policy_registry = InMemoryPolicyRegistry()
+    if workflow_policies_dir.exists():
+        policy_registry.load_dir(workflow_policies_dir)
+    policy_engine = PolicyEngine(policy_registry)
+    # Slice 4.1 Mongo collections (internal — not in contract).
+    workflow_command_outbox = MongoCommandOutbox(db)
+    workflow_child_registry = MongoChildRegistry(db)
+    workflow_notification_log = MongoNotificationLog(db)
+    await workflow_command_outbox.ensure_indexes()
+    await workflow_child_registry.ensure_indexes()
+    await workflow_notification_log.ensure_indexes()
+    # Command dispatcher (real emit_command) — default handler is a
+    # NullCommandHandler that simply marks delivered (later business
+    # slices will register real handlers).
+    workflow_command_dispatcher = CommandDispatcher(
+        outbox=workflow_command_outbox, handler=NullCommandHandler())
+    workflow_child_spawner = ChildSpawner(
+        definitions=definition_loader, registry=workflow_child_registry)
+    workflow_compensation_executor = CompensationExecutor(
+        repository=workflow_compensations_repo,
+        dispatcher=workflow_command_dispatcher)
+    workflow_sla_engine = SlaEngine(
+        policy_engine=policy_engine, timers=workflow_timers_repo)
+    workflow_notification_dispatcher = NotificationDispatcher(
+        log=workflow_notification_log)
+    workflow_notification_dispatcher.register_provider(LogProvider())
+    workflow_notification_dispatcher.register_provider(EmailStubProvider())
+    workflow_notification_dispatcher.register_provider(SmsStubProvider())
+
     workflow_engine = WorkflowEngine(
         client=client, db=db,
         instances=workflow_instances_repo,
@@ -382,6 +442,11 @@ async def _startup() -> None:
         compensations=workflow_compensations_repo,
         definitions=definition_loader,
         saga=saga_composer,
+        policy_engine=policy_engine,
+        command_dispatcher=workflow_command_dispatcher,
+        child_spawner=workflow_child_spawner,
+        compensation_executor=workflow_compensation_executor,
+        sla_engine=workflow_sla_engine,
     )
     workflow_task_service = TaskService(workflow_tasks_repo)
     workflow_router.configure_router(workflow_engine, workflow_task_service,
@@ -395,6 +460,30 @@ async def _startup() -> None:
     app.state.workflow_task_service = workflow_task_service
     app.state.workflow_definition_loader = definition_loader
     app.state.workflow_instance_projector = workflow_instance_projector
+    # Slice 4.1 handles.
+    app.state.workflow_policy_engine = policy_engine
+    app.state.workflow_policy_registry = policy_registry
+    app.state.workflow_command_dispatcher = workflow_command_dispatcher
+    app.state.workflow_command_outbox = workflow_command_outbox
+    app.state.workflow_child_spawner = workflow_child_spawner
+    app.state.workflow_child_registry = workflow_child_registry
+    app.state.workflow_compensation_executor = workflow_compensation_executor
+    app.state.workflow_sla_engine = workflow_sla_engine
+    app.state.workflow_notification_dispatcher = \
+        workflow_notification_dispatcher
+    app.state.workflow_notification_log = workflow_notification_log
+    # Background scheduler.
+    workflow_scheduler = WorkflowScheduler(
+        engine=workflow_engine,
+        timers=workflow_timers_repo,
+        sla=workflow_sla_engine,
+        commands=workflow_command_dispatcher,
+        notifications=workflow_notification_dispatcher,
+        tick_seconds=float(_os.environ.get(
+            "WORKFLOW_SCHEDULER_TICK_SECONDS", "2.0")))
+    if _os.environ.get("WORKFLOW_SCHEDULER_ENABLED", "1") == "1":
+        await workflow_scheduler.start()
+    app.state.workflow_scheduler = workflow_scheduler
 
     logger.info("Phase 1A constitutional kernel + Identity admin surface ready")
     logger.info("Phase 2A Registry bounded context ready at /api/v1/registry/*")
@@ -412,6 +501,9 @@ async def _startup() -> None:
 
 @app.on_event("shutdown")
 async def _shutdown() -> None:
+    scheduler = getattr(app.state, "workflow_scheduler", None)
+    if scheduler is not None:
+        await scheduler.stop()
     await stop_anchor_saga()
     await stop_outbox_publisher()
     await stop_worker()

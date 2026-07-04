@@ -356,4 +356,105 @@ Repository posture: constitutionally frozen implementation state at
 contract VERSION 2.0.0; governance-scope HEAD advance permitted under
 Constitution §6 + §11.
 
+---
+timestamp: 2026-07-01T02:30:00Z
+key2_id: K2-P4-4.1-20260701-02-GRANT
+phase: Phase 4
+slice: 4.1 — Workflow Engine Completion (GENERIC ORCHESTRATION INFRASTRUCTURE ONLY)
+result: PASS (Key 2 grant — start-of-work)
+operator: Operator
+report_ref: /app/governance/reports/K2-P4-4.1-20260701-02-4.1.md
+evidence_summary:
+  - STEP 0 Governance Pre-Flight :: PASS (this log 2026-07-01T02:15:00Z)
+  - Operator directive :: "Phase 4 — Slice 4.1 Implementation Release (Key 2)" — §D.5 acknowledged as UNCONDITIONAL PASS under Governance Constitution §6
+  - Slice 4.0 implementation freeze anchor :: 4e472e24eb2f1c85744ef00ae061a3c71ca572fe (immutable; NOT superseded by this grant)
+  - Governance remediation baseline milestone :: HEAD 724c636ef65858668d1438097110c3064511d8e0 (governance-scope only)
+  - Contract VERSION :: 2.0.0 (no change authorized by this directive; any bump HALTS for approval)
+  - Contract drift gate :: GREEN (must remain green throughout Slice 4.1)
+  - Authorized scope :: §3 of Operator directive (17 generic engine capabilities + Notification DELIVERY infrastructure)
+  - Out-of-scope (constitutionally prohibited) :: §4 of Operator directive (Consent/Survey/Community/Inheritance; business templates; UI; SDK business APIs; projections beyond engine-internal; Slice 4.2–4.8)
+  - Completion requirements :: §7 of Operator directive (10 items including Acceptance Review Packet, distinct Slice 4.1 Acceptance Governance Validation Report, replay determinism, drift GREEN, security review, architectural compliance review)
+  - Post-implementation gate :: §8 of Operator directive — HALT on completion; no auto-progression to Slice 4.2
+corrective_action_if_any: none
+references:
+  - 2026-07-01T02:15:00Z :: K2-P4-4.1-20260701-02 (STEP 0 PASS)
+  - 2026-07-01T01:45:00Z :: K2-P4-GOVERNANCE-REVALIDATION-20260701-01
+---
+Key 2 grant accepted for Slice 4.1 implementation (GENERIC ORCHESTRATION
+INFRASTRUCTURE ONLY). SLICE_STATE.md row 4.1 transitions `Pending →
+In-Progress` with an accompanying Ratification Log entry. Slice 4.0
+implementation freeze anchor 4e472e24 remains immutable; governance
+remediation HEAD 724c636e is recorded in the Ratification Log as a
+governance milestone only and does NOT replace, modify, supersede, or
+redefine the Slice 4.0 freeze anchor. Implementation proceeds strictly
+within §3 authorized scope; §4 items are constitutionally prohibited
+and any breach triggers immediate HALT. Contract VERSION 2.0.0 is
+locked; any commit that would introduce new public commands/events,
+schema modifications, SDK regeneration, compatibility-manifest changes,
+or a VERSION bump SHALL HALT for Operator approval. Drift gate must
+remain GREEN throughout. On completion of §7 deliverables, execution
+HALTS at the §8 post-implementation gate — no auto-progression to
+Slice 4.2. A distinct Slice 4.1 Acceptance Governance Validation
+Report will be produced and appended to this log with PASS verdict
+before the Operator is asked to approve `SLICE_STATE.md` row 4.1
+transition to `Accepted+Frozen`.
+
 <!-- APPEND NEW ENTRIES BELOW THIS COMMENT. -->
+
+---
+timestamp: 2026-07-01T02:50:00Z
+key2_id: K2-P4-4.1-20260701-02-ACCEPTANCE
+phase: Phase 4
+slice: 4.1 — Workflow Engine Completion (GENERIC ORCHESTRATION INFRASTRUCTURE ONLY)
+result: PASS (Slice 4.1 Acceptance Review — distinct from STEP 0 pre-flight)
+operator: main agent (delivered under Operator §7 items 1–10; awaiting Operator approval for §7 item 4 Accepted+Frozen transition)
+report_ref: /app/governance/reports/K2-P4-4.1-20260701-02-4.1-ACCEPTANCE.md
+evidence_summary:
+  - /app/governance/reports/K2-P4-4.1-20260701-02-4.1-ACCEPTANCE.md :: sha256 0eb1b535eff12df80bea5cb791d9bcbfdc46ee3173b1010b3477338b3b6a3fd0
+  - /app/audit/PHASE-4-SLICE-4.1-ACCEPTANCE.md :: sha256 caef6e348d8cad40eb75ed19966f82cb29776b921d6577e9425b3e3206ba562f
+  - /app/backend/tests/test_phase4_slice41_workflow.py :: 16/16 tests PASS (sha256 0a74942dd305c41b8f4914ee76db504a1cb2ba3bd4859fa5c95581fb6bcc93d2)
+  - Regression suite (Slice 4.0 + Slice 4.1 + SDK + contract freeze + authz engine + authz matrix) :: 106/106 tests PASS
+  - /app/contracts/VERSION :: 2.0.0 (unchanged)
+  - Contract drift gate :: GREEN ("Contract freeze OK — no drift.") — 2026-07-01T02:50:00Z verification
+  - compatibility.json.aggregate_sha256 :: 027d9c2bfb3616511717fffc5ce4e04b48519399782a43812db1fc5285187f7b == SDK_META.aggregateSha256
+  - Slice 4.0 implementation freeze anchor :: 4e472e24eb2f1c85744ef00ae061a3c71ca572fe (IMMUTABLE — unchanged by Slice 4.1 work)
+  - Session HEAD :: 2a14a894f842e9c2503872debff4f6938347ed96 (includes Slice 4.1 implementation authorized under Key 2 grant)
+  - No new public event types :: verified by test_slice41_no_new_public_event_types
+  - No cross-context imports :: verified by test_slice41_no_cross_context_references
+  - No new HTTP endpoints, no new pydantic response DTOs, no SDK regeneration :: verified by drift gate GREEN + test_slice41_contract_version_unchanged + test_slice41_contract_drift_gate_green
+  - Deterministic replay :: verified by test_slice41_replay_byte_identical_via_httpx (matches_committed=true)
+  - PII protection in notifications :: verified by test_notification_delivery_no_pii
+  - Retry + DLQ :: verified by test_command_dispatcher_retries_then_dlq + test_notification_retry_then_dlq
+  - LIFO compensation execution :: verified by test_compensation_executor_reverse_order
+  - Real spawn fan-out :: verified by test_child_spawner_fan_out
+  - Policy overlay + specificity :: verified by test_policy_may_transition_denies_and_requires_roles + test_policy_engine_resolve_picks_most_specific
+  - SLA scheduling :: verified by test_sla_engine_schedules_timer_on_state_entry
+  - Deterministic retry backoff :: verified by test_retry_policy_backoff_is_deterministic
+  - Backend service :: running (WorkflowScheduler loop active; tick=2.00s)
+corrective_action_if_any: none
+references:
+  - 2026-07-01T02:15:00Z :: K2-P4-4.1-20260701-02 (STEP 0 pre-flight PASS)
+  - 2026-07-01T02:30:00Z :: K2-P4-4.1-20260701-02-GRANT (Key 2 grant)
+---
+Slice 4.1 (Workflow Engine Completion — GENERIC ORCHESTRATION
+INFRASTRUCTURE ONLY) Acceptance Review PASSED with hash-pinned evidence
+across all seven CR-001 §D checks and all ten Operator §7 completion
+requirements. Delivered strictly under Operator §3 authorized scope +
+§4 out-of-scope exclusions: real emit_command via durable
+CommandDispatcher with retry + DLQ; deterministic spawn fan-out via
+ChildSpawner + workflow_child_registry; LIFO CompensationExecutor
+triggered by cancel(reason='saga_failed:*'); SlaEngine schedules
+policy-driven escalation timers via existing workflow.timer.* events;
+Notification DELIVERY infrastructure (LogProvider + Email/SMS stubs)
+with retry + DLQ and NO PII in delivery logs; WorkflowScheduler
+background loop; PolicyEngine overlay on transition legality. NO new
+public event types. NO new HTTP endpoints or pydantic response DTOs.
+NO SDK regeneration. Contract VERSION locked at 2.0.0; drift gate
+GREEN throughout. Bounded-context isolation preserved (static scan =
+0 forbidden imports). All 106 tests PASS. Slice 4.0 implementation
+freeze anchor 4e472e24 remains immutable; Slice 4.1 freeze SHA +
+annotated tag pending Operator §7 item 4 approval. Post-implementation
+HALT engaged per Operator §8 — no work performed toward Slice 4.2. No
+contracts / SDKs regenerated. No other bounded-context modifications.
+Repository awaits Operator instruction.
+

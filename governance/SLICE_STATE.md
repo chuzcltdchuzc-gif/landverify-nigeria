@@ -1,6 +1,11 @@
 # SLICE_STATE.md — Machine-Readable Slice Governance Ledger
 
-* **Version:** v1.1 (2026-07-01) — Step 4 of Constitutional Remediation
+* **Version:** v1.2 (2026-07-01T02:30:00Z) — Slice 4.1 row transitioned
+  `Status: Pending → In-Progress` under Key 2 grant
+  `K2-P4-4.1-20260701-02-GRANT`. Immutable columns unchanged. Freeze
+  Commit/Tag for row 4.1 remains empty until Operator-approved
+  Accepted+Frozen transition per Operator directive §7 item 4.
+* **Prior version:** v1.1 (2026-07-01) — Superseded by v1.2. v1.1
   set the Slice 4.0 Freeze Commit/Tag to an immutable SHA.
 * **Prior version:** v1.0 (2026-06-30). Superseded by v1.1.
 * **Authority:** CR-001 §D.3 / §D.5 authoritative input
@@ -36,7 +41,7 @@
 | Slice | Title | Status | Freeze Commit/Tag | Acceptance Review Ref | Depends-On | Constitutional Owner | Last Updated |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 4.0 | Workflow Engine Foundation | `Accepted+Frozen` | **SHA `4e472e24eb2f1c85744ef00ae061a3c71ca572fe`** (contract `VERSION=2.0.0`; no annotated tag issued at freeze time — SHA is the immutable anchor). | `/app/audit/PHASE-4-SLICE-4.0-ACCEPTANCE.md` | — | ADR-0021 + ADR-0022 + ADR-0004 + ADR-0005 | 2026-07-01 (Freeze SHA recorded per Remediation §Step 4) |
-| 4.1 | Workflow Engine Completion (real `emit_command`, real `spawn` fan-out, Policy Engine, SLA / Escalation, Notification delivery infrastructure) | `Pending` | — | — | 4.0 | ADR-0021 + ADR-0022 + ADR-0019 + ADR-0004 + ADR-0005 | 2026-06-30 |
+| 4.1 | Workflow Engine Completion (real `emit_command`, real `spawn` fan-out, Policy Engine, SLA / Escalation, Notification delivery infrastructure) | `In-Progress` | — | — | 4.0 | ADR-0021 + ADR-0022 + ADR-0019 + ADR-0004 + ADR-0005 | 2026-07-01T02:30:00Z (Key 2 grant `K2-P4-4.1-20260701-02-GRANT`; Pending → In-Progress) |
 | 4.2 | Consent | `Pending` | — | — | 4.1 | ADR-0020 + ADR-0009 + ADR-0015 + ADR-0016 | 2026-06-30 |
 | 4.3 | Survey Assignment (DEDICATED per Operator Decision #1) | `Pending` | — | — | 4.1 | ADR-0001 + ADR-0014 + ADR-0009 + ADR-0015 (consumes engine + policy from 4.1) | 2026-06-30 |
 | 4.4 | Community Validation | `Pending` | — | — | 4.1, 4.3 | ADR-0020 + ADR-0009 + ADR-0015 | 2026-06-30 |

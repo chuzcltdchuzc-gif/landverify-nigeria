@@ -1,26 +1,27 @@
-"""Workflow Engine (Phase 4 — Slice 4.0).
+"""Workflow Engine (Phase 4 — Slice 4.0 foundation + Slice 4.1 completion).
 
 The heart of the Workflow bounded context. Responsibilities (per
-ADR-0019 / PHASE4_SPEC §5.2):
+ADR-0019 / ADR-0021 / ADR-0022 / PHASE4_SPEC §5.2):
 
 * ``start_workflow(definition, initiator, payload, correlation_id)``
 * ``apply_command(instance_id, command, actor, payload)``
 * ``fire_timer(timer_id, actor)``
-* ``cancel(instance_id, reason, actor)``
+* ``cancel(instance_id, reason, actor)`` — Slice 4.1: reason
+  ``saga_failed`` triggers CompensationExecutor.
 * ``suspend(instance_id, reason, actor)`` / ``reactivate(...)``
 * ``replay(instance_id)`` (pure rebuild from outbox events)
 
-Internally the engine:
-1. Loads the WorkflowDefinition for the instance.
-2. Asserts the command is legal in the current state.
-3. Records each state transition as a DomainEvent.
-4. Drains any ``pending_actions`` declared by the definition's
-   ``on_enter`` — creating tasks, scheduling timers, recording
-   compensations, or hand-off declarations to the saga composer.
-5. Publishes events to the transactional outbox in the SAME Mongo
-   transaction as the aggregate write.
+Slice 4.1 additions (all engine-internal — no contract changes):
+* Real ``emit_command`` dispatch via CommandDispatcher (durable outbox
+  with retry + DLQ).
+* Real ``spawn`` fan-out via ChildSpawner (durable child registry).
+* Policy Engine overlay on transition legality (mayTransition +
+  required_roles).
+* SLA Engine schedules escalation timers on state entry.
+* Compensation Executor runs recorded compensations on
+  ``cancel(reason='saga_failed')``.
 
-Binding rules:
+Binding rules (unchanged):
 * Engine NEVER directly writes to other bounded contexts.
 * Engine NEVER interprets arbitrary expressions — only fixed action
   verbs.
@@ -109,6 +110,12 @@ class WorkflowEngine:
         compensations: MongoCompensationRepository,
         definitions: DefinitionLoader,
         saga: Optional[SagaComposer] = None,
+        # ---- Slice 4.1 optional wiring (opt-in; safe defaults) ----
+        policy_engine: Optional["Any"] = None,
+        command_dispatcher: Optional["Any"] = None,
+        child_spawner: Optional["Any"] = None,
+        compensation_executor: Optional["Any"] = None,
+        sla_engine: Optional["Any"] = None,
     ) -> None:
         self._client = client
         self._db = db
@@ -118,6 +125,13 @@ class WorkflowEngine:
         self._compensations = compensations
         self._definitions = definitions
         self._saga = saga or SagaComposer(definitions)
+        # Slice 4.1 services (all optional — engine remains callable
+        # without them and behaves identically to Slice 4.0).
+        self._policy_engine = policy_engine
+        self._command_dispatcher = command_dispatcher
+        self._child_spawner = child_spawner
+        self._compensation_executor = compensation_executor
+        self._sla_engine = sla_engine
 
     # ---------------------------------------------------------------
     # Public API
@@ -168,6 +182,17 @@ class WorkflowEngine:
                               code="workflow.instance.not_found")
         defn = self._require_definition(instance.definition_name,
                                           instance.definition_version)
+        # ---- Slice 4.1 Policy Engine overlay -----------------------
+        if self._policy_engine is not None:
+            ctx = current_context()
+            actor_roles = frozenset(ctx.roles or ())
+            allow, reason = self._policy_engine.may_transition(
+                instance=instance, command=command,
+                actor_roles=actor_roles)
+            if not allow:
+                raise conflict(
+                    reason or f"policy denies command {command!r}",
+                    code="workflow.policy.denied")
         try:
             instance.apply_command(definition=defn, command=command,
                                      actor=actor, payload=payload)
@@ -201,6 +226,11 @@ class WorkflowEngine:
                      resource_id=instance.instance_id,
                      decision="PERMIT",
                      payload={"reason": reason})
+        # ---- Slice 4.1: saga-driven compensation on forced failure --
+        if (self._compensation_executor is not None
+                and reason.startswith("saga_failed")):
+            await self._compensation_executor.execute_all_for(
+                instance=instance, actor=actor, reason=reason)
         return instance
 
     async def suspend(self, *, instance_id: str, actor: str,
@@ -320,6 +350,45 @@ class WorkflowEngine:
                 # per-instance event log (kept separately from the
                 # outbox for fast per-aggregate reads). Best-effort.
                 # We only persist the latest version after action exec.
+        # ---- Slice 4.1: post-commit SLA scheduling -----------------
+        # SLA timers are scheduled AFTER the aggregate commit so that a
+        # failure to schedule a timer never rolls back the state
+        # transition itself. Timers remain replayable — they are new
+        # WorkflowTimer aggregates with their own events.
+        if self._sla_engine is not None:
+            await self._sla_engine.maybe_schedule_for_entry(
+                instance=instance, actor=actor,
+                publish_event=self._publish_event)
+
+    async def _child_start(self, *, defn: WorkflowDefinition,
+                            payload: dict, correlation: str,
+                            parent: WorkflowInstance,
+                            session) -> WorkflowInstance:
+        """Start a real child WorkflowInstance under the parent's tenant
+        + country scope. Called by ChildSpawner during a spawn."""
+        child = WorkflowInstance.start(
+            definition=defn,
+            tenant_id=parent.tenant_id,
+            country_code=parent.country_code,
+            initiator_id=parent.instance_id,       # parent is the initiator
+            payload=payload,
+            correlation_id=correlation)
+        await self._instances.save(child, session=session)
+        for ev in child.pull_events():
+            await self._publish_event(
+                ev, actor=parent.instance_id, session=session,
+                tenant_id=child.tenant_id,
+                country=child.country_code)
+        # Recurse on_enter actions for the child within the SAME
+        # transaction — matches the parent semantics.
+        actions = child.pull_pending_actions()
+        for action in actions:
+            await self._execute_action(
+                action=action, instance=child, defn=defn,
+                actor=parent.instance_id, session=session)
+        await increment("workflow_child_started",
+                          labels={"definition": defn.name})
+        return child
 
     async def _execute_action(self, *, action: dict,
                                 instance: WorkflowInstance,
@@ -337,11 +406,17 @@ class WorkflowEngine:
             await self._action_record_compensation(params, instance,
                                                       actor, session)
         elif verb == "spawn":
-            # The composer interprets a spawn declaration. In Slice 4.0
-            # the composer logs the intent and emits a "spawn requested"
-            # outbox marker. Concrete spawn execution lands in 4.5.
-            await self._saga.handle_spawn(params=params, instance=instance,
-                                            actor=actor)
+            if self._child_spawner is not None:
+                # Slice 4.1 real fan-out execution.
+                await self._child_spawner.spawn(
+                    params=params, parent=instance, actor=actor,
+                    session=session,
+                    engine_starter=self._child_start)
+            else:
+                # Slice 4.0 audit-only fallback.
+                await self._saga.handle_spawn(params=params,
+                                                instance=instance,
+                                                actor=actor)
         else:
             raise DefinitionError(f"unknown action verb {verb!r}")
 
@@ -350,25 +425,34 @@ class WorkflowEngine:
                                      actor: str, session) -> None:
         """Emit an OUTBOUND command to another bounded context.
 
-        The engine NEVER writes to other contexts directly — it publishes
-        an envelope on the outbox. Subscribers in the target context
-        consume it.
+        Slice 4.1: writes a durable CommandEnvelope to the internal
+        outbox (``workflow_command_outbox``). A background dispatcher
+        attempts delivery with retry + DLQ (see CommandDispatcher).
+
+        The engine NEVER writes to other contexts directly — it only
+        publishes an envelope on our own queue. Downstream contexts
+        register handlers with the dispatcher.
         """
         target = params.get("target")
         command_name = params.get("command")
         if not isinstance(target, str) or not isinstance(command_name, str):
             raise DefinitionError(
                 "emit_command requires params.target + params.command")
-        # NOTE: emit_command is a side-effect; the transition envelope
-        # was already published. We do NOT republish here — the original
-        # transition envelope's payload carries the engine's intent.
-        # In Slice 4.5 this will turn into a dedicated outbound command
-        # envelope. For 4.0 we only record an audit entry.
-        await audit(action="workflow.engine.emit_command",
-                     resource_type="workflow_instance",
-                     resource_id=instance.instance_id,
-                     decision="PERMIT",
-                     payload={"target": target, "command": command_name})
+        if self._command_dispatcher is not None:
+            await self._command_dispatcher.enqueue(
+                instance=instance, target_context=target,
+                command_name=command_name,
+                payload=params.get("payload") or {},
+                session=session)
+        else:
+            # Fallback: audit-only (Slice 4.0 behavior) so existing
+            # tests keep passing without the dispatcher wired.
+            await audit(action="workflow.engine.emit_command",
+                         resource_type="workflow_instance",
+                         resource_id=instance.instance_id,
+                         decision="PERMIT",
+                         payload={"target": target,
+                                  "command": command_name})
 
     async def _action_schedule_timer(self, params: dict,
                                        instance: WorkflowInstance,
