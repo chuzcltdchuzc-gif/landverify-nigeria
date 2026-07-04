@@ -137,15 +137,37 @@ No performance regression detected against Slice 4.0 baseline. The 106-test suit
 
 ## 8. Risk register update (Operator §7 item 10)
 
+### 8.1 — Mocked infrastructure disclosure (Operator directive: "Provider abstractions")
+
+Slice 4.1 delivery **does not depend on any external provider adapter** for its acceptance
+gates. The wider platform still contains mocked adapters inherited from prior phases; per
+the Operator directive they are explicitly recorded here as ongoing risk items:
+
+| Adapter | Location | Status | Slice 4.1 dependency? | Migration owner |
+| --- | --- | --- | --- | --- |
+| Cloudflare R2 (evidence object storage) | `contexts.evidence.adapters.storage.*` | **MOCKED** (local FS WORM provider `local_fs_worm`, root `/tmp/aqua-evidence`) | **NO** — Slice 4.1 never touches evidence collections or storage (verified by static isolation test). | Future business slice + operator-supplied credentials. |
+| AWS KMS (evidence PII encryption) | `contexts.evidence.adapters.kms.software_kms_v1` | **MOCKED** (software KMS placeholder `software_kms_v1`) | **NO** — Slice 4.1 never encrypts / decrypts PII. Notification delivery hashes addresses at enqueue (SHA-256) — no KMS involvement. | Future business slice + operator-supplied credentials. |
+| Notification providers (`EmailStubProvider`, `SmsStubProvider`) | `contexts.workflow.application.notification_dispatcher` | **STUB (no-op success)** by design for Slice 4.1 | INFRA delivery only — providers deliberately do nothing external; `LogProvider` writes to structured logs. | Deferred to a future business slice when notification templates + content land (per ADR-0019). |
+
+**Explicit statement:** No production-readiness claim in this packet depends upon
+R2, AWS KMS, or a real notification provider. Slice 4.1 Acceptance is limited to
+the **generic engine infrastructure** and its bounded-context isolation. Migration
+to live providers is recorded as outstanding work in the register below.
+
+### 8.2 — Slice 4.1 risk items
+
 | # | Risk | Severity | Mitigation | Status |
 | --- | --- | --- | --- | --- |
-| R-41-1 | Scheduler polling overhead in dense workloads | Low | Configurable tick + batch size; each subsystem is O(batch). | Accepted — operator can tune. |
-| R-41-2 | Command envelope backlog on downstream outage | Medium | Retry with deterministic backoff + DLQ; operator inspection via `list_dead_lettered`. | Mitigated. |
+| R-41-1 | Scheduler polling overhead in dense workloads | Low | Configurable tick (`WORKFLOW_SCHEDULER_TICK_SECONDS`) + batch size; each subsystem is O(batch). | Accepted — operator can tune. |
+| R-41-2 | Command envelope backlog on downstream outage | Medium | Retry with deterministic backoff + DLQ; operator inspection via `MongoCommandOutbox.list_dead_lettered()`. | Mitigated. |
 | R-41-3 | Child instance fan-out storms | Medium | Cycle detection at load time (Slice 4.0); `for_each` array size is bounded by the definition author (definitions are content, reviewable). | Accepted — governed by definition review. |
 | R-41-4 | Policy resolution ambiguity across scopes | Low | Deterministic specificity ranking (test #1); `version` breaks ties. | Mitigated. |
 | R-41-5 | SLA timer over-scheduling | Low | Only scheduled when a state entry has a policy timeout; `payload_on_fire._sla_chain_step` prevents infinite scheduling (chain ends on last step). | Mitigated. |
-| R-41-6 | Notification providers exposing PII | High | Raw addresses NEVER persisted (hashed at enqueue). Payload NEVER persisted. Provider ports accept only `subject_ref` + `address_hash`-derived surrogate. | Mitigated. |
+| R-41-6 | Notification providers exposing PII | High | Raw addresses NEVER persisted (SHA-256 hashed at enqueue via `NotificationDelivery.create` → `_hash_address`). Payload NEVER persisted (dispatch uses opaque `subject_ref`). Verified by `test_notification_delivery_no_pii`. | Mitigated. |
 | R-41-7 | Scheduler running under super_admin context | Medium | `_push_system_context` scopes only to timer fire + dispatch loops; never exposes an HTTP endpoint. All calls remain in-process. | Accepted with monitoring. |
+| **R-41-8** | **R2 evidence-storage adapter mocked** | **Medium** | Slice 4.1 has zero R2 dependency (isolation-test verified). Live R2 credentials + adapter migration deferred to a future business slice. | **OUTSTANDING** — migration to live provider is future work. |
+| **R-41-9** | **AWS KMS adapter mocked** | **Medium** | Slice 4.1 has zero KMS dependency (no PII encryption path in engine). Live KMS credentials + adapter migration deferred to a future business slice. | **OUTSTANDING** — migration to live provider is future work. |
+| **R-41-10** | **Notification provider stubs (email / SMS)** | **Low** | Deliberate: business notification templates + content are constitutionally deferred per ADR-0019. Real SMTP / Twilio integration will land alongside business notification templates in a later slice. | **OUTSTANDING** — real providers land when business templates land. |
 
 ---
 
